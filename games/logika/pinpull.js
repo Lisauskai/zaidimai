@@ -46,7 +46,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g1_1',
       title: '1. Atidaryk vartus',
       instruction: 'Kaiščiai: 2. Pirma atidaryk apatinį kaištį (#2), tik tada viršutinį (#1), kad dubuo nepersipildytų per kraštą!',
-      reward: 15,
+      reward: 1,
       requiredGoal: 5,
       walls: [
         // Viršutinė kamera (siaurėjanti link #1)
@@ -73,7 +73,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g1_2',
       title: '2. Tiltas per bedugnę',
       instruction: 'Kaiščiai: 2. Įstrižas kaištis (#2) yra TILTAS! Ištrauk tik #1, kad geltoni rutuliukai nuriedėtų į kolbą.',
-      reward: 15,
+      reward: 2,
       requiredGoal: 5,
       walls: [
         // Viršutinė kairioji kamera
@@ -95,7 +95,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g1_3',
       title: '3. Trys aukštai',
       instruction: 'Kaiščiai: 3. Atidaryk aukštus iš APAČIOS į viršų (#3 → #2 → #1), kad tarpinės lėkštės nepersipildytų!',
-      reward: 20,
+      reward: 2,
       requiredGoal: 6,
       walls: [
         // 1 aukštas (viršus)
@@ -128,7 +128,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g1_4',
       title: '4. Dvigubas srautas',
       instruction: 'Kaiščiai: 3. Nuleisk #1 per tiltą (#3) į dešinę, o tada išlaisvink dešiniąją kamerą (#2)!',
-      reward: 20,
+      reward: 2,
       requiredGoal: 6,
       walls: [
         // Kairė kamera
@@ -157,7 +157,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g1_5',
       title: '5. Saugus posūkis',
       instruction: 'Kaiščiai: 3. Pirma atidaryk apatinę sklendę (#3), tada įstrižą užtvarą (#2) ir galiausiai viršų (#1)!',
-      reward: 25,
+      reward: 3,
       requiredGoal: 6,
       walls: [
         // Viršutinė dešinė kamera
@@ -188,7 +188,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g3_1',
       title: '1. Spąstai ar spalvos?',
       instruction: 'Kaiščiai: 4. Nuleisk pilkus (#2) į duobę per #3 (arba sumaišyk #1 + #2 kameroje), ir tik tada atidaryk kolbą (#4)!',
-      reward: 20,
+      reward: 1,
       requiredGoal: 4,
       walls: [
         // Pilka kamera (kairė -> krenta virš #3 link duobės arba rieda į dešinę)
@@ -221,7 +221,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g3_2',
       title: '2. Dažymo kamera',
       instruction: 'Kaiščiai: 4. Tikslui reikia visų 8 rutuliukų! Sumaišyk geltonus (#1) ir pilkus (#2) kameroje, tada nuleisk į kolbą (#3).',
-      reward: 25,
+      reward: 2,
       requiredGoal: 8,
       walls: [
         // Kairė (geltoni)
@@ -256,7 +256,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g3_3',
       title: '3. Išvalyk kanalą',
       instruction: 'Kaiščiai: 5. Pirma išpilk viršutinius pilkus rutuliukus į kairę duobę (#2 → #1), tada atvesk žalius (#4 → #5)!',
-      reward: 25,
+      reward: 2,
       requiredGoal: 5,
       walls: [
         // Viršutinė pilkų kamera
@@ -291,7 +291,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g3_4',
       title: '4. Didysis maišytuvas',
       instruction: 'Kaiščiai: 5. Surink 7 violetinius rutuliukus! Sumaišyk #1 ir #2 kameroje, tada atidaryk kelią žemyn (#4 → #5).',
-      reward: 30,
+      reward: 2,
       requiredGoal: 7,
       walls: [
         // Kairė kamera (4 violetiniai)
@@ -327,7 +327,7 @@ export const PINPULL_LEVELS = {
       id: 'pp_g3_5',
       title: '5. Inžinieriaus egzaminas',
       instruction: 'Kaiščiai: 6. Išmesk kairius pilkus į duobę (#4 → #1), sumaišyk centrinius su dešiniais (#2 + #3) ir nuleisk į kolbą (#6 → #5)!',
-      reward: 35,
+      reward: 3,
       requiredGoal: 7,
       walls: [
         // Kairė kamera (3 pilki -> į duobę!)

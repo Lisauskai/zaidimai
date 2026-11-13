@@ -18,7 +18,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g1_1',
       title: '1. Pirmasis kubas',
       instruction: 'Užstumk energijos kubą (⚡) ant šviečiančio mygtuko (🔘) ir ženk pro atsidariusius vartus (🚪)!',
-      reward: 15,
+      reward: 1,
       map: [
         '#####',
         '#R.E#',
@@ -31,7 +31,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g1_2',
       title: '2. Aplink koloną',
       instruction: 'Apeik laboratorijos sieną, nustumk kubą ant mygtuko ir išeik pro vartus.',
-      reward: 15,
+      reward: 2,
       map: [
         '######',
         '#R...#',
@@ -44,7 +44,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g1_3',
       title: '3. Du generatoriai',
       instruction: 'Užstumk abu energijos kubus ant mygtukų – tada atsidarys išėjimo vartai!',
-      reward: 20,
+      reward: 2,
       map: [
         '######',
         '#R..T#',
@@ -57,7 +57,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g1_4',
       title: '4. Didžioji salė',
       instruction: 'Suplanuok ėjimus, kad abu kubai atsidurtų apačioje ant šviečiančių mygtukų.',
-      reward: 20,
+      reward: 2,
       map: [
         '######',
         '#R...#',
@@ -71,7 +71,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g1_5',
       title: '5. Laboratorijos kampas',
       instruction: 'Stumk kubus atsargiai po vieną – jei suklysi, spausk „Atšaukti ėjimą (Undo)“!',
-      reward: 25,
+      reward: 3,
       map: [
         '######',
         '#R.T.#',
@@ -88,7 +88,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g3_1',
       title: '1. Ledo takelis',
       instruction: 'Užstumtas ant ledo (❄️) kubas slysta tol, kol atsitrenkia į sieną! Užstumk visus 3 kubus.',
-      reward: 25,
+      reward: 1,
       map: [
         '#######',
         '#R....#',
@@ -103,7 +103,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g3_2',
       title: '2. Vienkrypčiai vartai',
       instruction: 'Vartai (➡️) praleidžia TIK į dešinę! Perstumk vieną kubą per vartus ir panaudok ledą.',
-      reward: 25,
+      reward: 2,
       map: [
         '#######',
         '#R..#T#',
@@ -118,7 +118,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g3_3',
       title: '3. Dvigubas čiuožimas',
       instruction: 'Du ledo koridoriai ir vienkrypčiai vartai (➡️) – nustatyk teisingą eiliškumą!',
-      reward: 30,
+      reward: 2,
       map: [
         '########',
         '#R.....#',
@@ -134,7 +134,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g3_4',
       title: '4. Keturios jėgainės',
       instruction: '4 energijos kubai, ledas ir vartai (⬇️). Pravesk viršutinį kubą pro ⬇️ ir užbaik grandinę!',
-      reward: 30,
+      reward: 2,
       map: [
         '#######',
         '#R....#',
@@ -150,7 +150,7 @@ export const SOKOBAN_LEVELS = {
       id: 'sok_g3_5',
       title: '5. Vyriausiojo inžinieriaus testas',
       instruction: '4 kubai, slidus ledas ir dveji vienkrypčiai vartai! Atverk išėjimo vartus (🚪).',
-      reward: 35,
+      reward: 3,
       map: [
         '########',
         '#R.....#',

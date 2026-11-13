@@ -95,7 +95,7 @@ export const MATRIX_LEVELS = {
       kind: 'matrix',
       title: '1. Spalvų seka',
       instruction: 'Pažiūrėk, kaip keičiasi spalvos eilutėse, ir pasirink trūkstamą figūrą vietoj [ ? ]!',
-      reward: 15,
+      reward: 1,
       grid: [
         { shape: 'circle', color: 'cyan' }, { shape: 'circle', color: 'yellow' }, { shape: 'circle', color: 'magenta' },
         { shape: 'circle', color: 'cyan' }, { shape: 'circle', color: 'yellow' }, { shape: 'circle', color: 'magenta' },
@@ -114,7 +114,7 @@ export const MATRIX_LEVELS = {
       kind: 'matrix',
       title: '2. Figūrų kiekis (1–3)',
       instruction: 'Suskaičiuok, kiek kvadratų yra kiekviename langelyje iš kairės į dešinę!',
-      reward: 15,
+      reward: 2,
       grid: [
         { shape: 'square', color: 'cyan', count: 1 }, { shape: 'square', color: 'cyan', count: 2 }, { shape: 'square', color: 'cyan', count: 3 },
         { shape: 'square', color: 'cyan', count: 1 }, { shape: 'square', color: 'cyan', count: 2 }, { shape: 'square', color: 'cyan', count: 3 },
@@ -133,7 +133,7 @@ export const MATRIX_LEVELS = {
       kind: 'matrix',
       title: '3. Didėjantys deimantai',
       instruction: 'Kiekvienoje eilutėje deimantai auga! Koks deimantas tinka į paskutinį langelį?',
-      reward: 15,
+      reward: 2,
       grid: [
         { shape: 'diamond', color: 'green', size: 'sm' }, { shape: 'diamond', color: 'green', size: 'md' }, { shape: 'diamond', color: 'green', size: 'lg' },
         { shape: 'diamond', color: 'green', size: 'sm' }, { shape: 'diamond', color: 'green', size: 'md' }, { shape: 'diamond', color: 'green', size: 'lg' },
@@ -152,7 +152,7 @@ export const MATRIX_LEVELS = {
       kind: 'matrix',
       title: '4. Trys formos eilutėje',
       instruction: 'Kiekvienoje eilutėje ir stulpelyje turi būti visos trys figūros: ratas, trikampis ir kvadratas!',
-      reward: 20,
+      reward: 2,
       grid: [
         { shape: 'circle', color: 'yellow' }, { shape: 'triangle', color: 'yellow' }, { shape: 'square', color: 'yellow' },
         { shape: 'triangle', color: 'yellow' }, { shape: 'square', color: 'yellow' }, { shape: 'circle', color: 'yellow' },
@@ -171,7 +171,7 @@ export const MATRIX_LEVELS = {
       kind: 'matrix',
       title: '5. Žvaigždžių šifras',
       instruction: 'Kokios spalvos žvaigždutės trūksta paskutiniame langelyje?',
-      reward: 20,
+      reward: 3,
       grid: [
         { shape: 'star', color: 'cyan' }, { shape: 'star', color: 'green' }, { shape: 'star', color: 'orange' },
         { shape: 'star', color: 'green' }, { shape: 'star', color: 'orange' }, { shape: 'star', color: 'cyan' },
@@ -192,7 +192,7 @@ export const MATRIX_LEVELS = {
       kind: 'matrix',
       title: '1. Sukimas + vidinis taškas',
       instruction: 'Rodyklė sukasi 90° kampu, o kartu keičiasi vidinio taško spalva! Rask tikslią figūrą.',
-      reward: 25,
+      reward: 1,
       grid: [
         { shape: 'arrow', color: 'cyan', rot: 0, dotColor: 'yellow' },
         { shape: 'arrow', color: 'cyan', rot: 90, dotColor: 'magenta' },
@@ -219,7 +219,7 @@ export const MATRIX_LEVELS = {
       kind: 'memory',
       title: '2. Atminties kodas #1 (4 žingsniai)',
       instruction: 'Įsimink 3 sekundes švytinčių langelių seką (1 → 4) ir tiksliai ją atkartok!',
-      reward: 25,
+      reward: 2,
       gridSize: 3,
       durationMs: 3000,
       sequence: [0, 4, 5, 7]
@@ -229,7 +229,7 @@ export const MATRIX_LEVELS = {
       kind: 'matrix',
       title: '3. Forma + taškų skaičius',
       instruction: 'Keičiasi du požymiai: išorinė figūra IR juodų taškelių skaičius viduje (1–3)!',
-      reward: 30,
+      reward: 2,
       grid: [
         { shape: 'circle', color: 'orange', innerDots: 1 },
         { shape: 'square', color: 'orange', innerDots: 2 },
@@ -256,7 +256,7 @@ export const MATRIX_LEVELS = {
       kind: 'memory',
       title: '4. Atminties kodas #2 (5 žingsniai)',
       instruction: 'Dėmesio! 3 sekundes sužibs 5 langelių kodas – pakartok jį iš eilės!',
-      reward: 30,
+      reward: 2,
       gridSize: 3,
       durationMs: 3000,
       sequence: [2, 1, 4, 6, 8]
@@ -266,7 +266,7 @@ export const MATRIX_LEVELS = {
       kind: 'matrix',
       title: '5. Trikampio posūkis + spalva',
       instruction: 'Finalinis IQ iššūkis! Trikampis sukasi 90° kampu ir kartu keičia spalvą.',
-      reward: 35,
+      reward: 3,
       grid: [
         { shape: 'triangle', color: 'cyan', rot: 0 },
         { shape: 'triangle', color: 'yellow', rot: 90 },

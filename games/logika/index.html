@@ -52,60 +52,81 @@
         </p>
       </div>
 
-      <div class="difficulty-grid">
-        <!-- 1 KLASĖ -->
-        <article class="diff-card diff-grade1" data-difficulty="grade1">
-          <div class="diff-card-header">
-            <span class="diff-level-chip">GRADE 1</span>
-            <span class="diff-icon" aria-hidden="true">🔭</span>
+      <div class="start-workshop-layout">
+        <div class="difficulty-grid start-categories-col">
+          <!-- 1 KLASĖ -->
+          <article class="diff-card diff-grade1" data-difficulty="grade1">
+            <div class="diff-card-header">
+              <span class="diff-level-chip">GRADE 1</span>
+              <span class="diff-icon" aria-hidden="true">🔭</span>
+            </div>
+            <h3>1 klasė (Jaunasis išradėjas)</h3>
+            <p class="diff-desc">
+              5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“, 5 „Raštų šifro“ lygiai ir 3 mini eksperimentai.
+            </p>
+
+            <div class="diff-progress-box">
+              <div class="progress-stat">
+                <span>✅ Išspręsti lygiai:</span>
+                <strong id="g1-solved-text">0 / 33</strong>
+              </div>
+              <div class="progress-stat">
+                <span>💎 Proto kristalai:</span>
+                <strong id="g1-crystals-text">0</strong>
+              </div>
+            </div>
+
+            <button id="btn-select-grade1" class="diff-start-btn btn-cyan" type="button">
+              🔬 ŽAISTI: 1 KLASĖ
+            </button>
+          </article>
+
+          <!-- 3 KLASĖ -->
+          <article class="diff-card diff-grade3" data-difficulty="grade3">
+            <div class="diff-card-header">
+              <span class="diff-level-chip">GRADE 3</span>
+              <span class="diff-icon" aria-hidden="true">🧪</span>
+            </div>
+            <h3>3 klasė (Vyriausiasis inžinierius)</h3>
+            <p class="diff-desc">
+              5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“, 5 „Raštų ir atminties šifro“ lygiai + 3 mini eksperimentai.
+            </p>
+
+            <div class="diff-progress-box">
+              <div class="progress-stat">
+                <span>✅ Išspręsti lygiai:</span>
+                <strong id="g3-solved-text">0 / 33</strong>
+              </div>
+              <div class="progress-stat">
+                <span>💎 Proto kristalai:</span>
+                <strong id="g3-crystals-text">0</strong>
+              </div>
+            </div>
+
+            <button id="btn-select-grade3" class="diff-start-btn btn-purple" type="button">
+              ⚡ ŽAISTI: 3 KLASĖ
+            </button>
+          </article>
+        </div>
+
+        <!-- MANO ROBOTO DIRBTUVĖS -->
+        <aside id="robot-workshop-card" class="robot-workshop-card" aria-label="Mano Roboto Dirbtuvės">
+          <div class="robot-workshop-header">
+            <div>
+              <span class="diff-level-chip">🤖 MANO ROBOTO DIRBTUVĖS</span>
+              <h3>Tavo Kosminis Robotas</h3>
+            </div>
+            <div class="robot-total-pill" id="robot-total-crystals-pill">💎 0 / 60+</div>
           </div>
-          <h3>1 klasė (Jaunasis išradėjas)</h3>
-          <p class="diff-desc">
-            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“, 5 „Raštų šifro“ lygiai ir 3 mini eksperimentai.
+
+          <p id="robot-next-unlock" class="robot-next-unlock">
+            Surink 5 💎 kristalus ir atrakink pirmąją roboto detalę! Paspausk ant atrakintos detalės spalvai keisti.
           </p>
 
-          <div class="diff-progress-box">
-            <div class="progress-stat">
-              <span>✅ Išspręsti lygiai:</span>
-              <strong id="g1-solved-text">0 / 33</strong>
-            </div>
-            <div class="progress-stat">
-              <span>💎 Proto kristalai:</span>
-              <strong id="g1-crystals-text">0</strong>
-            </div>
-          </div>
+          <div id="robot-canvas-box" class="robot-canvas-box"></div>
 
-          <button id="btn-select-grade1" class="diff-start-btn btn-cyan" type="button">
-            🔬 ŽAISTI: 1 KLASĖ
-          </button>
-        </article>
-
-        <!-- 3 KLASĖ -->
-        <article class="diff-card diff-grade3" data-difficulty="grade3">
-          <div class="diff-card-header">
-            <span class="diff-level-chip">GRADE 3</span>
-            <span class="diff-icon" aria-hidden="true">🧪</span>
-          </div>
-          <h3>3 klasė (Vyriausiasis inžinierius)</h3>
-          <p class="diff-desc">
-            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“, 5 „Raštų ir atminties šifro“ lygiai + 3 mini eksperimentai.
-          </p>
-
-          <div class="diff-progress-box">
-            <div class="progress-stat">
-              <span>✅ Išspręsti lygiai:</span>
-              <strong id="g3-solved-text">0 / 33</strong>
-            </div>
-            <div class="progress-stat">
-              <span>💎 Proto kristalai:</span>
-              <strong id="g3-crystals-text">0</strong>
-            </div>
-          </div>
-
-          <button id="btn-select-grade3" class="diff-start-btn btn-purple" type="button">
-            ⚡ ŽAISTI: 3 KLASĖ
-          </button>
-        </article>
+          <div id="robot-parts-list" class="robot-parts-list"></div>
+        </aside>
       </div>
     </section>
 

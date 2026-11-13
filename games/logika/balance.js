@@ -17,7 +17,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g1_1',
       title: '1. Baterijos ir varžtai',
       instruction: 'Pažiūrėk į taisyklę viršuje ir subalansuok svarstykles dešinėje lėkštėje!',
-      reward: 15,
+      reward: 1,
       weights: { bolt: 1, battery: 2 },
       hints: [
         { left: [{ kind: 'battery', count: 1 }], right: [{ kind: 'bolt', count: 2 }] }
@@ -29,7 +29,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g1_2',
       title: '2. Kristalų svoris',
       instruction: 'Kiek varžtų atsveria du energijos kristalus?',
-      reward: 15,
+      reward: 2,
       weights: { bolt: 1, crystal: 3 },
       hints: [
         { left: [{ kind: 'crystal', count: 1 }], right: [{ kind: 'bolt', count: 3 }] }
@@ -41,7 +41,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g1_3',
       title: '3. Magnetinė jėga',
       instruction: 'Suskaičiuok, kiek iš viso varžtų reikia sudėti dešinėje!',
-      reward: 15,
+      reward: 2,
       weights: { bolt: 1, magnet: 4 },
       hints: [
         { left: [{ kind: 'magnet', count: 1 }], right: [{ kind: 'bolt', count: 4 }] }
@@ -53,7 +53,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g1_4',
       title: '4. Robotukų energija',
       instruction: 'Kiek baterijų reikės dviem robotukams atsverti?',
-      reward: 20,
+      reward: 2,
       weights: { battery: 1, robot: 3 },
       hints: [
         { left: [{ kind: 'robot', count: 1 }], right: [{ kind: 'battery', count: 3 }] }
@@ -65,7 +65,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g1_5',
       title: '5. Pilnas kristalas',
       instruction: 'Apskaičiuok bendrą svorį ir išlygink svarstyklių lėkštes!',
-      reward: 20,
+      reward: 3,
       weights: { bolt: 1, crystal: 5 },
       hints: [
         { left: [{ kind: 'crystal', count: 1 }], right: [{ kind: 'bolt', count: 5 }] }
@@ -79,7 +79,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g3_1',
       title: '1. Dviguba grandinė',
       instruction: 'Panaudok abi taisykles ir išlygink svarstykles baterijomis arba varžtais!',
-      reward: 25,
+      reward: 1,
       weights: { bolt: 1, battery: 3, robot: 6 },
       hints: [
         { left: [{ kind: 'robot', count: 1 }], right: [{ kind: 'battery', count: 2 }] },
@@ -92,7 +92,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g3_2',
       title: '2. Kristalų laboratorija',
       instruction: 'Rask tikslų svorį suderinęs kelis objektus dešinėje lėkštėje!',
-      reward: 25,
+      reward: 2,
       weights: { bolt: 1, battery: 4, crystal: 8 },
       hints: [
         { left: [{ kind: 'crystal', count: 1 }], right: [{ kind: 'battery', count: 2 }] },
@@ -105,7 +105,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g3_3',
       title: '3. Kosminis reaktorius',
       instruction: 'Suderink kristalų ir baterijų kiekį, kad abi pusės būtų lygios!',
-      reward: 30,
+      reward: 2,
       weights: { battery: 1, crystal: 2, robot: 6 },
       hints: [
         { left: [{ kind: 'robot', count: 1 }], right: [{ kind: 'crystal', count: 3 }] },
@@ -118,7 +118,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g3_4',
       title: '4. Raketos starto svoris',
       instruction: 'Trijų žingsnių lygtis! Kiek baterijų ir varžtų atsveria raketą su robotu?',
-      reward: 30,
+      reward: 2,
       weights: { bolt: 1, battery: 2, robot: 4, rocket: 8 },
       hints: [
         { left: [{ kind: 'rocket', count: 1 }], right: [{ kind: 'robot', count: 2 }] },
@@ -132,7 +132,7 @@ export const BALANCE_LEVELS = {
       id: 'bal_g3_5',
       title: '5. Vyriausiojo inžinieriaus egzaminas',
       instruction: 'Sudėtinga kosminė lygtis! Surink reikiamą svorį robotukais ir varžtais!',
-      reward: 35,
+      reward: 3,
       weights: { bolt: 1, crystal: 3, robot: 6, rocket: 9 },
       hints: [
         { left: [{ kind: 'rocket', count: 1 }], right: [{ kind: 'robot', count: 1 }, { kind: 'crystal', count: 1 }] },

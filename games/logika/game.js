@@ -12,12 +12,22 @@ import {
   BALANCE_CANVAS_H
 } from './balance.js';
 import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js';
+import {
+  ROBOT_PARTS,
+  createDefaultRobotColors,
+  normalizeRobotColors,
+  getColorTheme,
+  cycleRobotPartColor,
+  getUnlockedPartIds,
+  renderRobotWorkshopSvg
+} from './robot.js';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
 export function createDefaultProgress() {
   return {
     activeDifficulty: null,
+    robotColors: createDefaultRobotColors(),
     grade1: {
       solvedLevels: [],
       crystals: 0
@@ -49,6 +59,7 @@ export function loadLabProgress() {
 
     return {
       activeDifficulty,
+      robotColors: normalizeRobotColors(parsed.robotColors),
       grade1: normalizeGrade(parsed.grade1),
       grade3: normalizeGrade(parsed.grade3)
     };
@@ -74,7 +85,7 @@ export const LAB_LEVELS = {
       badge: '🔦 LAZERIO KELIAS',
       title: '1. Veidrodžio posūkis',
       instruction: 'Paspausk ant geltono veidrodžio (/ arba \\), kad lazerio spindulys pataikytų į 💎 kristalą!',
-      reward: 10,
+      reward: 1,
       cols: 4,
       rows: 3,
       emitter: { r: 0, c: 0, dir: 'R' },
@@ -93,7 +104,7 @@ export const LAB_LEVELS = {
       badge: '⚙️ ENERGIJOS GRANDINĖ',
       title: '2. Laboratorijos šviesos',
       instruction: 'Įjunk tik tuos energijos blokus, kurių suma lygi lygiai 10 V!',
-      reward: 10,
+      reward: 1,
       targetSum: 10,
       values: [2, 5, 3, 6]
     },
@@ -103,7 +114,7 @@ export const LAB_LEVELS = {
       badge: '🔮 KRISTALŲ ŠIFRAS',
       title: '3. Skaičių banga',
       instruction: 'Atspėk, koks skaičius turėtų būti vietoj [ ? ] robotuko ekrane:',
-      reward: 15,
+      reward: 2,
       prompt: '2  →  4  →  6  →  8  →  [ ? ]',
       answer: 10,
       choices: [9, 10, 11, 12]
@@ -116,7 +127,7 @@ export const LAB_LEVELS = {
       badge: '🔦 LAZERIŲ LABIRINTAS',
       title: '1. Dvigubas atspindys',
       instruction: 'Sudėliok abu veidrodžius (/ arba \\), kad spindulys aplenktų sienas ir pasiektų 💎!',
-      reward: 15,
+      reward: 1,
       cols: 5,
       rows: 4,
       emitter: { r: 0, c: 0, dir: 'R' },
@@ -138,7 +149,7 @@ export const LAB_LEVELS = {
       badge: '⚡ REAKTORIAUS GALIA',
       title: '2. Tikslus krūvis (27 V)',
       instruction: 'Įjunk tinkamą jungiklių derinį, kad reaktorius pasiektų lygiai 27 V!',
-      reward: 15,
+      reward: 2,
       targetSum: 27,
       values: [4, 8, 12, 15, 3]
     },
@@ -148,7 +159,7 @@ export const LAB_LEVELS = {
       badge: '🧬 INŽINERINIS ŠIFRAS',
       title: '3. Dvigubėjančios jėgos',
       instruction: 'Rask dėsningumą ir nustatyk trūkstamą skaičių:',
-      reward: 20,
+      reward: 2,
       prompt: '3  →  6  →  12  →  24  →  [ ? ]',
       answer: 48,
       choices: [36, 42, 48, 54]
@@ -242,7 +253,7 @@ function updateSummaryUI() {
   if (currentDifficulty) {
     const activeData = progress[currentDifficulty];
     const totalLevels = getAllLevelsForDiff(currentDifficulty).length;
-    uiTotalCrystals.textContent = String(activeData.crystals);
+    uiTotalCrystals.textContent = String(g1Crystals + g3Crystals);
     uiActiveRank.textContent = currentDifficulty === 'grade1' ? '🔬 1 klasė' : '⚡ 3 klasė';
     document.getElementById('lab-mode-title').textContent = getDifficultyLabel(currentDifficulty);
     document.getElementById('lab-mode-stats').textContent =
@@ -250,6 +261,68 @@ function updateSummaryUI() {
   } else {
     uiTotalCrystals.textContent = String(g1Crystals + g3Crystals);
   }
+
+  renderRobotWorkshop(g1Crystals + g3Crystals);
+}
+
+function handleRobotPartColorCycle(partId) {
+  cycleRobotPartColor(progress.robotColors, partId);
+  saveLabProgress(progress);
+  const total = progress.grade1.crystals + progress.grade3.crystals;
+  renderRobotWorkshop(total);
+}
+
+function renderRobotWorkshop(totalCrystals) {
+  const pillEl = document.getElementById('robot-total-crystals-pill');
+  const nextEl = document.getElementById('robot-next-unlock');
+  const boxEl = document.getElementById('robot-canvas-box');
+  const listEl = document.getElementById('robot-parts-list');
+  if (!boxEl || !listEl) return;
+
+  if (pillEl) {
+    pillEl.textContent = `💎 ${totalCrystals} krist.`;
+  }
+
+  const unlockedIds = new Set(getUnlockedPartIds(totalCrystals));
+  const nextPart = ROBOT_PARTS.find((p) => !unlockedIds.has(p.id));
+
+  if (nextEl) {
+    if (nextPart) {
+      nextEl.textContent = `Kita detalė: ${nextPart.icon} ${nextPart.name} (${totalCrystals} / ${nextPart.threshold} 💎). Paspausk ant atrakintos detalės spalvai keisti!`;
+    } else {
+      nextEl.textContent = '🎉 ŠAUNU! Visos 8 kosminio roboto detalės atrakintos! Paspausk ant bet kurios detalės spalvai keisti.';
+    }
+  }
+
+  boxEl.innerHTML = renderRobotWorkshopSvg(totalCrystals, progress.robotColors);
+  boxEl.querySelectorAll('[data-part]').forEach((el) => {
+    el.addEventListener('click', () => {
+      handleRobotPartColorCycle(el.getAttribute('data-part'));
+    });
+  });
+
+  listEl.innerHTML = '';
+  ROBOT_PARTS.forEach((part, idx) => {
+    const isUnlocked = unlockedIds.has(part.id);
+    const theme = getColorTheme(progress.robotColors[part.id]);
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = `robot-part-chip${isUnlocked ? ' unlocked' : ''}`;
+    chip.dataset.partChip = part.id;
+    chip.disabled = !isUnlocked;
+    chip.title = isUnlocked
+      ? `Spausk, kad pakeistum spalvą (dabar: ${theme.name})`
+      : `Reikia ${part.threshold} 💎`;
+
+    chip.innerHTML = isUnlocked
+      ? `<span>${idx + 1}. ${part.icon} ${part.name}</span><span class="robot-color-dot" style="background:${theme.fill}"></span>`
+      : `<span>🔒 ${idx + 1}. ${part.name}</span><span>${part.threshold} 💎</span>`;
+
+    if (isUnlocked) {
+      chip.addEventListener('click', () => handleRobotPartColorCycle(part.id));
+    }
+    listEl.appendChild(chip);
+  });
 }
 
 export function selectDifficulty(difficulty) {
