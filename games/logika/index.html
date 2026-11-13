@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261113b" />
+  <link rel="stylesheet" href="./style.css?v=20261113c" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -174,20 +174,23 @@
           <button id="tab-mode-algo" class="mode-tab-btn" type="button">
             🧑‍💻 Algoritmų trasa (5)
           </button>
+          <button id="tab-mode-gears" class="mode-tab-btn" type="button">
+            ⚙️ Krumpliaračiai (5)
+          </button>
           <button id="tab-mode-mini" class="mode-tab-btn" type="button">
             🧪 Mini Eksperimentai (3)
           </button>
         </div>
       </div>
 
-      <!-- NUOTYKIŲ ŽEMĖLAPIS (7 LABORATORIJOS ZONOS) -->
+      <!-- NUOTYKIŲ ŽEMĖLAPIS (8 LABORATORIJOS ZONOS) -->
       <section id="world-map-panel" class="world-map-panel" aria-label="Proto laboratorijos nuotykių žemėlapis">
         <div class="world-map-head">
           <div>
-            <h2 class="world-map-title">🗺️ Proto Laboratorijos nuotykių žemėlapis</h2>
-            <p class="world-map-sub">Laisvai rinkis bet kurią iš 7 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
+            <h2 class="world-map-title">🗺️ Proto Laboratorijos žemėlapis</h2>
+            <p class="world-map-sub">Laisvai rinkis bet kurią iš 8 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
           </div>
-          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 105</div>
+          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 120</div>
         </div>
         <div id="world-map-grid" class="world-map-grid"></div>
       </section>
@@ -429,6 +432,37 @@
           </div>
         </div>
 
+        <!-- 8. KRUMPLIARAČIŲ VARIKLIS (MECHANIKA) -->
+        <div id="gears-stage" class="pinpull-stage hidden">
+          <div class="pinpull-controls-bar">
+            <span id="gears-counter" class="pinpull-counter">⚙️ Uždėta: 0 kr.</span>
+            <div class="pinpull-btn-group">
+              <button id="btn-gears-reset" class="pin-reset-btn" type="button">
+                🔄 Iš naujo (Reset)
+              </button>
+              <button id="btn-gears-next" class="pin-next-btn hidden" type="button">
+                Kitas lygis ▶
+              </button>
+            </div>
+          </div>
+
+          <div class="pinpull-canvas-wrap">
+            <canvas
+              id="gears-canvas"
+              class="pinpull-canvas"
+              width="540"
+              height="440"
+              aria-label="Krumpliaračių mechanizmo lenta"
+            ></canvas>
+          </div>
+
+          <div id="gears-status-banner" class="gears-status-banner">
+            ⚙️ Pasirink krumpliaračio dydį apačioje ir spausk ant tuščio kaiščio (arba nutempk ant kaiščio)!
+          </div>
+
+          <div id="gears-palette" class="gears-palette" aria-label="Krumpliaračių dydžių pasirinkimas"></div>
+        </div>
+
         <!-- MINI EKSPERIMENTŲ ZONA -->
         <div id="puzzle-stage" class="puzzle-stage hidden"></div>
 
@@ -458,6 +492,6 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js?v=20261113b"></script>
+  <script type="module" src="./game.js?v=20261113c"></script>
 </body>
 </html>

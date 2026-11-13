@@ -193,3 +193,15 @@ export function playAlgoJump() {
   playTone({ type: 'sine', freqStart: 360, freqEnd: 740, duration: 0.14, gain: 0.11 });
   playTone({ type: 'triangle', freqStart: 540, freqEnd: 920, duration: 0.1, gain: 0.06, delay: 0.05 });
 }
+
+// 14. Krumpliaračio uždėjimo spragtelėjimas
+export function playGearPlace() {
+  playTone({ type: 'square', freqStart: 280, freqEnd: 460, duration: 0.06, gain: 0.09 });
+  playTone({ type: 'triangle', freqStart: 520, freqEnd: 680, duration: 0.08, gain: 0.08, delay: 0.03 });
+}
+
+// 15. Krumpliaračių užstrigimo garsas
+export function playGearJam() {
+  playTone({ type: 'sawtooth', freqStart: 160, freqEnd: 95, duration: 0.16, gain: 0.09 });
+  playTone({ type: 'triangle', freqStart: 130, freqEnd: 85, duration: 0.18, gain: 0.08, delay: 0.08 });
+}

@@ -1,19 +1,20 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113b';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113b';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113b';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113b';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113c';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113c';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113c';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113c';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113b';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113b';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113b';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113b';
+} from './balance.js?v=20261113c';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113c';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113c';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113c';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113c';
 import {
   isSoundEnabled,
   toggleSound,
@@ -31,9 +32,11 @@ import {
   playHintChime,
   playWrongBuzz,
   playVictoryFanfare,
-  playAlgoJump
-} from './sound.js?v=20261113b';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113b';
+  playAlgoJump,
+  playGearPlace,
+  playGearJam
+} from './sound.js?v=20261113c';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113c';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -42,7 +45,7 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113b';
+} from './robot.js?v=20261113c';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -217,6 +220,7 @@ let circuitEngine = null;
 let balanceEngine = null;
 let memoryCtrl = null;
 let algoEngine = null;
+let gearsEngine = null;
 let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
@@ -252,6 +256,8 @@ const balanceStage = document.getElementById('balance-stage');
 const matrixStage = document.getElementById('matrix-stage');
 const algoCanvas = document.getElementById('algo-canvas');
 const algoStage = document.getElementById('algo-stage');
+const gearsCanvas = document.getElementById('gears-canvas');
+const gearsStage = document.getElementById('gears-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
@@ -269,6 +275,7 @@ function getAllLevelsForDiff(diff) {
     ...BALANCE_LEVELS[diff],
     ...MATRIX_LEVELS[diff],
     ...ALGO_LEVELS[diff],
+    ...GEARS_LEVELS[diff],
     ...LAB_LEVELS[diff]
   ];
 }
@@ -322,6 +329,13 @@ const LAB_WORLD_ZONES = [
     desc: 'Programavimo blokeliai ir ciklai',
     icon: '🧑‍💻',
     accent: '#2dd4bf'
+  },
+  {
+    mode: 'gears',
+    title: '8. Krumpliaračių variklis',
+    desc: 'Kryptys, perdavimas ir diržai',
+    icon: '⚙️',
+    accent: '#fb923c'
   }
 ];
 
@@ -333,6 +347,7 @@ function getLevelsForMode(mode, diff = currentDifficulty) {
   if (mode === 'balance') return BALANCE_LEVELS[diff];
   if (mode === 'matrix') return MATRIX_LEVELS[diff];
   if (mode === 'algo') return ALGO_LEVELS[diff];
+  if (mode === 'gears') return GEARS_LEVELS[diff];
   return LAB_LEVELS[diff];
 }
 
@@ -539,6 +554,7 @@ export function showWorldMapView() {
   destroyBalanceEngine();
   destroyMemoryCtrl();
   destroyAlgoEngine();
+  destroyGearsEngine();
 
   worldMapPanel?.classList.remove('hidden');
   labPuzzleArea?.classList.add('hidden');
@@ -597,6 +613,7 @@ function showDifficultyScreen() {
   destroyBalanceEngine();
   destroyMemoryCtrl();
   destroyAlgoEngine();
+  destroyGearsEngine();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -614,6 +631,7 @@ function syncModeTabsUI() {
   document.getElementById('tab-mode-balance')?.classList.toggle('active', currentMode === 'balance');
   document.getElementById('tab-mode-matrix')?.classList.toggle('active', currentMode === 'matrix');
   document.getElementById('tab-mode-algo')?.classList.toggle('active', currentMode === 'algo');
+  document.getElementById('tab-mode-gears')?.classList.toggle('active', currentMode === 'gears');
   document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
 }
 
@@ -626,6 +644,7 @@ function switchLabMode(mode) {
     mode !== 'balance' &&
     mode !== 'matrix' &&
     mode !== 'algo' &&
+    mode !== 'gears' &&
     mode !== 'mini'
   ) {
     return;
@@ -671,7 +690,9 @@ function renderLevelsStrip() {
                     ? lvl.kind === 'memory' ? '🧠 Atmintis' : '🧩 Raštas'
                     : currentMode === 'algo'
                       ? '🧑‍💻 Kodas'
-                      : '🧩 Užduotis';
+                      : currentMode === 'gears'
+                        ? '⚙️ Variklis'
+                        : '🧩 Užduotis';
     btn.innerHTML = `
       <div class="level-tab-top">
         <span>${label}</span>
@@ -840,6 +861,13 @@ function destroyAlgoEngine() {
   }
 }
 
+function destroyGearsEngine() {
+  if (gearsEngine) {
+    gearsEngine.destroy();
+    gearsEngine = null;
+  }
+}
+
 // ==================== UŽUOMINOS LEMPUTĖ IR ĖJIMŲ SKAITIKLIS ====================
 function stopLevelTimer() {
   if (levelTimerId !== null) {
@@ -908,6 +936,7 @@ function clearAllHints() {
   circuitEngine?.setHintTile(null);
   balanceEngine?.setHintRemove(false);
   memoryCtrl?.setHintCell(null);
+  gearsEngine?.setHint(null);
 }
 
 function recordPlayerMove() {
@@ -937,6 +966,7 @@ function applyFirstHint() {
     circuitEngine,
     balanceEngine,
     memoryCtrl,
+    gearsEngine,
     mirrorStates,
     switchStates
   });
@@ -985,6 +1015,10 @@ function applyFirstHint() {
   } else if (hint.kind === 'algo-cmd') {
     const btn = document.querySelector(`.algo-cmd-btn[data-algo-cmd="${hint.cmd}"]`);
     btn?.classList.add('hint-btn-pulse');
+  } else if (hint.kind === 'gear-peg') {
+    gearsEngine?.setHint({ pegId: hint.pegId, sizeKey: hint.sizeKey });
+    const btn = document.querySelector(`.gear-pick-btn[data-gear-size="${hint.sizeKey}"]`);
+    btn?.classList.add('hint-btn-pulse');
   }
 
   hintUsedInLevel = true;
@@ -1013,6 +1047,7 @@ function loadActiveLevel() {
   destroyBalanceEngine();
   destroyMemoryCtrl();
   destroyAlgoEngine();
+  destroyGearsEngine();
   sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
@@ -1032,7 +1067,9 @@ function loadActiveLevel() {
                 ? `🧩 RAŠTAI IR ATMINTIS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
                 : currentMode === 'algo'
                   ? `🧑‍💻 ALGORITMŲ TRASA • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-                  : level.badge;
+                  : currentMode === 'gears'
+                    ? `⚙️ KRUMPLIARAČIŲ VARIKLIS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+                    : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -1048,6 +1085,7 @@ function loadActiveLevel() {
   document.getElementById('btn-balance-next')?.classList.add('hidden');
   document.getElementById('btn-matrix-next')?.classList.add('hidden');
   document.getElementById('btn-algo-next')?.classList.add('hidden');
+  document.getElementById('btn-gears-next')?.classList.add('hidden');
 
   if (currentMode === 'pinpull') {
     pinPullStage.classList.remove('hidden');
@@ -1057,6 +1095,7 @@ function loadActiveLevel() {
     balanceStage?.classList.add('hidden');
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startPinPullLevel(level, levels.length);
   } else if (currentMode === 'sokoban') {
@@ -1067,6 +1106,7 @@ function loadActiveLevel() {
     balanceStage?.classList.add('hidden');
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startSokobanLevel(level, levels.length);
   } else if (currentMode === 'laser') {
@@ -1077,6 +1117,7 @@ function loadActiveLevel() {
     balanceStage?.classList.add('hidden');
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startLaserLevel(level, levels.length);
   } else if (currentMode === 'circuit') {
@@ -1087,6 +1128,7 @@ function loadActiveLevel() {
     balanceStage?.classList.add('hidden');
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startCircuitLevel(level, levels.length);
   } else if (currentMode === 'balance') {
@@ -1097,6 +1139,7 @@ function loadActiveLevel() {
     balanceStage?.classList.remove('hidden');
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startBalanceLevel(level, levels.length);
   } else if (currentMode === 'matrix') {
@@ -1107,6 +1150,7 @@ function loadActiveLevel() {
     balanceStage?.classList.add('hidden');
     matrixStage?.classList.remove('hidden');
     algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startMatrixLevel(level, levels.length);
   } else if (currentMode === 'algo') {
@@ -1117,8 +1161,20 @@ function loadActiveLevel() {
     balanceStage?.classList.add('hidden');
     matrixStage?.classList.add('hidden');
     algoStage?.classList.remove('hidden');
+    gearsStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startAlgoLevel(level, levels.length);
+  } else if (currentMode === 'gears') {
+    pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.add('hidden');
+    laserStage?.classList.add('hidden');
+    circuitStage?.classList.add('hidden');
+    balanceStage?.classList.add('hidden');
+    matrixStage?.classList.add('hidden');
+    algoStage?.classList.add('hidden');
+    gearsStage?.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startGearsLevel(level, levels.length);
   } else {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.add('hidden');
@@ -1127,6 +1183,7 @@ function loadActiveLevel() {
     balanceStage?.classList.add('hidden');
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
 
@@ -1660,6 +1717,109 @@ function renderAlgoQueue() {
   }
 }
 
+// ==================== 8. KRUMPLIARAČIŲ VARIKLIS RENDERIS IR VALDYMAS ====================
+function startGearsLevel(level, totalInMode) {
+  const nextBtn = document.getElementById('btn-gears-next');
+
+  gearsEngine = new GearsEngine(gearsCanvas, level, {
+    onAction: () => {
+      playGearPlace();
+      recordPlayerMove();
+    },
+    onJam: () => {
+      playGearJam();
+    },
+    onError: (msg) => {
+      playWrongBuzz();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      feedbackEl.textContent = `⚠️ ${msg}`;
+      feedbackEl.className = 'puzzle-feedback error';
+      feedbackEl.classList.remove('hidden');
+    },
+    onStateChange: () => {
+      renderGearsPalette();
+    },
+    onWin: () => {
+      markLevelSolved(level);
+      if (nextBtn && activeLevelIndex < totalInMode - 1) {
+        nextBtn.classList.remove('hidden');
+      }
+    }
+  });
+
+  // Automatiškai parenkame pirmą dydį, kurio turime likučio
+  const firstAvail = ['M', 'L', 'S'].find((k) => (level.inventory[k] || 0) > 0) || 'M';
+  gearsEngine.setSelectedSize(firstAvail);
+  renderGearsPalette();
+}
+
+function renderGearsPalette() {
+  if (!gearsEngine) return;
+  const paletteEl = document.getElementById('gears-palette');
+  const counterEl = document.getElementById('gears-counter');
+  const bannerEl = document.getElementById('gears-status-banner');
+  if (!paletteEl) return;
+
+  const placedCount = Object.keys(gearsEngine.placed).length;
+  if (counterEl) {
+    counterEl.textContent = `⚙️ Uždėta: ${placedCount} kr.`;
+  }
+
+  if (bannerEl) {
+    const summary = gearsEngine.getStatusSummary();
+    bannerEl.textContent = summary.text;
+    bannerEl.className = `gears-status-banner ${summary.state}`;
+  }
+
+  paletteEl.innerHTML = '';
+  ['S', 'M', 'L'].forEach((sizeKey) => {
+    const spec = GEAR_SIZES[sizeKey];
+    const total = gearsEngine.level.inventory[sizeKey] || 0;
+    if (total <= 0) return;
+
+    const rem = gearsEngine.getRemainingCount(sizeKey);
+    const isActive = gearsEngine.selectedSize === sizeKey;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `gear-pick-btn${isActive ? ' active' : ''}`;
+    btn.dataset.gearSize = sizeKey;
+    btn.disabled = rem <= 0 || gearsEngine.won;
+    btn.draggable = rem > 0 && !gearsEngine.won;
+
+    const dotSize = sizeKey === 'S' ? 16 : sizeKey === 'M' ? 22 : 28;
+    btn.innerHTML = `
+      <span class="gear-icon-dot" style="width:${dotSize}px;height:${dotSize}px;background:${spec.color}"></span>
+      <span>${spec.label}</span>
+      <span class="gear-pick-count">×${rem}</span>
+    `;
+
+    btn.addEventListener('click', () => {
+      if (!gearsEngine || gearsEngine.won) return;
+      playTrackClick();
+      gearsEngine.setSelectedSize(sizeKey);
+    });
+
+    btn.addEventListener('dragstart', (e) => {
+      if (e.dataTransfer) {
+        e.dataTransfer.setData('text/plain', sizeKey);
+        e.dataTransfer.effectAllowed = 'copy';
+      }
+      gearsEngine?.setSelectedSize(sizeKey);
+    });
+
+    paletteEl.appendChild(btn);
+  });
+}
+
+function getGearsCanvasCoords(e) {
+  const rect = gearsCanvas.getBoundingClientRect();
+  return {
+    mx: (e.clientX - rect.left) * (GEARS_CANVAS_W / rect.width),
+    my: (e.clientY - rect.top) * (GEARS_CANVAS_H / rect.height)
+  };
+}
+
 // ==================== ROBO-STUMDUKAS RENDERIS IR VALDYMAS ====================
 const GATE_ICON = {
   '>': '➡️',
@@ -1949,6 +2109,7 @@ document.getElementById('tab-mode-circuit')?.addEventListener('click', () => swi
 document.getElementById('tab-mode-balance')?.addEventListener('click', () => switchLabMode('balance'));
 document.getElementById('tab-mode-matrix')?.addEventListener('click', () => switchLabMode('matrix'));
 document.getElementById('tab-mode-algo')?.addEventListener('click', () => switchLabMode('algo'));
+document.getElementById('tab-mode-gears')?.addEventListener('click', () => switchLabMode('gears'));
 document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
 
 document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
@@ -2334,12 +2495,58 @@ document.getElementById('btn-algo-next')?.addEventListener('click', () => {
   }
 });
 
+// 8. Krumpliaračių variklio įvykiai
+document.getElementById('btn-gears-reset')?.addEventListener('click', () => {
+  if (!gearsEngine) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-gears-next')?.classList.add('hidden');
+  gearsEngine.reset();
+  resetAttemptState();
+});
+
+document.getElementById('btn-gears-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
+
+if (gearsCanvas) {
+  gearsCanvas.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!gearsEngine) return;
+      e.preventDefault();
+      const { mx, my } = getGearsCanvasCoords(e);
+      gearsEngine.handlePointerDown(mx, my);
+    },
+    { passive: false }
+  );
+
+  gearsCanvas.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+  });
+
+  gearsCanvas.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (!gearsEngine) return;
+    const sizeKey = e.dataTransfer?.getData('text/plain') || gearsEngine.selectedSize;
+    const { mx, my } = getGearsCanvasCoords(e);
+    gearsEngine.handleDropFromPalette(sizeKey, mx, my);
+  });
+}
+
 btnSoundToggle?.addEventListener('click', () => {
   toggleSound();
   syncSoundToggleUI();
 });
 
-const MODE_SEQUENCE = ['pinpull', 'sokoban', 'laser', 'circuit', 'balance', 'matrix', 'algo', 'mini'];
+const MODE_SEQUENCE = ['pinpull', 'sokoban', 'laser', 'circuit', 'balance', 'matrix', 'algo', 'gears', 'mini'];
 
 document.getElementById('btn-victory-next')?.addEventListener('click', () => {
   hideVictoryOverlay();

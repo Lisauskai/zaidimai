@@ -50,7 +50,14 @@ export const OPTIMAL_PAR_MOVES = {
   alg_g3_4: 13,
   alg_g3_5: 14,
 
-  // 8. Mini eksperimentai
+  // 8. Krumpliaračių variklis
+  gea_g3_1: 4,
+  gea_g3_2: 4,
+  gea_g3_3: 4,
+  gea_g3_4: 5,
+  gea_g3_5: 5,
+
+  // 9. Mini eksperimentai
   g3_laser_1: 4,
   g3_switches_1: 4,
   g3_sequence_1: 1
@@ -516,6 +523,35 @@ export function computeFirstHint(mode, level, context = {}) {
       cmd: firstCmd,
       message: desc
     };
+  }
+
+  if (mode === 'gears') {
+    const GEAR_SOLUTIONS = {
+      gea_g1_1: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'M' }],
+      gea_g1_2: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'S' }],
+      gea_g1_3: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'M' }],
+      gea_g1_4: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'L' }, { pegId: 'p3', sizeKey: 'S' }, { pegId: 'p4', sizeKey: 'M' }],
+      gea_g1_5: [{ pegId: 'p1', sizeKey: 'S' }, { pegId: 'p2', sizeKey: 'L' }, { pegId: 'p3', sizeKey: 'M' }, { pegId: 'p4', sizeKey: 'M' }],
+      gea_g3_1: [{ pegId: 'u1', sizeKey: 'L' }, { pegId: 'u2', sizeKey: 'L' }, { pegId: 'u3', sizeKey: 'L' }],
+      gea_g3_2: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'M' }, { pegId: 'p3', sizeKey: 'L' }],
+      gea_g3_3: [{ pegId: 'b1', sizeKey: 'L' }, { pegId: 'b2', sizeKey: 'L' }, { pegId: 'b3', sizeKey: 'L' }],
+      gea_g3_4: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'L' }, { pegId: 'p3', sizeKey: 'M' }, { pegId: 'p4', sizeKey: 'L' }],
+      gea_g3_5: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'M' }, { pegId: 'p4', sizeKey: 'L' }]
+    };
+    const sizeLabels = { S: 'Mažą (S)', M: 'Vidutinį (M)', L: 'Didelį (L)' };
+    const eng = context.gearsEngine;
+    const placed = eng?.placed || {};
+    const chain = GEAR_SOLUTIONS[level.id] || [];
+    const target = chain.find((step) => placed[step.pegId] !== step.sizeKey) || chain[0];
+    if (target) {
+      return {
+        mode,
+        kind: 'gear-peg',
+        pegId: target.pegId,
+        sizeKey: target.sizeKey,
+        message: `💡 Pirmas žingsnis: uždėk ${sizeLabels[target.sizeKey]} krumpliaratį ant pažymėto geltono kaiščio!`
+      };
+    }
   }
 
   if (mode === 'mini') {
