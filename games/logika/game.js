@@ -1,6 +1,7 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
 import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -148,11 +149,14 @@ export const LAB_LEVELS = {
 // ==================== BŪSENA ====================
 let progress = loadLabProgress();
 let currentDifficulty = null;
-let currentMode = 'pinpull'; // 'pinpull' | 'mini'
+let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'mini'
 let activeLevelIndex = 0;
 let mirrorStates = [];
 let switchStates = [];
 let pinEngine = null;
+let sokobanGame = null;
+let currentSokobanDef = null;
+let currentSokobanTotal = 0;
 
 // ==================== DOM NUORODOS ====================
 const startScreen = document.getElementById('start-screen');
@@ -162,6 +166,7 @@ const uiActiveRank = document.getElementById('ui-active-rank');
 const uiTotalCrystals = document.getElementById('ui-total-crystals');
 const pinCanvas = document.getElementById('pinpull-canvas');
 const pinPullStage = document.getElementById('pinpull-stage');
+const sokobanStage = document.getElementById('sokoban-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
@@ -171,11 +176,13 @@ function getDifficultyLabel(diff) {
 }
 
 function getAllLevelsForDiff(diff) {
-  return [...PINPULL_LEVELS[diff], ...LAB_LEVELS[diff]];
+  return [...PINPULL_LEVELS[diff], ...SOKOBAN_LEVELS[diff], ...LAB_LEVELS[diff]];
 }
 
 function getCurrentModeLevels(diff = currentDifficulty) {
-  return currentMode === 'pinpull' ? PINPULL_LEVELS[diff] : LAB_LEVELS[diff];
+  if (currentMode === 'pinpull') return PINPULL_LEVELS[diff];
+  if (currentMode === 'sokoban') return SOKOBAN_LEVELS[diff];
+  return LAB_LEVELS[diff];
 }
 
 function updateSummaryUI() {
@@ -240,11 +247,12 @@ function showDifficultyScreen() {
 
 function syncModeTabsUI() {
   document.getElementById('tab-mode-pinpull')?.classList.toggle('active', currentMode === 'pinpull');
+  document.getElementById('tab-mode-sokoban')?.classList.toggle('active', currentMode === 'sokoban');
   document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
 }
 
 function switchLabMode(mode) {
-  if (mode !== 'pinpull' && mode !== 'mini') return;
+  if (mode !== 'pinpull' && mode !== 'sokoban' && mode !== 'mini') return;
   currentMode = mode;
   activeLevelIndex = 0;
   syncModeTabsUI();
@@ -265,7 +273,7 @@ function renderLevelsStrip() {
     btn.className = `level-tab-btn${idx === activeLevelIndex ? ' active' : ''}${isSolved ? ' solved' : ''}`;
     btn.innerHTML = `
       <div class="level-tab-top">
-        <span>${isSolved ? '✅ Atlikta' : currentMode === 'pinpull' ? '🔩 Kaiščiai' : '🧩 Užduotis'}</span>
+        <span>${isSolved ? '✅ Atlikta' : currentMode === 'pinpull' ? '🔩 Kaiščiai' : currentMode === 'sokoban' ? '🤖 Robotas' : '🧩 Užduotis'}</span>
         <span>+${lvl.reward} 💎</span>
       </div>
       <div class="level-tab-name">${lvl.title}</div>
@@ -308,13 +316,16 @@ function destroyPinEngine() {
 
 function loadActiveLevel() {
   destroyPinEngine();
+  sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
 
   document.getElementById('puzzle-type-badge').textContent =
     currentMode === 'pinpull'
       ? `🔩 IŠTRAUK KAIŠTĮ • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-      : level.badge;
+      : currentMode === 'sokoban'
+        ? `🤖 ROBO-STUMDUKAS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+        : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -323,15 +334,22 @@ function loadActiveLevel() {
   feedbackEl.className = 'puzzle-feedback hidden';
   feedbackEl.textContent = '';
 
-  const nextBtn = document.getElementById('btn-pin-next');
-  if (nextBtn) nextBtn.classList.add('hidden');
+  document.getElementById('btn-pin-next')?.classList.add('hidden');
+  document.getElementById('btn-sok-next')?.classList.add('hidden');
 
   if (currentMode === 'pinpull') {
     pinPullStage.classList.remove('hidden');
+    sokobanStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startPinPullLevel(level, levels.length);
+  } else if (currentMode === 'sokoban') {
+    pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startSokobanLevel(level, levels.length);
   } else {
     pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
 
@@ -383,6 +401,105 @@ function getCanvasCoords(evt) {
     mx: ((evt.clientX - rect.left) / rect.width) * CANVAS_W,
     my: ((evt.clientY - rect.top) / rect.height) * CANVAS_H
   };
+}
+
+// ==================== ROBO-STUMDUKAS RENDERIS IR VALDYMAS ====================
+const GATE_ICON = {
+  '>': '➡️',
+  '<': '⬅️',
+  '^': '⬆️',
+  'v': '⬇️'
+};
+
+function startSokobanLevel(level, totalInMode) {
+  currentSokobanDef = level;
+  currentSokobanTotal = totalInMode;
+  sokobanGame = new SokobanGame(level);
+  renderSokobanBoard();
+}
+
+function handleSokobanMove(dr, dc) {
+  if (!sokobanGame || sokobanGame.won) return;
+  const moved = sokobanGame.move(dr, dc);
+  if (!moved) return;
+
+  renderSokobanBoard();
+
+  if (sokobanGame.won) {
+    markLevelSolved(currentSokobanDef);
+    const nextBtn = document.getElementById('btn-sok-next');
+    if (nextBtn && activeLevelIndex < currentSokobanTotal - 1) {
+      nextBtn.classList.remove('hidden');
+    }
+  }
+}
+
+function renderSokobanBoard() {
+  if (!sokobanGame) return;
+  const gridEl = document.getElementById('sokoban-grid');
+  const counterEl = document.getElementById('sokoban-counter');
+  const undoBtn = document.getElementById('btn-sok-undo');
+
+  const covered = sokobanGame.getCoveredCount();
+  const totalTargets = sokobanGame.targets.length;
+  const gateOpen = sokobanGame.areAllTargetsCovered();
+
+  if (counterEl) {
+    counterEl.textContent = `⚡ Ant mygtukų: ${covered} / ${totalTargets} • ${gateOpen ? '🔓 Vartai ATIDARYTI!' : '🔒 Vartai uždaryti'} • Ėjimai: ${sokobanGame.moves}`;
+  }
+  if (undoBtn) {
+    undoBtn.disabled = sokobanGame.history.length === 0;
+  }
+
+  gridEl.style.gridTemplateColumns = `repeat(${sokobanGame.cols}, auto)`;
+  gridEl.innerHTML = '';
+
+  for (let r = 0; r < sokobanGame.rows; r++) {
+    for (let c = 0; c < sokobanGame.cols; c++) {
+      const tile = sokobanGame.grid[r][c];
+      const hasCube = sokobanGame.cubeIndexAt(r, c) >= 0;
+      const isRobot = sokobanGame.robot.r === r && sokobanGame.robot.c === c;
+      const isTarget = tile === 'T';
+      const isExit = tile === 'E';
+
+      const cell = document.createElement('div');
+      cell.className = 'sok-cell';
+
+      if (tile === '#') {
+        cell.classList.add('wall');
+        cell.textContent = '🧱';
+      } else {
+        if (tile === 'I') cell.classList.add('ice');
+        if (GATE_ICON[tile]) cell.classList.add('gate');
+        if (isTarget) cell.classList.add('target');
+        if (isExit) cell.classList.add(gateOpen ? 'exit-open' : 'exit-locked');
+
+        if (isRobot) {
+          cell.textContent = '🤖';
+        } else if (hasCube) {
+          if (isTarget) cell.classList.add('cube-on-target');
+          cell.textContent = '⚡';
+        } else if (isExit) {
+          cell.textContent = gateOpen ? '🚪' : '🔒';
+        } else if (isTarget) {
+          cell.textContent = '🔘';
+        } else if (GATE_ICON[tile]) {
+          cell.textContent = GATE_ICON[tile];
+        } else if (tile === 'I') {
+          cell.textContent = '❄️';
+        }
+
+        const dr = r - sokobanGame.robot.r;
+        const dc = c - sokobanGame.robot.c;
+        if (Math.abs(dr) + Math.abs(dc) === 1 && !sokobanGame.won) {
+          cell.classList.add('adjacent-step');
+          cell.addEventListener('click', () => handleSokobanMove(dr, dc));
+        }
+      }
+
+      gridEl.appendChild(cell);
+    }
+  }
 }
 
 // ==================== MINI EKSPERIMENTŲ RENDERIS ====================
@@ -542,7 +659,63 @@ document.getElementById('btn-select-grade3')?.addEventListener('click', () => se
 document.getElementById('btn-back-difficulty')?.addEventListener('click', showDifficultyScreen);
 
 document.getElementById('tab-mode-pinpull')?.addEventListener('click', () => switchLabMode('pinpull'));
+document.getElementById('tab-mode-sokoban')?.addEventListener('click', () => switchLabMode('sokoban'));
 document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
+
+document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
+  if (!sokobanGame) return;
+  if (sokobanGame.undo()) {
+    const feedbackEl = document.getElementById('puzzle-feedback');
+    feedbackEl.className = 'puzzle-feedback hidden';
+    feedbackEl.textContent = '';
+    document.getElementById('btn-sok-next')?.classList.add('hidden');
+    renderSokobanBoard();
+  }
+});
+
+document.getElementById('btn-sok-reset')?.addEventListener('click', () => {
+  if (!sokobanGame) return;
+  sokobanGame.reset();
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-sok-next')?.classList.add('hidden');
+  renderSokobanBoard();
+});
+
+document.getElementById('btn-sok-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
+
+document.querySelectorAll('.dpad-btn[data-dir]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const [dr, dc] = btn.dataset.dir.split(',').map(Number);
+    handleSokobanMove(dr, dc);
+  });
+});
+
+window.addEventListener('keydown', (e) => {
+  if (!currentDifficulty || currentMode !== 'sokoban' || !sokobanGame) return;
+  const k = e.key.toLowerCase();
+  if (k === 'arrowup' || k === 'w') {
+    e.preventDefault();
+    handleSokobanMove(-1, 0);
+  } else if (k === 'arrowdown' || k === 's') {
+    e.preventDefault();
+    handleSokobanMove(1, 0);
+  } else if (k === 'arrowleft' || k === 'a') {
+    e.preventDefault();
+    handleSokobanMove(0, -1);
+  } else if (k === 'arrowright' || k === 'd') {
+    e.preventDefault();
+    handleSokobanMove(0, 1);
+  }
+});
 
 document.getElementById('btn-pin-reset')?.addEventListener('click', () => {
   if (!pinEngine) return;

@@ -61,13 +61,13 @@
           </div>
           <h3>1 klasė (Jaunasis išradėjas)</h3>
           <p class="diff-desc">
-            5 „Ištrauk kaištį“ fizikos lygiai (2–3 kaiščiai, spalvoti rutuliukai, tiltai) ir 3 mini eksperimentai.
+            5 „Ištrauk kaištį“ fizikos lygiai, 5 „Robo-Stumduko“ lygiai (5×5 / 6×6) ir 3 mini eksperimentai.
           </p>
 
           <div class="diff-progress-box">
             <div class="progress-stat">
               <span>✅ Išspręsti lygiai:</span>
-              <strong id="g1-solved-text">0 / 8</strong>
+              <strong id="g1-solved-text">0 / 13</strong>
             </div>
             <div class="progress-stat">
               <span>💎 Proto kristalai:</span>
@@ -88,13 +88,13 @@
           </div>
           <h3>3 klasė (Vyriausiasis inžinierius)</h3>
           <p class="diff-desc">
-            5 sudėtingi „Ištrauk kaištį“ lygiai (4–6 kaiščiai, pilki užteršti rutuliukai, spąstų duobės ir maišymas) + 3 mini eksperimentai.
+            5 „Ištrauk kaištį“ lygiai, 5 „Robo-Stumduko“ lygiai (7×7 / 8×8, ledas ir vartai) + 3 mini eksperimentai.
           </p>
 
           <div class="diff-progress-box">
             <div class="progress-stat">
               <span>✅ Išspręsti lygiai:</span>
-              <strong id="g3-solved-text">0 / 8</strong>
+              <strong id="g3-solved-text">0 / 13</strong>
             </div>
             <div class="progress-stat">
               <span>💎 Proto kristalai:</span>
@@ -125,6 +125,9 @@
         <div class="lab-mode-tabs">
           <button id="tab-mode-pinpull" class="mode-tab-btn active" type="button">
             🔩 Ištrauk kaištį (5)
+          </button>
+          <button id="tab-mode-sokoban" class="mode-tab-btn" type="button">
+            🤖 Robo-Stumdukas (5)
           </button>
           <button id="tab-mode-mini" class="mode-tab-btn" type="button">
             🔦 Mini Eksperimentai (3)
@@ -162,6 +165,43 @@
 
           <div class="pinpull-canvas-wrap">
             <canvas id="pinpull-canvas" width="640" height="460"></canvas>
+          </div>
+        </div>
+
+        <!-- ROBO-STUMDUKAS (GRID SOKOBAN) ZONA -->
+        <div id="sokoban-stage" class="sokoban-stage hidden">
+          <div class="pinpull-controls-bar">
+            <span id="sokoban-counter" class="pinpull-counter">⚡ Ant mygtukų: 0 / 1 • 🚪 Uždaryti</span>
+            <div class="pinpull-btn-group">
+              <button id="btn-sok-undo" class="sok-undo-btn" type="button">
+                ↩️ Atšaukti ėjimą (Undo)
+              </button>
+              <button id="btn-sok-reset" class="pin-reset-btn" type="button">
+                🔄 Iš naujo (Reset)
+              </button>
+              <button id="btn-sok-next" class="pin-next-btn hidden" type="button">
+                Kitas lygis ▶
+              </button>
+            </div>
+          </div>
+
+          <div id="sokoban-grid" class="sokoban-grid" aria-label="Robo-Stumduko tinklelis"></div>
+
+          <div class="sok-controls-footer">
+            <div class="sok-dpad" aria-label="Valdymo rodyklės">
+              <button class="dpad-btn dpad-up" data-dir="-1,0" type="button">⬆️</button>
+              <div class="dpad-mid">
+                <button class="dpad-btn" data-dir="0,-1" type="button">⬅️</button>
+                <button class="dpad-btn" data-dir="1,0" type="button">⬇️</button>
+                <button class="dpad-btn" data-dir="0,1" type="button">➡️</button>
+              </div>
+            </div>
+            <div class="sok-legend">
+              <span>🤖 Robotas (WASD / Rodyklės / paspaudimas)</span>
+              <span>⚡ Kubas (stumk ant 🔘)</span>
+              <span>❄️ Ledas (kubas slysta)</span>
+              <span>➡️ Vienkrypčiai vartai</span>
+            </div>
           </div>
         </div>
 
