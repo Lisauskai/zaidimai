@@ -3,6 +3,7 @@
 import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js';
 import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js';
 import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -150,13 +151,14 @@ export const LAB_LEVELS = {
 // ==================== BŪSENA ====================
 let progress = loadLabProgress();
 let currentDifficulty = null;
-let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'mini'
+let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'circuit' | 'mini'
 let activeLevelIndex = 0;
 let mirrorStates = [];
 let switchStates = [];
 let pinEngine = null;
 let sokobanGame = null;
 let laserEngine = null;
+let circuitEngine = null;
 let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
@@ -172,6 +174,8 @@ const pinPullStage = document.getElementById('pinpull-stage');
 const sokobanStage = document.getElementById('sokoban-stage');
 const laserCanvas = document.getElementById('laser-canvas');
 const laserStage = document.getElementById('laser-stage');
+const circuitCanvas = document.getElementById('circuit-canvas');
+const circuitStage = document.getElementById('circuit-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
@@ -181,13 +185,20 @@ function getDifficultyLabel(diff) {
 }
 
 function getAllLevelsForDiff(diff) {
-  return [...PINPULL_LEVELS[diff], ...SOKOBAN_LEVELS[diff], ...LASER_LEVELS[diff], ...LAB_LEVELS[diff]];
+  return [
+    ...PINPULL_LEVELS[diff],
+    ...SOKOBAN_LEVELS[diff],
+    ...LASER_LEVELS[diff],
+    ...CIRCUIT_LEVELS[diff],
+    ...LAB_LEVELS[diff]
+  ];
 }
 
 function getCurrentModeLevels(diff = currentDifficulty) {
   if (currentMode === 'pinpull') return PINPULL_LEVELS[diff];
   if (currentMode === 'sokoban') return SOKOBAN_LEVELS[diff];
   if (currentMode === 'laser') return LASER_LEVELS[diff];
+  if (currentMode === 'circuit') return CIRCUIT_LEVELS[diff];
   return LAB_LEVELS[diff];
 }
 
@@ -245,6 +256,7 @@ export function selectDifficulty(difficulty) {
 function showDifficultyScreen() {
   destroyPinEngine();
   destroyLaserEngine();
+  destroyCircuitEngine();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -256,11 +268,12 @@ function syncModeTabsUI() {
   document.getElementById('tab-mode-pinpull')?.classList.toggle('active', currentMode === 'pinpull');
   document.getElementById('tab-mode-sokoban')?.classList.toggle('active', currentMode === 'sokoban');
   document.getElementById('tab-mode-laser')?.classList.toggle('active', currentMode === 'laser');
+  document.getElementById('tab-mode-circuit')?.classList.toggle('active', currentMode === 'circuit');
   document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
 }
 
 function switchLabMode(mode) {
-  if (mode !== 'pinpull' && mode !== 'sokoban' && mode !== 'laser' && mode !== 'mini') return;
+  if (mode !== 'pinpull' && mode !== 'sokoban' && mode !== 'laser' && mode !== 'circuit' && mode !== 'mini') return;
   currentMode = mode;
   activeLevelIndex = 0;
   syncModeTabsUI();
@@ -287,7 +300,9 @@ function renderLevelsStrip() {
           ? '🤖 Robotas'
           : currentMode === 'laser'
             ? '🔦 Optika'
-            : '🧩 Užduotis';
+            : currentMode === 'circuit'
+              ? '🚂 Grandinė'
+              : '🧩 Užduotis';
     btn.innerHTML = `
       <div class="level-tab-top">
         <span>${label}</span>
@@ -338,9 +353,17 @@ function destroyLaserEngine() {
   }
 }
 
+function destroyCircuitEngine() {
+  if (circuitEngine) {
+    circuitEngine.destroy();
+    circuitEngine = null;
+  }
+}
+
 function loadActiveLevel() {
   destroyPinEngine();
   destroyLaserEngine();
+  destroyCircuitEngine();
   sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
@@ -352,7 +375,9 @@ function loadActiveLevel() {
         ? `🤖 ROBO-STUMDUKAS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
         : currentMode === 'laser'
           ? `🔦 LAZERIŲ VEIDRODŽIAI • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-          : level.badge;
+          : currentMode === 'circuit'
+            ? `🚂 SUJUNK GRANDINĘ • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+            : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -364,29 +389,41 @@ function loadActiveLevel() {
   document.getElementById('btn-pin-next')?.classList.add('hidden');
   document.getElementById('btn-sok-next')?.classList.add('hidden');
   document.getElementById('btn-laser-next')?.classList.add('hidden');
+  document.getElementById('btn-circuit-next')?.classList.add('hidden');
 
   if (currentMode === 'pinpull') {
     pinPullStage.classList.remove('hidden');
     sokobanStage?.classList.add('hidden');
     laserStage?.classList.add('hidden');
+    circuitStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startPinPullLevel(level, levels.length);
   } else if (currentMode === 'sokoban') {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.remove('hidden');
     laserStage?.classList.add('hidden');
+    circuitStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startSokobanLevel(level, levels.length);
   } else if (currentMode === 'laser') {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.add('hidden');
     laserStage?.classList.remove('hidden');
+    circuitStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startLaserLevel(level, levels.length);
+  } else if (currentMode === 'circuit') {
+    pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.add('hidden');
+    laserStage?.classList.add('hidden');
+    circuitStage?.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startCircuitLevel(level, levels.length);
   } else {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.add('hidden');
     laserStage?.classList.add('hidden');
+    circuitStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
 
@@ -486,6 +523,61 @@ function startLaserLevel(level, totalInMode) {
     }
   });
   laserEngine.startLoop();
+}
+
+function getCircuitCanvasCoords(evt) {
+  const rect = circuitCanvas.getBoundingClientRect();
+  return {
+    mx: ((evt.clientX - rect.left) / rect.width) * CIRCUIT_CANVAS_W,
+    my: ((evt.clientY - rect.top) / rect.height) * CIRCUIT_CANVAS_H
+  };
+}
+
+function startCircuitLevel(level, totalInMode) {
+  const counterEl = document.getElementById('circuit-counter');
+  const launchBtn = document.getElementById('btn-circuit-launch');
+  const nextBtn = document.getElementById('btn-circuit-next');
+  const g3Legend = document.getElementById('circuit-legend-g3');
+
+  if (g3Legend) {
+    g3Legend.classList.toggle('hidden', currentDifficulty !== 'grade3');
+  }
+  if (launchBtn) {
+    launchBtn.disabled = false;
+  }
+
+  circuitEngine = new CircuitEngine(circuitCanvas, level, {
+    onStatusChange: ({ readyToWin, totalStars, collectedStars, running }) => {
+      if (counterEl) {
+        counterEl.textContent = running
+          ? `🚂 Važiuoja... ⭐ ${collectedStars} / ${totalStars}`
+          : `⭐ Žvaigždutės: ${collectedStars} / ${totalStars}${readyToWin ? ' • ✅ Kelias sujungtas!' : ''}`;
+      }
+      if (launchBtn) {
+        launchBtn.disabled = !!running;
+      }
+    },
+    onRunResult: ({ won, reason, starsCollected, totalStars }) => {
+      if (launchBtn) {
+        launchBtn.disabled = false;
+      }
+      if (won) {
+        if (counterEl) {
+          counterEl.textContent = `⭐ Žvaigždutės: ${starsCollected} / ${totalStars} • 🎉 Pasiekta 🏁!`;
+        }
+        markLevelSolved(level);
+        if (nextBtn && activeLevelIndex < totalInMode - 1) {
+          nextBtn.classList.remove('hidden');
+        }
+      } else {
+        const feedbackEl = document.getElementById('puzzle-feedback');
+        feedbackEl.textContent = reason || '⚠️ Kelias nesujungtas! Pakoreguok bėgius ir bandyk dar kartą.';
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
+    }
+  });
+  circuitEngine.startLoop();
 }
 
 // ==================== ROBO-STUMDUKAS RENDERIS IR VALDYMAS ====================
@@ -746,6 +838,7 @@ document.getElementById('btn-back-difficulty')?.addEventListener('click', showDi
 document.getElementById('tab-mode-pinpull')?.addEventListener('click', () => switchLabMode('pinpull'));
 document.getElementById('tab-mode-sokoban')?.addEventListener('click', () => switchLabMode('sokoban'));
 document.getElementById('tab-mode-laser')?.addEventListener('click', () => switchLabMode('laser'));
+document.getElementById('tab-mode-circuit')?.addEventListener('click', () => switchLabMode('circuit'));
 document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
 
 document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
@@ -883,6 +976,42 @@ if (laserCanvas) {
     if (!laserEngine) return;
     const { mx, my } = getLaserCanvasCoords(e);
     laserEngine.handlePointerUp(mx, my);
+  });
+}
+
+document.getElementById('btn-circuit-launch')?.addEventListener('click', () => {
+  if (!circuitEngine) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  circuitEngine.launchTrain();
+});
+
+document.getElementById('btn-circuit-reset')?.addEventListener('click', () => {
+  if (!circuitEngine) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-circuit-next')?.classList.add('hidden');
+  const launchBtn = document.getElementById('btn-circuit-launch');
+  if (launchBtn) launchBtn.disabled = false;
+  circuitEngine.reset();
+});
+
+document.getElementById('btn-circuit-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
+
+if (circuitCanvas) {
+  circuitCanvas.addEventListener('pointerdown', (e) => {
+    if (!circuitEngine) return;
+    const { mx, my } = getCircuitCanvasCoords(e);
+    circuitEngine.handlePointerDown(mx, my);
   });
 }
 
