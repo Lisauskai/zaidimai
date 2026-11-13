@@ -1208,6 +1208,12 @@ body {
   border-color: #ef4444;
 }
 
+.puzzle-feedback.hint-info {
+  background: #1e293b;
+  color: #fde047;
+  border-color: #facc15;
+}
+
 /* ==================== MANO ROBOTO DIRBTUVĖS (START SCREEN) ==================== */
 .start-workshop-layout {
   display: grid;
@@ -1358,4 +1364,107 @@ body {
     height: 40px;
     font-size: 1.2rem;
   }
+}
+
+/* ==================== UŽUOMINOS LEMPUTĖ IR 3 KL. ĖJIMŲ ŽVAIGŽDUTĖS ==================== */
+.hint-lamp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  border: 3px solid #facc15;
+  background: linear-gradient(180deg, #fef08a 0%, #f59e0b 100%);
+  color: #0f172a;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.94rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #78350f;
+  transition: transform 0.14s ease, filter 0.14s ease, box-shadow 0.14s ease;
+}
+
+.hint-lamp-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+.hint-lamp-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #78350f;
+}
+
+.hint-lamp-btn.hint-ready-pulse {
+  animation: hintLampPulse 1.35s ease-in-out infinite;
+}
+
+.hint-lamp-btn.hint-used {
+  background: #334155;
+  border-color: #64748b;
+  color: #cbd5e1;
+  box-shadow: 0 3px 0 #020617;
+}
+
+@keyframes hintLampPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 0 #78350f, 0 0 0 0 rgba(250, 204, 21, 0.7);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 4px 0 #78350f, 0 0 20px 6px rgba(250, 204, 21, 0.75);
+  }
+}
+
+.puzzle-header-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.puzzle-moves-pill {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 3px solid var(--outline);
+  background: #0f172a;
+  color: #38bdf8;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.92rem;
+  box-shadow: 0 4px 0 var(--outline);
+  white-space: nowrap;
+}
+
+.puzzle-moves-pill.over-par {
+  color: #fbbf24;
+  border-color: #f59e0b;
+}
+
+.level-tab-stars {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.hint-highlight {
+  outline: 4px solid #fde047 !important;
+  outline-offset: 2px;
+  box-shadow: 0 0 22px rgba(250, 204, 21, 0.85) !important;
+  animation: hintElementPulse 1s ease-in-out infinite !important;
+}
+
+@keyframes hintElementPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 14px rgba(250, 204, 21, 0.75);
+  }
+  50% {
+    transform: scale(1.07);
+    box-shadow: 0 0 26px rgba(250, 204, 21, 1);
+  }
+}
+
+.matrix-choice-btn.hint-dimmed,
+.lab-choice-btn.hint-dimmed {
+  opacity: 0.25;
+  filter: grayscale(0.85);
 }

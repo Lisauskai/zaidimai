@@ -12,6 +12,7 @@ import {
   BALANCE_CANVAS_H
 } from './balance.js';
 import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js';
+import { getParMoves, computeFirstHint } from './hints.js';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -30,11 +31,13 @@ export function createDefaultProgress() {
     robotColors: createDefaultRobotColors(),
     grade1: {
       solvedLevels: [],
-      crystals: 0
+      crystals: 0,
+      levelStars: {}
     },
     grade3: {
       solvedLevels: [],
-      crystals: 0
+      crystals: 0,
+      levelStars: {}
     }
   };
 }
@@ -47,9 +50,21 @@ export function loadLabProgress() {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return def;
 
+    const normalizeStars = (rawStars) => {
+      const clean = {};
+      if (rawStars && typeof rawStars === 'object') {
+        Object.entries(rawStars).forEach(([k, v]) => {
+          const n = Number(v);
+          if (n >= 1 && n <= 3) clean[k] = n;
+        });
+      }
+      return clean;
+    };
+
     const normalizeGrade = (g) => ({
       solvedLevels: Array.isArray(g?.solvedLevels) ? Array.from(new Set(g.solvedLevels)) : [],
-      crystals: Math.max(0, Number(g?.crystals) || 0)
+      crystals: Math.max(0, Number(g?.crystals) || 0),
+      levelStars: normalizeStars(g?.levelStars)
     });
 
     const activeDifficulty =
@@ -183,11 +198,18 @@ let memoryCtrl = null;
 let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
+let currentMoves = 0;
+let levelElapsedSec = 0;
+let levelTimerId = null;
+let hintUsedInLevel = false;
+let currentLevelSolvedNow = false;
 
 // ==================== DOM NUORODOS ====================
 const startScreen = document.getElementById('start-screen');
 const labScreen = document.getElementById('lab-screen');
 const topDiffPill = document.getElementById('top-difficulty-pill');
+const btnLabHint = document.getElementById('btn-lab-hint');
+const puzzleMovesPill = document.getElementById('puzzle-moves-pill');
 const uiActiveRank = document.getElementById('ui-active-rank');
 const uiTotalCrystals = document.getElementById('ui-total-crystals');
 const pinCanvas = document.getElementById('pinpull-canvas');
@@ -334,6 +356,7 @@ export function selectDifficulty(difficulty) {
   startScreen.classList.add('hidden');
   labScreen.classList.remove('hidden');
   topDiffPill.classList.remove('hidden');
+  btnLabHint?.classList.remove('hidden');
 
   currentMode = 'pinpull';
   activeLevelIndex = 0;
@@ -344,6 +367,8 @@ export function selectDifficulty(difficulty) {
 }
 
 function showDifficultyScreen() {
+  stopLevelTimer();
+  clearAllHints();
   destroyPinEngine();
   destroyLaserEngine();
   destroyCircuitEngine();
@@ -353,6 +378,8 @@ function showDifficultyScreen() {
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
   topDiffPill.classList.add('hidden');
+  btnLabHint?.classList.add('hidden');
+  puzzleMovesPill?.classList.add('hidden');
   updateSummaryUI();
 }
 
@@ -388,11 +415,18 @@ function switchLabMode(mode) {
 function renderLevelsStrip() {
   const strip = document.getElementById('levels-strip');
   const levels = getCurrentModeLevels();
-  const solvedSet = new Set(progress[currentDifficulty].solvedLevels);
+  const bucket = progress[currentDifficulty];
+  const solvedSet = new Set(bucket.solvedLevels);
 
   strip.innerHTML = '';
   levels.forEach((lvl, idx) => {
     const isSolved = solvedSet.has(lvl.id);
+    const savedStars = isSolved
+      ? currentDifficulty === 'grade1'
+        ? 3
+        : bucket.levelStars?.[lvl.id] || 3
+      : 0;
+    const starsHtml = isSolved ? `<div class="level-tab-stars">${'⭐'.repeat(savedStars)}</div>` : '';
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = `level-tab-btn${idx === activeLevelIndex ? ' active' : ''}${isSolved ? ' solved' : ''}`;
@@ -417,6 +451,7 @@ function renderLevelsStrip() {
         <span>+${lvl.reward} 💎</span>
       </div>
       <div class="level-tab-name">${lvl.title}</div>
+      ${starsHtml}
     `;
     btn.addEventListener('click', () => {
       activeLevelIndex = idx;
@@ -428,9 +463,24 @@ function renderLevelsStrip() {
 }
 
 function markLevelSolved(level) {
+  currentLevelSolvedNow = true;
+  stopLevelTimer();
+  clearAllHints();
+  syncHintButtonUI();
+
   const bucket = progress[currentDifficulty];
+  if (!bucket.levelStars) bucket.levelStars = {};
   const feedbackEl = document.getElementById('puzzle-feedback');
   const alreadySolved = bucket.solvedLevels.includes(level.id);
+
+  // 1 klasė visada gauna 3 žvaigždutes; 3 klasė pagal optimalų ėjimų skaičių (3 arba 2)
+  const par = currentDifficulty === 'grade3' ? getParMoves(level.id) : null;
+  const earnedStars = currentDifficulty === 'grade1' || !par || currentMoves <= par ? 3 : 2;
+  const prevStars = bucket.levelStars[level.id] || 0;
+  const improvedStars = earnedStars > prevStars;
+  bucket.levelStars[level.id] = Math.max(prevStars, earnedStars);
+
+  const starsStr = '⭐'.repeat(earnedStars);
 
   if (!alreadySolved) {
     bucket.solvedLevels.push(level.id);
@@ -438,9 +488,20 @@ function markLevelSolved(level) {
     saveLabProgress(progress);
     updateSummaryUI();
     renderLevelsStrip();
-    feedbackEl.textContent = `🎉 PUIKIAI! Lygis įveiktas! Gavai +${level.reward} Proto kristalų (💎)!`;
+    feedbackEl.textContent =
+      currentDifficulty === 'grade3' && earnedStars === 2
+        ? `🎉 Lygis įveiktas! +${level.reward} 💎 • Įvertinimas: ${starsStr} (Norint ⭐⭐⭐, išspręsk per ≤ ${par} ėj.!)`
+        : `🎉 PUIKIAI! Lygis įveiktas! +${level.reward} 💎 • Įvertinimas: ${starsStr}!`;
   } else {
-    feedbackEl.textContent = '✅ Lygis sėkmingai įveiktas dar kartą!';
+    saveLabProgress(progress);
+    renderLevelsStrip();
+    if (improvedStars) {
+      feedbackEl.textContent = `🌟 REKORDAS PAGERINTAS! ${starsStr} (${currentMoves} ėj.)!`;
+    } else if (currentDifficulty === 'grade3' && earnedStars === 2 && (bucket.levelStars[level.id] || 0) < 3) {
+      feedbackEl.textContent = `✅ Lygis įveiktas! ${starsStr} (${currentMoves} ėj.) – peržaisk per ≤ ${par} ėj., kad gautum ⭐⭐⭐!`;
+    } else {
+      feedbackEl.textContent = `✅ Lygis įveiktas! Įvertinimas: ${starsStr}!`;
+    }
   }
 
   feedbackEl.className = 'puzzle-feedback success';
@@ -482,7 +543,167 @@ function destroyMemoryCtrl() {
   }
 }
 
+// ==================== UŽUOMINOS LEMPUTĖ IR ĖJIMŲ SKAITIKLIS ====================
+function stopLevelTimer() {
+  if (levelTimerId !== null) {
+    clearInterval(levelTimerId);
+    levelTimerId = null;
+  }
+}
+
+function startLevelTimer() {
+  stopLevelTimer();
+  levelElapsedSec = 0;
+  levelTimerId = setInterval(() => {
+    if (!currentDifficulty || currentLevelSolvedNow) return;
+    levelElapsedSec += 1;
+    if (levelElapsedSec >= 30 && !hintUsedInLevel) {
+      syncHintButtonUI();
+    }
+  }, 1000);
+}
+
+function syncHintButtonUI() {
+  if (!btnLabHint) return;
+  if (!currentDifficulty) {
+    btnLabHint.classList.add('hidden');
+    return;
+  }
+  btnLabHint.classList.remove('hidden');
+  const shouldPulse = !currentLevelSolvedNow && !hintUsedInLevel && levelElapsedSec >= 30;
+  btnLabHint.classList.toggle('hint-ready-pulse', shouldPulse);
+  btnLabHint.classList.toggle('hint-used', hintUsedInLevel);
+  if (hintUsedInLevel) {
+    btnLabHint.textContent = '💡 Užuomina parodyta';
+  } else if (shouldPulse) {
+    btnLabHint.textContent = '💡 Nemokama užuomina!';
+  } else {
+    btnLabHint.textContent = '💡 Užuomina';
+  }
+}
+
+function updateMovesUI() {
+  if (!puzzleMovesPill) return;
+  if (currentDifficulty !== 'grade3') {
+    puzzleMovesPill.classList.add('hidden');
+    puzzleMovesPill.classList.remove('over-par');
+    return;
+  }
+  const levels = getCurrentModeLevels();
+  const level = levels?.[activeLevelIndex];
+  const par = level ? getParMoves(level.id) : null;
+  puzzleMovesPill.classList.remove('hidden');
+  if (par) {
+    puzzleMovesPill.textContent = `🎯 Ėjimai: ${currentMoves} / ${par}`;
+    puzzleMovesPill.classList.toggle('over-par', currentMoves > par);
+  } else {
+    puzzleMovesPill.textContent = `🎯 Ėjimai: ${currentMoves}`;
+    puzzleMovesPill.classList.remove('over-par');
+  }
+}
+
+function clearAllHints() {
+  document.querySelectorAll('.hint-highlight').forEach((el) => el.classList.remove('hint-highlight'));
+  document.querySelectorAll('.hint-dimmed').forEach((el) => el.classList.remove('hint-dimmed'));
+  pinEngine?.setHintPin(null);
+  laserEngine?.setHint(null);
+  circuitEngine?.setHintTile(null);
+  balanceEngine?.setHintRemove(false);
+  memoryCtrl?.setHintCell(null);
+}
+
+function recordPlayerMove() {
+  currentMoves += 1;
+  clearAllHints();
+  updateMovesUI();
+}
+
+function applyFirstHint() {
+  if (!currentDifficulty || currentLevelSolvedNow) return;
+  const levels = getCurrentModeLevels();
+  const level = levels?.[activeLevelIndex];
+  if (!level) return;
+
+  if (currentMode === 'matrix' && level.kind === 'memory' && memoryCtrl?.phase === 'showing') {
+    const feedbackEl = document.getElementById('puzzle-feedback');
+    feedbackEl.textContent = '👀 Pirmiausia įsimink švytinčią seką!';
+    feedbackEl.className = 'puzzle-feedback';
+    feedbackEl.classList.remove('hidden');
+    return;
+  }
+
+  const hint = computeFirstHint(currentMode, level, {
+    pinEngine,
+    sokobanGame,
+    laserEngine,
+    circuitEngine,
+    balanceEngine,
+    memoryCtrl,
+    mirrorStates,
+    switchStates
+  });
+
+  if (!hint) return;
+  clearAllHints();
+
+  if (hint.kind === 'pin') {
+    pinEngine?.setHintPin(hint.pinId);
+  } else if (hint.kind === 'sokoban-dir') {
+    const dpad = document.querySelector(`.dpad-btn[data-dir="${hint.dr},${hint.dc}"]`);
+    dpad?.classList.add('hint-highlight');
+    const adjCell = document.querySelector(`.sok-cell.adjacent-step[data-dir="${hint.dr},${hint.dc}"]`);
+    adjCell?.classList.add('hint-highlight');
+  } else if (hint.kind === 'sokoban-reset') {
+    document.getElementById('btn-sok-undo')?.classList.add('hint-highlight');
+  } else if (hint.kind === 'laser-move' || hint.kind === 'laser-rotate') {
+    laserEngine?.setHint(hint);
+  } else if (hint.kind === 'circuit-tile') {
+    circuitEngine?.setHintTile({ r: hint.r, c: hint.c });
+  } else if (hint.kind === 'circuit-launch') {
+    document.getElementById('btn-circuit-launch')?.classList.add('hint-highlight');
+  } else if (hint.kind === 'balance-add') {
+    const btn = document.querySelector(`.balance-add-btn[data-kind="${hint.itemKind}"]`);
+    btn?.classList.add('hint-highlight');
+  } else if (hint.kind === 'balance-remove') {
+    balanceEngine?.setHintRemove(true);
+  } else if (hint.kind === 'memory-cell') {
+    memoryCtrl?.setHintCell(hint.cellIndex);
+  } else if (hint.kind === 'matrix-eliminate') {
+    hint.eliminateIndices.forEach((idx) => {
+      const btn = document.querySelector(`.matrix-choice-btn[data-choice-index="${idx}"]`);
+      btn?.classList.add('hint-dimmed');
+    });
+  } else if (hint.kind === 'mini-laser-mirror') {
+    const cell = document.querySelector(`[data-laser-cell="${hint.r},${hint.c}"]`);
+    cell?.classList.add('hint-highlight');
+  } else if (hint.kind === 'mini-switch') {
+    const sw = document.querySelector(`[data-switch-index="${hint.switchIndex}"]`);
+    sw?.classList.add('hint-highlight');
+  } else if (hint.kind === 'mini-seq-eliminate') {
+    hint.eliminateValues.forEach((val) => {
+      const btn = document.querySelector(`.lab-choice-btn[data-seq-value="${val}"]`);
+      btn?.classList.add('hint-dimmed');
+    });
+  }
+
+  hintUsedInLevel = true;
+  syncHintButtonUI();
+
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.textContent = hint.message;
+  feedbackEl.className = 'puzzle-feedback hint-info';
+  feedbackEl.classList.remove('hidden');
+}
+
 function loadActiveLevel() {
+  stopLevelTimer();
+  clearAllHints();
+  currentMoves = 0;
+  hintUsedInLevel = false;
+  currentLevelSolvedNow = false;
+  startLevelTimer();
+  syncHintButtonUI();
+  updateMovesUI();
   destroyPinEngine();
   destroyLaserEngine();
   destroyCircuitEngine();
@@ -602,6 +823,9 @@ function startPinPullLevel(level, totalInMode) {
   const nextBtn = document.getElementById('btn-pin-next');
 
   pinEngine = new PinPullEngine(pinCanvas, level, {
+    onPinPull: () => {
+      recordPlayerMove();
+    },
     onTick: ({ goalCount, requiredGoal }) => {
       if (counterEl) {
         counterEl.textContent = `🧪 Kolboje: ${goalCount} / ${requiredGoal}`;
@@ -668,6 +892,9 @@ function startLaserLevel(level, totalInMode) {
   }
 
   laserEngine = new LaserMirrorsEngine(laserCanvas, level, {
+    onMove: () => {
+      recordPlayerMove();
+    },
     onStatusChange: ({ litTargets, totalTargets, won }) => {
       if (counterEl) {
         counterEl.textContent = `💎 Apšviesta kristalų: ${litTargets} / ${totalTargets}`;
@@ -705,6 +932,9 @@ function startCircuitLevel(level, totalInMode) {
   }
 
   circuitEngine = new CircuitEngine(circuitCanvas, level, {
+    onMove: () => {
+      recordPlayerMove();
+    },
     onStatusChange: ({ readyToWin, totalStars, collectedStars, running }) => {
       if (counterEl) {
         counterEl.textContent = running
@@ -793,6 +1023,9 @@ function startBalanceLevel(level, totalInMode) {
   renderBalanceTray(level);
 
   balanceEngine = new BalanceScaleEngine(balanceCanvas, level, {
+    onMove: () => {
+      recordPlayerMove();
+    },
     onStatusChange: ({ rightCount, balanced, won }) => {
       if (counterEl) {
         counterEl.textContent = won
@@ -830,6 +1063,9 @@ function startMatrixLevel(level, totalInMode) {
 
   if (level.kind === 'memory') {
     memoryCtrl = new MemoryCodeController(boardEl, level, {
+      onMove: () => {
+        recordPlayerMove();
+      },
       onStatusChange: ({ phase, progress: cur, total }) => {
         if (counterEl) {
           counterEl.textContent =
@@ -890,6 +1126,7 @@ function startMatrixLevel(level, totalInMode) {
     btn.innerHTML = renderShapeSvg(choiceSpec);
     btn.addEventListener('click', () => {
       if (solved) return;
+      recordPlayerMove();
       const feedbackEl = document.getElementById('puzzle-feedback');
       if (idx === level.correctIndex) {
         solved = true;
@@ -935,6 +1172,7 @@ function handleSokobanMove(dr, dc) {
   const moved = sokobanGame.move(dr, dc);
   if (!moved) return;
 
+  recordPlayerMove();
   renderSokobanBoard();
 
   if (sokobanGame.won) {
@@ -1005,6 +1243,7 @@ function renderSokobanBoard() {
         const dc = c - sokobanGame.robot.c;
         if (Math.abs(dr) + Math.abs(dc) === 1 && !sokobanGame.won) {
           cell.classList.add('adjacent-step');
+          cell.dataset.dir = `${dr},${dc}`;
           cell.addEventListener('click', () => handleSokobanMove(dr, dc));
         }
       }
@@ -1081,6 +1320,7 @@ function renderLaserStage(stage, level) {
         const mIdx = mirrorStates.findIndex((m) => m.r === r && m.c === c);
         if (mIdx >= 0) {
           cell.classList.add('mirror');
+          cell.dataset.laserCell = `${r},${c}`;
           const sym = document.createElement('span');
           sym.className = 'mirror-symbol';
           sym.textContent = mirrorStates[mIdx].type;
@@ -1088,6 +1328,7 @@ function renderLaserStage(stage, level) {
           cell.title = 'Paspausk, kad pasuktum veidrodį';
           cell.addEventListener('click', () => {
             mirrorStates[mIdx].type = mirrorStates[mIdx].type === '/' ? '\\' : '/';
+            recordPlayerMove();
             renderLaserStage(stage, level);
           });
         } else if (litSet.has(key)) {
@@ -1121,9 +1362,11 @@ function renderSwitchesStage(stage, level) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = `switch-btn${switchStates[idx] ? ' on' : ''}`;
+    btn.dataset.switchIndex = String(idx);
     btn.textContent = `${switchStates[idx] ? '🟢 ĮJUNGTA' : '⚪ IŠJUNGTA'} (+${val} V)`;
     btn.addEventListener('click', () => {
       switchStates[idx] = !switchStates[idx];
+      recordPlayerMove();
       renderSwitchesStage(stage, level);
     });
     row.appendChild(btn);
@@ -1149,8 +1392,10 @@ function renderSequenceStage(stage, level) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'lab-choice-btn';
+    btn.dataset.seqValue = String(choice);
     btn.textContent = String(choice);
     btn.addEventListener('click', () => {
+      recordPlayerMove();
       const feedbackEl = document.getElementById('puzzle-feedback');
       if (choice === level.answer) {
         markLevelSolved(level);
@@ -1166,6 +1411,16 @@ function renderSequenceStage(stage, level) {
 }
 
 // ==================== ĮVYKIŲ VALDYMAS ====================
+function resetAttemptState() {
+  currentMoves = 0;
+  currentLevelSolvedNow = false;
+  clearAllHints();
+  updateMovesUI();
+  startLevelTimer();
+  syncHintButtonUI();
+}
+
+document.getElementById('btn-lab-hint')?.addEventListener('click', applyFirstHint);
 document.getElementById('btn-select-grade1')?.addEventListener('click', () => selectDifficulty('grade1'));
 document.getElementById('btn-select-grade3')?.addEventListener('click', () => selectDifficulty('grade3'));
 document.getElementById('btn-back-difficulty')?.addEventListener('click', showDifficultyScreen);
@@ -1192,6 +1447,7 @@ document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
 document.getElementById('btn-sok-reset')?.addEventListener('click', () => {
   if (!sokobanGame) return;
   sokobanGame.reset();
+  resetAttemptState();
   const feedbackEl = document.getElementById('puzzle-feedback');
   feedbackEl.className = 'puzzle-feedback hidden';
   feedbackEl.textContent = '';
@@ -1240,6 +1496,7 @@ document.getElementById('btn-pin-reset')?.addEventListener('click', () => {
   feedbackEl.textContent = '';
   document.getElementById('btn-pin-next')?.classList.add('hidden');
   pinEngine.reset();
+  resetAttemptState();
 });
 
 document.getElementById('btn-pin-next')?.addEventListener('click', () => {
@@ -1279,6 +1536,7 @@ document.getElementById('btn-laser-reset')?.addEventListener('click', () => {
   feedbackEl.textContent = '';
   document.getElementById('btn-laser-next')?.classList.add('hidden');
   laserEngine.reset();
+  resetAttemptState();
 });
 
 document.getElementById('btn-laser-next')?.addEventListener('click', () => {
@@ -1333,6 +1591,7 @@ document.getElementById('btn-circuit-reset')?.addEventListener('click', () => {
   const launchBtn = document.getElementById('btn-circuit-launch');
   if (launchBtn) launchBtn.disabled = false;
   circuitEngine.reset();
+  resetAttemptState();
 });
 
 document.getElementById('btn-circuit-next')?.addEventListener('click', () => {
@@ -1359,6 +1618,7 @@ document.getElementById('btn-balance-reset')?.addEventListener('click', () => {
   feedbackEl.textContent = '';
   document.getElementById('btn-balance-next')?.classList.add('hidden');
   balanceEngine.reset();
+  resetAttemptState();
 });
 
 document.getElementById('btn-balance-next')?.addEventListener('click', () => {
@@ -1380,6 +1640,7 @@ if (balanceCanvas) {
 
 document.getElementById('btn-memory-replay')?.addEventListener('click', () => {
   if (!memoryCtrl) return;
+  recordPlayerMove();
   const feedbackEl = document.getElementById('puzzle-feedback');
   feedbackEl.className = 'puzzle-feedback hidden';
   feedbackEl.textContent = '';

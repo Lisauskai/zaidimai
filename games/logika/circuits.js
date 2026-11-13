@@ -498,9 +498,15 @@ export class CircuitEngine {
       return;
     }
 
+    this.hintCell = null;
     tile.rot = ((tile.rot || 0) + 1) % 4;
     tile.targetAngle += Math.PI / 2;
     this.recompute();
+    if (this.callbacks.onMove) this.callbacks.onMove();
+  }
+
+  setHintTile(hintObj) {
+    this.hintCell = hintObj || null;
   }
 
   launchTrain() {
@@ -691,6 +697,20 @@ export class CircuitEngine {
       }
 
       ctx.restore();
+      if (this.hintCell && this.hintCell.r === tile.r && this.hintCell.c === tile.c) {
+        const pulse = 0.5 + 0.5 * Math.sin(this.time * 7);
+        ctx.save();
+        ctx.translate(cx + shakeX, cy);
+        ctx.shadowBlur = 16 + pulse * 10;
+        ctx.shadowColor = '#fde047';
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 3.5 + pulse * 2;
+        const hHalf = cs / 2 - 1;
+        ctx.beginPath();
+        ctx.roundRect(-hHalf, -hHalf, hHalf * 2, hHalf * 2, 10);
+        ctx.stroke();
+        ctx.restore();
+      }
     });
 
     // Traukinuko animacija

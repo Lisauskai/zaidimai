@@ -397,8 +397,13 @@ export class LaserMirrorsEngine {
     this.pieces = this.level.pieces.map((p) => ({ ...p }));
     this.selectedPieceId = null;
     this.dragState = null;
+    this.hint = null;
     this.wonNotified = false;
     this.recomputeBeam();
+  }
+
+  setHint(hintObj) {
+    this.hint = hintObj || null;
   }
 
   setInteractionMode(mode) {
@@ -445,8 +450,10 @@ export class LaserMirrorsEngine {
 
   rotatePiece(piece) {
     piece.type = piece.type === '/' ? '\\' : '/';
+    this.hint = null;
     this.wonNotified = false;
     this.recomputeBeam();
+    if (this.callbacks.onMove) this.callbacks.onMove();
   }
 
   movePiece(piece, r, c) {
@@ -454,8 +461,10 @@ export class LaserMirrorsEngine {
     if (!this.isCellEmptyForPiece(r, c)) return false;
     piece.r = r;
     piece.c = c;
+    this.hint = null;
     this.wonNotified = false;
     this.recomputeBeam();
+    if (this.callbacks.onMove) this.callbacks.onMove();
     return true;
   }
 
@@ -680,13 +689,43 @@ export class LaserMirrorsEngine {
       this.drawCrystal(ctx, ox + (t.c + 0.5) * cs, oy + (t.r + 0.5) * cs, cs, hit);
     });
 
+    // Užuominos tikslo langelis (kai reikia perkelti elementą)
+    if (this.hint && typeof this.hint.toR === 'number' && typeof this.hint.toC === 'number') {
+      const hx = ox + this.hint.toC * cs + 4;
+      const hy = oy + this.hint.toR * cs + 4;
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * 7);
+      ctx.save();
+      ctx.shadowBlur = 16 + pulse * 10;
+      ctx.shadowColor = '#fde047';
+      ctx.strokeStyle = '#fde047';
+      ctx.lineWidth = 3.5;
+      ctx.setLineDash([7, 5]);
+      ctx.strokeRect(hx, hy, cs - 8, cs - 8);
+      ctx.setLineDash([]);
+      ctx.fillStyle = `rgba(250, 204, 21, ${(0.12 + pulse * 0.12).toFixed(2)})`;
+      ctx.fillRect(hx, hy, cs - 8, cs - 8);
+      ctx.restore();
+    }
+
     // Veidrodžiai ir dalikliai
     this.pieces.forEach((p) => {
       const isDraggingThis = this.dragState?.movedEnough && this.dragState.pieceId === p.id;
       const cx = isDraggingThis ? this.dragState.currX : ox + (p.c + 0.5) * cs;
       const cy = isDraggingThis ? this.dragState.currY : oy + (p.r + 0.5) * cs;
-      const isSelected = this.selectedPieceId === p.id;
+      const isSelected = this.selectedPieceId === p.id || this.hint?.pieceId === p.id;
       this.drawOpticPiece(ctx, cx, cy, cs, p, isSelected, isDraggingThis);
+      if (this.hint?.pieceId === p.id) {
+        const pulse = 0.5 + 0.5 * Math.sin(this.time * 7);
+        ctx.save();
+        ctx.shadowBlur = 18 + pulse * 10;
+        ctx.shadowColor = '#fde047';
+        ctx.strokeStyle = '#fef08a';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(cx, cy, cs * 0.45 + pulse * 4, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
     });
   }
 

@@ -170,6 +170,7 @@ export class BalanceScaleEngine {
   reset() {
     this.leftItems = [...this.level.leftPan];
     this.rightItems = [];
+    this.hintRemove = false;
     this.won = false;
     this.settledTime = 0;
 
@@ -179,6 +180,10 @@ export class BalanceScaleEngine {
     this.angularVel = 0;
 
     this.notifyStatus();
+  }
+
+  setHintRemove(flag) {
+    this.hintRemove = !!flag;
   }
 
   getLeftWeight() {
@@ -203,20 +208,24 @@ export class BalanceScaleEngine {
     if (this.rightItems.length >= 16) return false;
     if (!this.level.palette.includes(kind)) return false;
 
+    this.hintRemove = false;
     this.rightItems.push(kind);
     this.angularVel += 0.14; // Lengvas smūgis ant dešinės lėkštės
     this.settledTime = 0;
     this.notifyStatus();
+    if (this.callbacks.onMove) this.callbacks.onMove();
     return true;
   }
 
   removeItemAt(index) {
     if (this.won) return false;
     if (index < 0 || index >= this.rightItems.length) return false;
+    this.hintRemove = false;
     this.rightItems.splice(index, 1);
     this.angularVel -= 0.1;
     this.settledTime = 0;
     this.notifyStatus();
+    if (this.callbacks.onMove) this.callbacks.onMove();
     return true;
   }
 
@@ -471,9 +480,14 @@ export class BalanceScaleEngine {
       const meta = ITEM_CATALOG[kind] || ITEM_CATALOG.bolt;
 
       ctx.save();
+      const isHintRem = isRemovable && this.hintRemove && idx === items.length - 1;
+      if (isHintRem) {
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = '#fde047';
+      }
       ctx.fillStyle = isRemovable ? 'rgba(30, 41, 59, 0.9)' : 'rgba(15, 23, 42, 0.85)';
-      ctx.strokeStyle = meta.color;
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = isHintRem ? '#fde047' : meta.color;
+      ctx.lineWidth = isHintRem ? 4 : 2;
       ctx.beginPath();
       ctx.arc(ix, iy, 15, 0, Math.PI * 2);
       ctx.fill();

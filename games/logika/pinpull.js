@@ -401,11 +401,16 @@ export class PinPullEngine {
       offset: 0
     }));
     this.sparks = [];
+    this.hintPinId = null;
     this.status = 'playing'; // 'playing' | 'won' | 'failed'
     this.failReason = '';
     this.goalCount = 0;
     this.trapCount = 0;
     this.reportStatus();
+  }
+
+  setHintPin(pinId) {
+    this.hintPinId = pinId || null;
   }
 
   destroy() {
@@ -450,6 +455,12 @@ export class PinPullEngine {
     const pin = this.pins.find((p) => p.id === pinId);
     if (!pin || pin.pulling || pin.removed) return false;
     pin.pulling = true;
+    if (this.hintPinId === pinId) {
+      this.hintPinId = null;
+    } else {
+      this.hintPinId = null;
+    }
+    this.callbacks.onPinPull?.(pinId);
     return true;
   }
 
@@ -777,21 +788,27 @@ export class PinPullEngine {
     ctx.restore();
 
     // 5. Metaliniai kaiščiai (Pins)
+    const nowPulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.009);
     for (const pin of this.pins) {
       if (pin.removed) continue;
       const seg = this.getActivePinRect(pin);
       const isHover = this.hoveredPinId === pin.id && !pin.pulling;
+      const isHintPin = this.hintPinId === pin.id && !pin.pulling;
 
       ctx.save();
       ctx.lineCap = 'round';
-      ctx.strokeStyle = '#020617';
-      ctx.lineWidth = PIN_RADIUS * 2 + 4;
+      if (isHintPin) {
+        ctx.shadowBlur = 18 + nowPulse * 10;
+        ctx.shadowColor = '#fde047';
+      }
+      ctx.strokeStyle = isHintPin ? '#fef08a' : '#020617';
+      ctx.lineWidth = isHintPin ? PIN_RADIUS * 2 + 8 : PIN_RADIUS * 2 + 4;
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
 
-      ctx.strokeStyle = isHover ? '#fde047' : '#f59e0b';
+      ctx.strokeStyle = isHover || isHintPin ? '#fde047' : '#f59e0b';
       ctx.lineWidth = PIN_RADIUS * 2;
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
@@ -801,7 +818,14 @@ export class PinPullEngine {
       // Rankenėlė traukimui
       const hx = pin.dirX >= 0 ? seg.x2 + 12 : seg.x1 - 12;
       const hy = pin.dirX >= 0 ? seg.y2 : seg.y1;
-      ctx.fillStyle = isHover ? '#fef08a' : '#facc15';
+      if (isHintPin) {
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.arc(hx, hy, 17 + nowPulse * 5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.fillStyle = isHover || isHintPin ? '#fef08a' : '#facc15';
       ctx.strokeStyle = '#020617';
       ctx.lineWidth = 3;
       ctx.beginPath();

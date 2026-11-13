@@ -301,9 +301,15 @@ export class MemoryCodeController {
     this.userInput = [];
     this.activeFlashIndex = -1;
     this.activeFlashStep = -1;
+    this.hintCellIndex = null;
 
     this.renderBoard();
     this.startShowcase();
+  }
+
+  setHintCell(cellIdx) {
+    this.hintCellIndex = typeof cellIdx === 'number' ? cellIdx : null;
+    this.renderBoard();
   }
 
   clearTimers() {
@@ -348,6 +354,8 @@ export class MemoryCodeController {
 
   handleCellClick(cellIdx) {
     if (this.phase !== 'input') return;
+    this.hintCellIndex = null;
+    if (this.callbacks.onMove) this.callbacks.onMove();
     const expected = this.level.sequence[this.userInput.length];
 
     if (cellIdx === expected) {
@@ -404,6 +412,10 @@ export class MemoryCodeController {
         btn.textContent = '✖';
       } else {
         btn.textContent = '•';
+      }
+
+      if (this.hintCellIndex === idx && this.phase === 'input') {
+        btn.classList.add('hint-highlight');
       }
 
       btn.disabled = this.phase !== 'input';

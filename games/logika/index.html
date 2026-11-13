@@ -27,6 +27,9 @@
     </div>
 
     <div class="top-bar-right">
+      <button id="btn-lab-hint" class="hint-lamp-btn hidden" type="button" title="Parodyti pirmojo žingsnio užuominą">
+        💡 Užuomina
+      </button>
       <div id="top-difficulty-pill" class="hud-pill hud-rank hidden">
         <span id="ui-active-rank">🔬 1 klasė</span>
       </div>
@@ -179,7 +182,10 @@
             <h2 id="puzzle-title">Lygis #1</h2>
             <p id="puzzle-instruction" class="puzzle-instruction"></p>
           </div>
-          <div id="puzzle-reward-badge" class="puzzle-reward-badge">+15 💎</div>
+          <div class="puzzle-header-badges">
+            <div id="puzzle-moves-pill" class="puzzle-moves-pill hidden">🎯 Ėjimai: 0</div>
+            <div id="puzzle-reward-badge" class="puzzle-reward-badge">+15 💎</div>
+          </div>
         </div>
 
         <!-- PIN-PULL CANVAS ZONA -->
