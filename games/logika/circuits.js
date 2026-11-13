@@ -934,6 +934,9 @@ export class CircuitEngine {
           }
         }
       } else {
+        if (anim.won && anim.finishedWait === 0) {
+          window.__protoLabJuice?.(true);
+        }
         anim.finishedWait += dt;
         const waitThreshold = anim.won ? 0.75 : 0.25;
         if (!anim.notified && anim.finishedWait >= waitThreshold) {

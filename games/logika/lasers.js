@@ -728,6 +728,7 @@ export class LaserMirrorsEngine {
       this.selectedPieceId = null;
       this.dragState = null;
       this.spawnTargetSparks();
+      window.__protoLabJuice?.(true);
     } else if (!this.trace.won && this.movesUsed >= this.maxMoves && !this.outOfMoves) {
       this.outOfMoves = true;
     }
@@ -1014,16 +1015,16 @@ export class LaserMirrorsEngine {
       ctx.fill();
     });
 
-    // LAZERIO SPINDULYS SU ŠVYTĖJIMU (shadowBlur)
+    // LAZERIO PLAZMOS SPINDULYS SU BALTA ŠERDIMI IR ATSPINDŽIO KIBIRKŠTIMIS
     if (this.trace && this.trace.segments.length > 0) {
       ctx.save();
       const pulse = 0.85 + 0.15 * Math.sin(this.time * 8);
 
-      // Išorinis švytintis sluoksnis
-      ctx.shadowBlur = 22 * pulse;
-      ctx.shadowColor = '#22d3ee';
-      ctx.strokeStyle = 'rgba(34, 211, 238, 0.85)';
-      ctx.lineWidth = 8;
+      // Plati plazmos aura
+      ctx.shadowBlur = 28 * pulse;
+      ctx.shadowColor = '#06b6d4';
+      ctx.strokeStyle = 'rgba(34, 211, 238, 0.48)';
+      ctx.lineWidth = 11;
       ctx.lineCap = 'round';
       ctx.beginPath();
       this.trace.segments.forEach((seg) => {
@@ -1032,11 +1033,11 @@ export class LaserMirrorsEngine {
       });
       ctx.stroke();
 
-      // Vidinė ryški balta-žydra šerdis
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = '#ffffff';
-      ctx.strokeStyle = '#f0f9ff';
-      ctx.lineWidth = 3;
+      // Vidutinė ryškiai žydra plazmos juosta
+      ctx.shadowBlur = 16;
+      ctx.shadowColor = '#38bdf8';
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 5.5;
       ctx.beginPath();
       this.trace.segments.forEach((seg) => {
         ctx.moveTo(ox + seg.c1 * cs, oy + seg.r1 * cs);
@@ -1044,16 +1045,44 @@ export class LaserMirrorsEngine {
       });
       ctx.stroke();
 
-      // Kibirkštys ir atspindžio taškai
-      this.trace.sparks.forEach((sp) => {
+      // Ryški balta lazerio šerdis
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#ffffff';
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      this.trace.segments.forEach((seg) => {
+        ctx.moveTo(ox + seg.c1 * cs, oy + seg.r1 * cs);
+        ctx.lineTo(ox + seg.c2 * cs, oy + seg.r2 * cs);
+      });
+      ctx.stroke();
+
+      // Atspindžio taškų šviesos žvaigždutės ir trykštančios kibirkštys
+      this.trace.sparks.forEach((sp, idx) => {
         const sx = ox + sp.c * cs;
         const sy = oy + sp.r * cs;
-        ctx.shadowBlur = 14;
-        ctx.shadowColor = sp.kind === 'target' ? '#4ade80' : '#22d3ee';
-        ctx.fillStyle = sp.kind === 'target' ? '#86efac' : '#e0f2fe';
+        const isTarget = sp.kind === 'target';
+        const sparkCol = isTarget ? '#4ade80' : '#38bdf8';
+
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = sparkCol;
+        ctx.fillStyle = '#ffffff';
         ctx.beginPath();
-        ctx.arc(sx, sy, sp.kind === 'target' ? 6 : 4, 0, Math.PI * 2);
+        ctx.arc(sx, sy, isTarget ? 5.5 : 3.8, 0, Math.PI * 2);
         ctx.fill();
+
+        // Trykštančios atspindžio kibirkštėlės aplink atspindžio tašką
+        for (let k = 0; k < 5; k++) {
+          const phase = (this.time * 2.8 + idx * 0.41 + k * 0.23) % 1;
+          const ang = idx * 1.3 + k * ((Math.PI * 2) / 5) + Math.sin(this.time * 3 + k) * 0.25;
+          const dist = 4 + phase * (isTarget ? 18 : 14);
+          ctx.globalAlpha = Math.max(0, 1 - phase);
+          ctx.fillStyle = k % 2 === 0 ? '#ffffff' : isTarget ? '#86efac' : '#67e8f9';
+          ctx.beginPath();
+          ctx.arc(sx + Math.cos(ang) * dist, sy + Math.sin(ang) * dist, 1.8 * (1 - phase * 0.5), 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
       });
       ctx.restore();
     }
@@ -1154,7 +1183,7 @@ export class LaserMirrorsEngine {
 
   drawCrystal(ctx, cx, cy, cs, isHit) {
     ctx.save();
-    const s = cs * 0.34;
+    const s = cs * 0.36;
     const isAllWon = this.isWinning || this.wonNotified;
     const charge = isAllWon ? Math.min(1, (this.victoryTimer || 2.2) / 1.3) : isHit ? 0.55 : 0;
 
@@ -1175,42 +1204,98 @@ export class LaserMirrorsEngine {
       ctx.scale(pulse, pulse);
       cx /= pulse;
       cy /= pulse;
-      ctx.shadowBlur = isAllWon ? 32 : 24;
+      ctx.shadowBlur = isAllWon ? 32 : 22;
       ctx.shadowColor = isAllWon ? '#86efac' : '#4ade80';
+    } else {
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = 'rgba(2, 6, 23, 0.7)';
+      ctx.shadowOffsetY = 3;
     }
 
-    ctx.fillStyle = isHit ? (isAllWon ? '#4ade80' : '#22c55e') : '#065f46';
-    ctx.strokeStyle = isHit ? (isAllWon ? '#fef08a' : '#bbf7d0') : '#34d399';
-    ctx.lineWidth = isAllWon ? 3.5 : 3;
+    // Išorinis briaunoto brangakmenio siluetas
+    const pts = [
+      [cx, cy - s],
+      [cx + s * 0.82, cy - s * 0.25],
+      [cx + s * 0.58, cy + s * 0.92],
+      [cx, cy + s * 1.04],
+      [cx - s * 0.58, cy + s * 0.92],
+      [cx - s * 0.82, cy - s * 0.25]
+    ];
+
+    const gemGrad = ctx.createLinearGradient(cx - s, cy - s, cx + s, cy + s);
+    if (isHit) {
+      gemGrad.addColorStop(0, '#dcfce7');
+      gemGrad.addColorStop(0.45, '#4ade80');
+      gemGrad.addColorStop(1, '#15803d');
+    } else {
+      gemGrad.addColorStop(0, '#34d399');
+      gemGrad.addColorStop(0.5, '#059669');
+      gemGrad.addColorStop(1, '#064e3b');
+    }
+
+    ctx.fillStyle = gemGrad;
+    ctx.strokeStyle = isHit ? (isAllWon ? '#fef08a' : '#bbf7d0') : '#6ee7b7';
+    ctx.lineWidth = isAllWon ? 3.2 : 2.5;
     ctx.beginPath();
-    ctx.moveTo(cx, cy - s);
-    ctx.lineTo(cx + s * 0.8, cy - s * 0.15);
-    ctx.lineTo(cx + s * 0.55, cy + s);
-    ctx.lineTo(cx - s * 0.55, cy + s);
-    ctx.lineTo(cx - s * 0.8, cy - s * 0.15);
+    pts.forEach(([px, py], i) => (i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)));
     ctx.closePath();
     ctx.fill();
+
+    // Vidinės brangakmenio briaunos (facets)
+    ctx.save();
+    ctx.clip();
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    // Kairioji šviesos briauna
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.24)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - s);
+    ctx.lineTo(cx, cy + s * 1.04);
+    ctx.lineTo(cx - s * 0.58, cy + s * 0.92);
+    ctx.lineTo(cx - s * 0.82, cy - s * 0.25);
+    ctx.closePath();
+    ctx.fill();
+
+    // Centrinė šlifuota plokštuma (table facet)
+    ctx.fillStyle = isHit ? 'rgba(255, 255, 255, 0.34)' : 'rgba(167, 243, 208, 0.16)';
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - s * 0.52);
+    ctx.lineTo(cx + s * 0.42, cy - s * 0.1);
+    ctx.lineTo(cx + s * 0.28, cy + s * 0.46);
+    ctx.lineTo(cx - s * 0.28, cy + s * 0.46);
+    ctx.lineTo(cx - s * 0.42, cy - s * 0.1);
+    ctx.closePath();
+    ctx.fill();
+
     if (isHit && charge > 0) {
-      ctx.save();
-      ctx.clip();
       const fillH = s * 2 * charge;
       const glowGrad = ctx.createLinearGradient(0, cy + s - fillH, 0, cy + s);
       glowGrad.addColorStop(0, 'rgba(254, 240, 138, 0.85)');
-      glowGrad.addColorStop(1, 'rgba(74, 222, 128, 0.25)');
+      glowGrad.addColorStop(1, 'rgba(74, 222, 128, 0.2)');
       ctx.fillStyle = glowGrad;
       ctx.fillRect(cx - s, cy + s - fillH, s * 2, fillH);
-      ctx.restore();
     }
+    ctx.restore();
+
     ctx.stroke();
 
-    // Vidinė briauna
-    ctx.strokeStyle = isHit ? '#ffffff' : 'rgba(110, 231, 183, 0.45)';
-    ctx.lineWidth = 2;
+    // Švytinčios vidinių briaunų linijos
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = isHit ? 'rgba(255, 255, 255, 0.88)' : 'rgba(167, 243, 208, 0.52)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(cx, cy - s);
-    ctx.lineTo(cx, cy + s);
-    ctx.moveTo(cx - s * 0.8, cy - s * 0.15);
-    ctx.lineTo(cx + s * 0.8, cy - s * 0.15);
+    ctx.lineTo(cx, cy - s * 0.52);
+    ctx.moveTo(cx - s * 0.82, cy - s * 0.25);
+    ctx.lineTo(cx - s * 0.42, cy - s * 0.1);
+    ctx.moveTo(cx + s * 0.82, cy - s * 0.25);
+    ctx.lineTo(cx + s * 0.42, cy - s * 0.1);
+    ctx.moveTo(cx - s * 0.42, cy - s * 0.1);
+    ctx.lineTo(cx + s * 0.42, cy - s * 0.1);
+    ctx.lineTo(cx + s * 0.28, cy + s * 0.46);
+    ctx.lineTo(cx - s * 0.28, cy + s * 0.46);
+    ctx.closePath();
     ctx.stroke();
     ctx.restore();
   }

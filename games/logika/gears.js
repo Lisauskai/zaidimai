@@ -878,6 +878,9 @@ export class GearsEngine {
       }
 
       if (this.isWinning && !this.winNotified) {
+        if (this.victoryTimer === 0) {
+          window.__protoLabJuice?.(true);
+        }
         this.victoryTimer += dt;
         this.sparkAccum += dt;
         if (this.sparkAccum >= 0.14) {
@@ -894,6 +897,13 @@ export class GearsEngine {
         if (this.sparkAccum >= 0.35) {
           this.sparkAccum = 0;
           this.spawnVictorySparks(2);
+        }
+      } else if (!this.jammed && Object.keys(this.speeds).length > 1) {
+        // Subtilios auksinės kibirkštys nuo aktyviai besisukančių krumpliaračių
+        this.sparkAccum += dt;
+        if (this.sparkAccum >= 0.42 && this.sparks.length < 18) {
+          this.sparkAccum = 0;
+          this.spawnVictorySparks(1);
         }
       }
 
@@ -1226,23 +1236,58 @@ export class GearsEngine {
     const rOuter = g.radius + 5;
     const rInner = g.radius - 5;
     const teeth = g.teeth;
+    const isSpinning = omega !== 0 && !isJammed;
 
     ctx.save();
     ctx.translate(g.x, g.y);
 
+    // 2.5D krintantis šešėlis arba būsenos švytėjimas
     if (isJammed) {
       ctx.shadowColor = '#ef4444';
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = 20;
     } else if (g.kind === 'goal' && this.won) {
       ctx.shadowColor = '#4ade80';
-      ctx.shadowBlur = 22;
+      ctx.shadowBlur = 26;
+    } else if (isSpinning) {
+      ctx.shadowColor = 'rgba(250, 204, 21, 0.52)';
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 3;
+    } else {
+      ctx.shadowColor = 'rgba(2, 6, 23, 0.72)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 5;
+    }
+
+    // Auksinė aura aplink besisukantį krumpliaratį
+    if (isSpinning) {
+      const pulse = 0.45 + 0.35 * Math.sin(performance.now() * 0.008 + g.x * 0.03);
+      ctx.save();
+      ctx.strokeStyle = `rgba(251, 191, 36, ${pulse.toFixed(2)})`;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, rOuter + 5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
     }
 
     ctx.rotate(angle);
 
-    ctx.fillStyle = isJammed ? '#ef4444' : g.color;
+    // Metalinis krumpliaračio kūno radialinis gradientas
+    const bodyGrad = ctx.createRadialGradient(-rInner * 0.28, -rInner * 0.28, rInner * 0.12, 0, 0, rOuter);
+    if (isJammed) {
+      bodyGrad.addColorStop(0, '#fca5a5');
+      bodyGrad.addColorStop(0.55, '#ef4444');
+      bodyGrad.addColorStop(1, '#7f1d1d');
+    } else {
+      bodyGrad.addColorStop(0, '#f8fafc');
+      bodyGrad.addColorStop(0.28, g.color);
+      bodyGrad.addColorStop(0.85, g.rim || g.color);
+      bodyGrad.addColorStop(1, '#0f172a');
+    }
+
+    ctx.fillStyle = bodyGrad;
     ctx.strokeStyle = isJammed ? '#7f1d1d' : '#020617';
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth = 2.4;
 
     ctx.beginPath();
     const step = (Math.PI * 2) / teeth;
@@ -1262,43 +1307,93 @@ export class GearsEngine {
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = isJammed ? '#b91c1c' : g.rim;
+    // Nuimame šešėlį vidinėms detalėms
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    // Įgilintas vidinis žiedas
+    const wellR = g.radius * 0.66;
+    const wellGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, wellR);
+    wellGrad.addColorStop(0, isJammed ? '#450a0a' : '#090f20');
+    wellGrad.addColorStop(0.75, isJammed ? '#7f1d1d' : '#1e293b');
+    wellGrad.addColorStop(1, isJammed ? '#b91c1c' : '#475569');
+    ctx.fillStyle = wellGrad;
+    ctx.strokeStyle = 'rgba(248, 250, 252, 0.32)';
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.arc(0, 0, g.radius * 0.62, 0, Math.PI * 2);
+    ctx.arc(0, 0, wellR, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
-    ctx.strokeStyle = '#f8fafc';
-    ctx.lineWidth = 3;
-    for (let s = 0; s < 3; s++) {
-      const sa = (s * Math.PI * 2) / 3;
+    // Vidiniai stipinai (4 arba 5 pagal dydį) su metaliniu blizgesiu
+    const spokeCount = g.radius >= 50 ? 6 : g.radius >= 36 ? 5 : 4;
+    for (let s = 0; s < spokeCount; s++) {
+      const sa = (s * Math.PI * 2) / spokeCount;
+      ctx.strokeStyle = '#020617';
+      ctx.lineWidth = 7;
+      ctx.lineCap = 'round';
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(sa) * g.radius * 0.55, Math.sin(sa) * g.radius * 0.55);
+      ctx.lineTo(Math.cos(sa) * (wellR - 3), Math.sin(sa) * (wellR - 3));
+      ctx.stroke();
+
+      ctx.strokeStyle = isJammed ? '#f87171' : '#cbd5e1';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(sa) * (wellR - 4), Math.sin(sa) * (wellR - 4));
       ctx.stroke();
     }
 
-    ctx.fillStyle = '#0f172a';
-    ctx.strokeStyle = '#e2e8f0';
+    // Metalinės kniedės išoriniame flange
+    const rivetRingR = g.radius * 0.78;
+    const rivetCount = Math.max(4, Math.min(8, Math.round(g.radius / 7)));
+    for (let rv = 0; rv < rivetCount; rv++) {
+      const ra = (rv * Math.PI * 2) / rivetCount + step * 0.5;
+      const rx = Math.cos(ra) * rivetRingR;
+      const ry = Math.sin(ra) * rivetRingR;
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.arc(rx, ry, 2.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(rx - 0.6, ry - 0.6, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Centrinė ašis su šešiabriaune/metaline kepurėle
+    const capGrad = ctx.createRadialGradient(-3, -3, 1, 0, 0, 10);
+    capGrad.addColorStop(0, '#f8fafc');
+    capGrad.addColorStop(0.6, '#64748b');
+    capGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = capGrad;
+    ctx.strokeStyle = '#020617';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(0, 0, 8, 0, Math.PI * 2);
+    ctx.arc(0, 0, 9.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
+    ctx.fillStyle = isSpinning ? '#facc15' : '#38bdf8';
+    ctx.beginPath();
+    ctx.arc(0, 0, 3.2, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
 
-    if (omega !== 0 && !isJammed) {
+    if (isSpinning) {
       const dir = Math.sign(omega);
       ctx.save();
       ctx.translate(g.x, g.y);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 2.4;
+      ctx.lineCap = 'round';
       ctx.beginPath();
       if (dir > 0) {
-        ctx.arc(0, 0, g.radius * 0.36, -0.6, 1.3);
+        ctx.arc(0, 0, g.radius * 0.34, -0.6, 1.25);
       } else {
-        ctx.arc(0, 0, g.radius * 0.36, 1.3, -0.6, true);
+        ctx.arc(0, 0, g.radius * 0.34, 1.25, -0.6, true);
       }
       ctx.stroke();
       ctx.restore();

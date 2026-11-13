@@ -674,6 +674,9 @@ export class BalanceScaleEngine {
     this.time += dt;
 
     if (this.isWinning && !this.winNotified) {
+      if (this.victoryTimer === 0) {
+        window.__protoLabJuice?.(true);
+      }
       this.victoryTimer += dt;
       if (this.victoryTimer >= 2.1) {
         this.isWinning = false;
@@ -734,10 +737,20 @@ export class BalanceScaleEngine {
     const armLen = 198;
     const balancedConfirmed = this.lastCheckState === 'balanced' && this.won;
 
-    // Pagrindinis stovas
-    ctx.fillStyle = '#334155';
+    // Poliruoto žalvario stovas su šoniniu neoniniu akcentu
+    ctx.save();
+    ctx.shadowColor = 'rgba(2, 6, 23, 0.75)';
+    ctx.shadowBlur = 14;
+    ctx.shadowOffsetY = 5;
+    const brassColGrad = ctx.createLinearGradient(pivotX - 30, pivotY, pivotX + 30, pivotY);
+    brassColGrad.addColorStop(0, '#78350f');
+    brassColGrad.addColorStop(0.28, '#fbbf24');
+    brassColGrad.addColorStop(0.5, '#fef08a');
+    brassColGrad.addColorStop(0.75, '#d97706');
+    brassColGrad.addColorStop(1, '#451a03');
+    ctx.fillStyle = brassColGrad;
     ctx.strokeStyle = '#020617';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(pivotX - 18, pivotY);
     ctx.lineTo(pivotX + 18, pivotY);
@@ -747,12 +760,39 @@ export class BalanceScaleEngine {
     ctx.fill();
     ctx.stroke();
 
-    // Pagrindas apačioje
-    ctx.fillStyle = '#475569';
+    // Neoninė šerdis stovo viduje
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = balancedConfirmed ? '#4ade80' : '#38bdf8';
+    ctx.strokeStyle = balancedConfirmed ? '#4ade80' : '#38bdf8';
+    ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.roundRect(pivotX - 110, BALANCE_CANVAS_H - 36, 220, 22, 10);
+    ctx.moveTo(pivotX, pivotY + 26);
+    ctx.lineTo(pivotX, BALANCE_CANVAS_H - 42);
+    ctx.stroke();
+
+    // Poliruotas pagrindas apačioje
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = 'rgba(2, 6, 23, 0.7)';
+    const baseBrassGrad = ctx.createLinearGradient(pivotX - 115, BALANCE_CANVAS_H - 38, pivotX + 115, BALANCE_CANVAS_H - 14);
+    baseBrassGrad.addColorStop(0, '#92400e');
+    baseBrassGrad.addColorStop(0.35, '#fde047');
+    baseBrassGrad.addColorStop(0.65, '#f59e0b');
+    baseBrassGrad.addColorStop(1, '#78350f');
+    ctx.fillStyle = baseBrassGrad;
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.roundRect(pivotX - 114, BALANCE_CANVAS_H - 36, 228, 22, 11);
     ctx.fill();
     ctx.stroke();
+
+    ctx.strokeStyle = balancedConfirmed ? '#4ade80' : 'rgba(56, 189, 248, 0.75)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pivotX - 96, BALANCE_CANVAS_H - 25);
+    ctx.lineTo(pivotX + 96, BALANCE_CANVAS_H - 25);
+    ctx.stroke();
+    ctx.restore();
 
     // Sijos galų koordinatės
     const cosA = Math.cos(this.angle);
@@ -762,27 +802,38 @@ export class BalanceScaleEngine {
     const rightHookX = pivotX + armLen * cosA;
     const rightHookY = pivotY + armLen * sinA;
 
-    // Svyravimo sija
+    // Poliruoto žalvario ir neono svyravimo sija
     ctx.save();
     ctx.translate(pivotX, pivotY);
     ctx.rotate(this.angle);
-    ctx.fillStyle = balancedConfirmed ? '#15803d' : this.locked ? '#1e293b' : '#31102f';
+    ctx.shadowBlur = balancedConfirmed ? 20 : 12;
+    ctx.shadowColor = balancedConfirmed ? '#4ade80' : 'rgba(2, 6, 23, 0.75)';
+    const beamGrad = ctx.createLinearGradient(0, -11, 0, 11);
+    beamGrad.addColorStop(0, '#fef08a');
+    beamGrad.addColorStop(0.45, '#d97706');
+    beamGrad.addColorStop(1, '#78350f');
+    ctx.fillStyle = beamGrad;
     ctx.strokeStyle = balancedConfirmed ? '#4ade80' : this.locked ? '#a78bfa' : '#fb7185';
-    ctx.lineWidth = 4;
-    if (balancedConfirmed) {
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = '#4ade80';
-    }
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.roundRect(-armLen - 12, -10, (armLen + 12) * 2, 20, 10);
+    ctx.roundRect(-armLen - 14, -10, (armLen + 14) * 2, 20, 10);
     ctx.fill();
+    ctx.stroke();
+
+    // Neoninė linija sijos centre
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = balancedConfirmed ? '#4ade80' : this.locked ? '#38bdf8' : '#fb7185';
+    ctx.strokeStyle = balancedConfirmed ? '#86efac' : this.locked ? '#38bdf8' : '#fda4af';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(-armLen + 14, 0);
+    ctx.lineTo(armLen - 14, 0);
     ctx.stroke();
     ctx.restore();
 
-    // Centrinė šviesos lemputė (užrakinta „?“ arba patikrinimo rezultatas)
+    // Centrinė žalvarinė ir neoninė šviesos lemputė
     ctx.save();
     if (balancedConfirmed) {
-      // Pusiausvyros šviesos banga nuo centro
       for (let w = 0; w < 2; w++) {
         const wavePhase = (this.time * 1.15 + w * 0.5) % 1;
         const wr = 24 + wavePhase * 195;
@@ -795,23 +846,35 @@ export class BalanceScaleEngine {
         ctx.stroke();
       }
     }
+    const brassRing = ctx.createRadialGradient(pivotX - 6, pivotY - 6, 4, pivotX, pivotY, 27);
+    brassRing.addColorStop(0, '#fef08a');
+    brassRing.addColorStop(0.7, '#d97706');
+    brassRing.addColorStop(1, '#451a03');
+    ctx.fillStyle = brassRing;
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(pivotX, pivotY, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
     const lampColor = balancedConfirmed
       ? '#22c55e'
       : this.locked
         ? '#7c3aed'
         : '#f43f5e';
-    ctx.shadowBlur = balancedConfirmed ? 26 : 14;
+    ctx.shadowBlur = balancedConfirmed ? 26 : 16;
     ctx.shadowColor = lampColor;
     ctx.fillStyle = lampColor;
     ctx.beginPath();
-    ctx.arc(pivotX, pivotY, 22, 0, Math.PI * 2);
+    ctx.arc(pivotX, pivotY, 20, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#fef9c3';
+    ctx.lineWidth = 2.2;
     ctx.stroke();
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '900 17px "Russo One", sans-serif';
+    ctx.font = '700 17px "Fredoka", "Outfit", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const centerSymbol = balancedConfirmed
@@ -858,8 +921,13 @@ export class BalanceScaleEngine {
   }
 
   drawPanFrame(ctx, hookX, hookY, panY, panHalfW, isBalanced) {
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 2.5;
+    // Žalvarinės grandinės / strypai
+    const rodGrad = ctx.createLinearGradient(hookX - panHalfW, hookY, hookX + panHalfW, panY);
+    rodGrad.addColorStop(0, '#d97706');
+    rodGrad.addColorStop(0.5, '#fef08a');
+    rodGrad.addColorStop(1, '#b45309');
+    ctx.strokeStyle = rodGrad;
+    ctx.lineWidth = 2.8;
     ctx.beginPath();
     ctx.moveTo(hookX, hookY + 6);
     ctx.lineTo(hookX - panHalfW + 10, panY);
@@ -867,19 +935,30 @@ export class BalanceScaleEngine {
     ctx.lineTo(hookX + panHalfW - 10, panY);
     ctx.stroke();
 
-    ctx.fillStyle = '#cbd5e1';
+    ctx.fillStyle = '#fde047';
+    ctx.strokeStyle = '#78350f';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(hookX, hookY + 4, 6, 0, Math.PI * 2);
+    ctx.arc(hookX, hookY + 4, 6.5, 0, Math.PI * 2);
     ctx.fill();
+    ctx.stroke();
 
     ctx.save();
+    ctx.shadowBlur = isBalanced ? 18 : 10;
+    ctx.shadowColor = isBalanced ? '#4ade80' : 'rgba(2, 6, 23, 0.75)';
+    const panGrad = ctx.createLinearGradient(hookX - panHalfW, panY, hookX + panHalfW, panY + 18);
     if (isBalanced) {
-      ctx.shadowBlur = 14;
-      ctx.shadowColor = '#4ade80';
+      panGrad.addColorStop(0, '#166534');
+      panGrad.addColorStop(0.5, '#22c55e');
+      panGrad.addColorStop(1, '#14532d');
+    } else {
+      panGrad.addColorStop(0, '#78350f');
+      panGrad.addColorStop(0.5, '#d97706');
+      panGrad.addColorStop(1, '#451a03');
     }
-    ctx.fillStyle = isBalanced ? '#14532d' : '#1e293b';
-    ctx.strokeStyle = isBalanced ? '#4ade80' : '#38bdf8';
-    ctx.lineWidth = 3.5;
+    ctx.fillStyle = panGrad;
+    ctx.strokeStyle = isBalanced ? '#86efac' : '#38bdf8';
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(hookX - panHalfW, panY);
     ctx.lineTo(hookX + panHalfW, panY);

@@ -14,8 +14,11 @@ export const MATRIX_COLORS = {
  * Sugeneruoja ryškų SVG pagal figūros aprašymą:
  * { shape, color, rot, count, size, dotColor }
  */
+let matrixSvgCounter = 0;
+
 export function renderShapeSvg(spec) {
   if (!spec) return '';
+  const uid = `m${++matrixSvgCounter}`;
   const shape = spec.shape || 'circle';
   const fill = MATRIX_COLORS[spec.color] || spec.color || '#22d3ee';
   const rot = Number(spec.rot) || 0;
@@ -26,24 +29,30 @@ export function renderShapeSvg(spec) {
 
   const scaleMap = { sm: 0.56, md: 0.82, lg: 1.06 };
   const scale = count > 1 ? 0.44 : (scaleMap[size] || 0.85);
+  const gradUrl = `url(#${uid}_g)`;
+  const filtUrl = `url(#${uid}_s)`;
 
   const drawSingle = (cx, cy, sc) => {
     const r = 24 * sc;
     let body = '';
     if (shape === 'circle') {
-      body = `<circle cx="0" cy="0" r="${r}" fill="${fill}" stroke="#020617" stroke-width="3" />`;
+      body = `<circle cx="0" cy="0" r="${r}" fill="${gradUrl}" stroke="#020617" stroke-width="2.6" />
+              <path d="M ${-r * 0.55} ${-r * 0.35} A ${r * 0.72} ${r * 0.72} 0 0 1 ${r * 0.42} ${-r * 0.55}" fill="none" stroke="rgba(255,255,255,0.48)" stroke-width="${Math.max(1.4, 2.2 * sc)}" stroke-linecap="round" />`;
     } else if (shape === 'square') {
-      body = `<rect x="${-r}" y="${-r}" width="${r * 2}" height="${r * 2}" rx="${4 * sc}" fill="${fill}" stroke="#020617" stroke-width="3" />`;
+      body = `<rect x="${-r}" y="${-r}" width="${r * 2}" height="${r * 2}" rx="${5 * sc}" fill="${gradUrl}" stroke="#020617" stroke-width="2.6" />
+              <line x1="${-r * 0.68}" y1="${-r * 0.68}" x2="${r * 0.68}" y2="${-r * 0.68}" stroke="rgba(255,255,255,0.45)" stroke-width="${Math.max(1.4, 2 * sc)}" stroke-linecap="round" />`;
     } else if (shape === 'diamond') {
       const d = r * 1.15;
-      body = `<polygon points="0,${-d} ${d},0 0,${d} ${-d},0" fill="${fill}" stroke="#020617" stroke-width="3" />`;
+      body = `<polygon points="0,${-d} ${d},0 0,${d} ${-d},0" fill="${gradUrl}" stroke="#020617" stroke-width="2.6" stroke-linejoin="round" />
+              <polygon points="0,${-d * 0.88} ${d * 0.55},0 0,0 ${-d * 0.55},0" fill="rgba(255,255,255,0.22)" />`;
     } else if (shape === 'triangle') {
       const h = r * 1.15;
-      body = `<polygon points="0,${-h} ${h},${h * 0.85} ${-h},${h * 0.85}" fill="${fill}" stroke="#020617" stroke-width="3" stroke-linejoin="round" />`;
+      body = `<polygon points="0,${-h} ${h},${h * 0.85} ${-h},${h * 0.85}" fill="${gradUrl}" stroke="#020617" stroke-width="2.6" stroke-linejoin="round" />
+              <polygon points="0,${-h * 0.86} 0,${h * 0.72} ${-h * 0.82},${h * 0.72}" fill="rgba(255,255,255,0.18)" />`;
     } else if (shape === 'arrow') {
       // Kryptinė rodyklė į dešinę prie rot = 0°
       const w = r * 1.15;
-      body = `<polygon points="${-w},${-w * 0.45} ${w * 0.1},${-w * 0.45} ${w * 0.1},${-w * 0.9} ${w},0 ${w * 0.1},${w * 0.9} ${w * 0.1},${w * 0.45} ${-w},${w * 0.45}" fill="${fill}" stroke="#020617" stroke-width="3" stroke-linejoin="round" />`;
+      body = `<polygon points="${-w},${-w * 0.45} ${w * 0.1},${-w * 0.45} ${w * 0.1},${-w * 0.9} ${w},0 ${w * 0.1},${w * 0.9} ${w * 0.1},${w * 0.45} ${-w},${w * 0.45}" fill="${gradUrl}" stroke="#020617" stroke-width="2.6" stroke-linejoin="round" />`;
     } else if (shape === 'star') {
       const outer = r * 1.15;
       const inner = outer * 0.46;
@@ -53,7 +62,7 @@ export function renderShapeSvg(spec) {
         const rad = i % 2 === 0 ? outer : inner;
         pts.push(`${(Math.cos(a) * rad).toFixed(1)},${(Math.sin(a) * rad).toFixed(1)}`);
       }
-      body = `<polygon points="${pts.join(' ')}" fill="${fill}" stroke="#020617" stroke-width="3" stroke-linejoin="round" />`;
+      body = `<polygon points="${pts.join(' ')}" fill="${gradUrl}" stroke="#020617" stroke-width="2.6" stroke-linejoin="round" />`;
     }
 
     let overlay = '';
@@ -69,11 +78,11 @@ export function renderShapeSvg(spec) {
             ? [[-7 * sc, 0], [7 * sc, 0]]
             : [[-8 * sc, 5 * sc], [8 * sc, 5 * sc], [0, -7 * sc]];
       offsets.forEach(([dx, dy]) => {
-        overlay += `<circle cx="${dx}" cy="${dy}" r="${4.2 * sc}" fill="#020617" />`;
+        overlay += `<circle cx="${dx}" cy="${dy}" r="${4.2 * sc}" fill="#020617" stroke="rgba(255,255,255,0.4)" stroke-width="0.9" />`;
       });
     }
 
-    return `<g transform="translate(${cx}, ${cy}) rotate(${rot})">${body}${overlay}</g>`;
+    return `<g transform="translate(${cx}, ${cy}) rotate(${rot})" filter="${filtUrl}">${body}${overlay}</g>`;
   };
 
   let innerSvg = '';
@@ -85,7 +94,19 @@ export function renderShapeSvg(spec) {
     innerSvg = drawSingle(40, 23, scale) + drawSingle(23, 54, scale) + drawSingle(57, 54, scale);
   }
 
-  return `<svg class="matrix-svg" viewBox="0 0 80 80" aria-hidden="true">${innerSvg}</svg>`;
+  return `<svg class="matrix-svg" viewBox="0 0 80 80" aria-hidden="true">
+    <defs>
+      <radialGradient id="${uid}_g" cx="32%" cy="28%" r="78%">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+        <stop offset="28%" stop-color="${fill}" />
+        <stop offset="100%" stop-color="${fill}" stop-opacity="0.72" />
+      </radialGradient>
+      <filter id="${uid}_s" x="-25%" y="-25%" width="150%" height="150%">
+        <feDropShadow dx="0" dy="2.5" stdDeviation="2.2" flood-color="#020617" flood-opacity="0.65" />
+      </filter>
+    </defs>
+    ${innerSvg}
+  </svg>`;
 }
 
 export const MATRIX_LEVELS = {

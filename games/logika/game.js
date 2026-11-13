@@ -1,32 +1,32 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113m';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113m';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113m';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113m';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113n';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113n';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113n';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113n';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113m';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113m';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113m';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113m';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113m';
+} from './balance.js?v=20261113n';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113n';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113n';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113n';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113n';
 import {
   MathCrossEngine,
   MATHCROSS_LEVELS,
   MATHCROSS_CANVAS_W,
   MATHCROSS_CANVAS_H
-} from './mathcross.js?v=20261113m';
+} from './mathcross.js?v=20261113n';
 import {
   BridgesEngine,
   BRIDGES_LEVELS,
   BRIDGES_CANVAS_W,
   BRIDGES_CANVAS_H
-} from './bridges.js?v=20261113m';
+} from './bridges.js?v=20261113n';
 import {
   PipeValveEngine,
   JugPourEngine,
@@ -34,8 +34,8 @@ import {
   FLASK_CANVAS_W,
   FLASK_CANVAS_H,
   RYB_COLORS
-} from './flasks.js?v=20261113m';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113m';
+} from './flasks.js?v=20261113n';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113n';
 import {
   isSoundEnabled,
   toggleSound,
@@ -59,8 +59,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113m';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113m';
+} from './sound.js?v=20261113n';
+import { launchVictoryConfetti, stopVictoryConfetti, launchBurstParticles } from './confetti.js?v=20261113n';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -69,8 +69,8 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113m';
-import { computeInventionsState } from './inventions.js?v=20261113m';
+} from './robot.js?v=20261113n';
+import { computeInventionsState } from './inventions.js?v=20261113n';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -770,6 +770,7 @@ function markLevelSolved(level) {
   feedbackEl.classList.remove('hidden');
 
   playVictoryFanfare();
+  triggerGameJuice(false);
   showVictoryOverlay({
     level,
     earnedStars,
@@ -3624,6 +3625,97 @@ document.querySelectorAll('.inv-filter-btn').forEach((btn) => {
     renderInventionsShelfModal();
   });
 });
+
+// ==================== GAME JUICE (EKRANO VIRPTELĖJIMAS, DALELIŲ SPROGIMAS IR FONINĖS DULKĖS) ====================
+let shakeResetTimer = null;
+function triggerGameJuice(withBurst = true, clientX, clientY) {
+  const stage = document.querySelector('#game-screen .puzzle-stage:not(.hidden)') || document.getElementById('game-screen');
+  if (stage) {
+    stage.classList.remove('lab-shake');
+    void stage.offsetWidth;
+    stage.classList.add('lab-shake');
+    if (shakeResetTimer) clearTimeout(shakeResetTimer);
+    shakeResetTimer = setTimeout(() => {
+      stage.classList.remove('lab-shake');
+    }, 440);
+  }
+  if (withBurst) {
+    const burstCanvas = document.getElementById('victory-confetti-canvas');
+    if (burstCanvas) {
+      const rect = stage?.getBoundingClientRect();
+      const bx = typeof clientX === 'number' ? clientX : rect ? rect.left + rect.width * 0.5 : window.innerWidth * 0.5;
+      const by = typeof clientY === 'number' ? clientY : rect ? rect.top + rect.height * 0.45 : window.innerHeight * 0.45;
+      launchBurstParticles(burstCanvas, bx, by, 40);
+    }
+  }
+}
+window.__protoLabJuice = triggerGameJuice;
+
+(function initAmbientLabDust() {
+  const canvas = document.getElementById('lab-ambient-dust');
+  if (!canvas || !canvas.getContext) return;
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ctx = canvas.getContext('2d');
+  let w = 0;
+  let h = 0;
+  let motes = [];
+  const colors = ['#38bdf8', '#a78bfa', '#34d399', '#fde047'];
+
+  const resize = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = window.innerWidth || 1280;
+    h = window.innerHeight || 720;
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const target = Math.min(44, Math.max(18, Math.floor((w * h) / 36000)));
+    if (motes.length !== target) {
+      motes = Array.from({ length: target }, (_, i) => ({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vy: 0.16 + Math.random() * 0.34,
+        drift: Math.random() * Math.PI * 2,
+        r: 1.2 + Math.random() * 2.2,
+        color: colors[i % colors.length],
+        alpha: 0.22 + Math.random() * 0.38
+      }));
+    }
+  };
+
+  const renderDust = (animate) => {
+    ctx.clearRect(0, 0, w, h);
+    for (const m of motes) {
+      if (animate) {
+        m.y -= m.vy;
+        m.drift += 0.015;
+        m.x += Math.sin(m.drift) * 0.22;
+        if (m.y < -12) {
+          m.y = h + 12;
+          m.x = Math.random() * w;
+        }
+      }
+      ctx.save();
+      ctx.globalAlpha = m.alpha;
+      ctx.fillStyle = m.color;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = m.color;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    if (animate) {
+      requestAnimationFrame(() => renderDust(true));
+    }
+  };
+
+  window.addEventListener('resize', resize);
+  resize();
+  renderDust(!reduced);
+})();
 
 syncSoundToggleUI();
 updateSummaryUI();

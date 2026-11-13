@@ -1071,6 +1071,7 @@ export class PinPullEngine {
         this.winNotified = false;
         const g = this.level.goal;
         this.spawnMixSparks(g.x + g.w / 2, g.y + 12, '#4ade80');
+        window.__protoLabJuice?.(true);
         this.reportStatus();
       } else {
         const potentialTotal = this.balls.filter((b) => !b.removed && b.kind !== 'water').length;
@@ -1225,34 +1226,110 @@ export class PinPullEngine {
       ctx.restore();
     }
 
-    // 3. Tikslo kolba apačioje
+    // 3. Tikslo kolba apačioje (stiklas su storu dugnu, atspindžiu, banguojančiu skysčiu ir burbuliukais)
     const g = this.level.goal;
     const isFlaskGreen = this.status === 'winning' || this.status === 'won';
+    const animNow = performance.now() * 0.004;
     ctx.save();
-    ctx.fillStyle = isFlaskGreen ? 'rgba(6, 95, 70, 0.55)' : 'rgba(6, 78, 59, 0.45)';
-    ctx.fillRect(g.x, g.y, g.w, g.h);
 
-    // Kylantis skysčio / energijos lygis kolboje
+    // Kolbos stiklo foninis gradientas
+    const glassBg = ctx.createLinearGradient(g.x, g.y, g.x + g.w, g.y);
+    glassBg.addColorStop(0, 'rgba(30, 58, 138, 0.35)');
+    glassBg.addColorStop(0.5, isFlaskGreen ? 'rgba(6, 95, 70, 0.5)' : 'rgba(15, 23, 42, 0.55)');
+    glassBg.addColorStop(1, 'rgba(30, 58, 138, 0.3)');
+    ctx.fillStyle = glassBg;
+    ctx.beginPath();
+    ctx.roundRect(g.x, g.y, g.w, g.h, [4, 4, 14, 14]);
+    ctx.fill();
+
+    // Banguojantis skysčio lygis su kylančiais burbuliukais
     if (this.liquidFill > 0.01) {
-      const liqH = Math.max(4, (g.h - 24) * Math.min(1, this.liquidFill));
-      const liqGrad = ctx.createLinearGradient(0, g.y + g.h - liqH, 0, g.y + g.h);
-      liqGrad.addColorStop(0, isFlaskGreen ? 'rgba(74, 222, 128, 0.55)' : 'rgba(56, 189, 248, 0.35)');
-      liqGrad.addColorStop(1, isFlaskGreen ? 'rgba(22, 163, 74, 0.72)' : 'rgba(14, 165, 233, 0.5)');
+      const liqH = Math.max(10, (g.h - 22) * Math.min(1, this.liquidFill));
+      const topY = g.y + g.h - liqH;
+      const botY = g.y + g.h - 6;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(g.x + 3, g.y + 2, g.w - 6, g.h - 8, [2, 2, 11, 11]);
+      ctx.clip();
+
+      const liqGrad = ctx.createLinearGradient(0, topY, 0, botY);
+      liqGrad.addColorStop(0, isFlaskGreen ? 'rgba(134, 239, 172, 0.72)' : 'rgba(56, 189, 248, 0.55)');
+      liqGrad.addColorStop(1, isFlaskGreen ? 'rgba(21, 128, 61, 0.85)' : 'rgba(3, 105, 161, 0.75)');
       ctx.fillStyle = liqGrad;
-      ctx.fillRect(g.x + 2, g.y + g.h - liqH, g.w - 4, liqH - 2);
+
+      ctx.beginPath();
+      ctx.moveTo(g.x + 2, botY);
+      ctx.lineTo(g.x + 2, topY);
+      const waveSteps = 10;
+      for (let wi = 0; wi <= waveSteps; wi++) {
+        const wx = g.x + 2 + ((g.w - 4) * wi) / waveSteps;
+        const wy = topY + Math.sin(animNow * 1.6 + wi * 0.9) * 3.2;
+        ctx.lineTo(wx, wy);
+      }
+      ctx.lineTo(g.x + g.w - 2, botY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Paviršiaus bangelės blizgesys
+      ctx.strokeStyle = isFlaskGreen ? 'rgba(220, 252, 231, 0.78)' : 'rgba(224, 242, 254, 0.65)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      for (let wi = 0; wi <= waveSteps; wi++) {
+        const wx = g.x + 2 + ((g.w - 4) * wi) / waveSteps;
+        const wy = topY + Math.sin(animNow * 1.6 + wi * 0.9) * 3.2;
+        if (wi === 0) ctx.moveTo(wx, wy);
+        else ctx.lineTo(wx, wy);
+      }
+      ctx.stroke();
+
+      // Kylantys burbuliukai skystyje
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.58)';
+      for (let bi = 0; bi < 6; bi++) {
+        const bPhase = (animNow * 0.32 + bi * 0.19) % 1;
+        const bx = g.x + 16 + ((bi * 29) % Math.max(16, g.w - 32));
+        const by = botY - 4 - bPhase * Math.max(8, liqH - 8);
+        ctx.beginPath();
+        ctx.arc(bx + Math.sin(animNow + bi) * 2, by, 1.8 + (bi % 3) * 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
+
+    // Storas stiklo dugnas
+    const baseGrad = ctx.createLinearGradient(0, g.y + g.h - 10, 0, g.y + g.h);
+    baseGrad.addColorStop(0, 'rgba(186, 230, 253, 0.25)');
+    baseGrad.addColorStop(1, 'rgba(125, 211, 252, 0.52)');
+    ctx.fillStyle = baseGrad;
+    ctx.beginPath();
+    ctx.roundRect(g.x + 2, g.y + g.h - 9, g.w - 4, 9, [0, 0, 12, 12]);
+    ctx.fill();
+
+    // Vertikalus stiklo atspindžio brūkšnys
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.28)';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(g.x + 11, g.y + 12);
+    ctx.lineTo(g.x + 11, g.y + g.h - 16);
+    ctx.stroke();
 
     if (isFlaskGreen) {
-      ctx.shadowBlur = 20;
+      ctx.shadowBlur = 22;
       ctx.shadowColor = '#4ade80';
     }
-    ctx.strokeStyle = isFlaskGreen ? '#4ade80' : '#22d3ee';
+    ctx.strokeStyle = isFlaskGreen ? '#4ade80' : '#67e8f9';
     ctx.lineWidth = isFlaskGreen ? 4.5 : 4;
+    ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(g.x, g.y);
-    ctx.lineTo(g.x, g.y + g.h);
-    ctx.lineTo(g.x + g.w, g.y + g.h);
-    ctx.lineTo(g.x + g.w, g.y);
+    ctx.moveTo(g.x - 4, g.y);
+    ctx.lineTo(g.x, g.y + 6);
+    ctx.lineTo(g.x, g.y + g.h - 8);
+    ctx.quadraticCurveTo(g.x, g.y + g.h, g.x + 10, g.y + g.h);
+    ctx.lineTo(g.x + g.w - 10, g.y + g.h);
+    ctx.quadraticCurveTo(g.x + g.w, g.y + g.h, g.x + g.w, g.y + g.h - 8);
+    ctx.lineTo(g.x + g.w, g.y + 6);
+    ctx.lineTo(g.x + g.w + 4, g.y);
     ctx.stroke();
 
     // Žalia indikatoriaus lemputė ant kolbos krašto
@@ -1266,10 +1343,10 @@ export class PinPullEngine {
     ctx.stroke();
 
     ctx.shadowBlur = 0;
-    ctx.font = '900 13px "Russo One", sans-serif';
-    ctx.fillStyle = isFlaskGreen ? '#86efac' : '#67e8f9';
+    ctx.font = '700 13px "Fredoka", "Outfit", sans-serif';
+    ctx.fillStyle = isFlaskGreen ? '#86efac' : '#e0f2fe';
     ctx.textAlign = 'center';
-    ctx.fillText(`🧪 KOLBA (${this.goalCount}/${this.level.requiredGoal})`, g.x + g.w / 2, g.y + g.h - 10);
+    ctx.fillText(`🧪 KOLBA (${this.goalCount}/${this.level.requiredGoal})`, g.x + g.w / 2, g.y + g.h - 14);
     ctx.restore();
 
     // 4. Stiklinės sienelės / kanalai
@@ -1293,7 +1370,7 @@ export class PinPullEngine {
     }
     ctx.restore();
 
-    // 5. Metaliniai kaiščiai (Pins)
+    // 5. Šlifuoto plieno kaiščiai-varžtai su rankenėlėmis
     const nowPulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.009);
     for (const pin of this.pins) {
       if (pin.removed) continue;
@@ -1301,45 +1378,93 @@ export class PinPullEngine {
       const isHover = this.hoveredPinId === pin.id && !pin.pulling;
       const isHintPin = this.hintPinId === pin.id && !pin.pulling;
 
+      const dx = seg.x2 - seg.x1;
+      const dy = seg.y2 - seg.y1;
+      const len = Math.max(1, Math.hypot(dx, dy));
+      const nx = -dy / len;
+      const ny = dx / len;
+
       ctx.save();
       ctx.lineCap = 'round';
-      if (isHintPin) {
-        ctx.shadowBlur = 18 + nowPulse * 10;
-        ctx.shadowColor = '#fde047';
-      }
+      ctx.shadowColor = isHintPin ? '#fde047' : 'rgba(2, 6, 23, 0.72)';
+      ctx.shadowBlur = isHintPin ? 18 + nowPulse * 10 : 10;
+      ctx.shadowOffsetY = isHintPin ? 0 : 4;
+
+      // Tamsus varžto kontūras
       ctx.strokeStyle = isHintPin ? '#fef08a' : '#020617';
-      ctx.lineWidth = isHintPin ? PIN_RADIUS * 2 + 8 : PIN_RADIUS * 2 + 4;
+      ctx.lineWidth = isHintPin ? PIN_RADIUS * 2 + 8 : PIN_RADIUS * 2 + 5;
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
 
-      ctx.strokeStyle = isHover || isHintPin ? '#fde047' : '#f59e0b';
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Šlifuoto plieno cilindrinis gradientas skersai varžto
+      const midX = (seg.x1 + seg.x2) / 2;
+      const midY = (seg.y1 + seg.y2) / 2;
+      const steelGrad = ctx.createLinearGradient(
+        midX - nx * PIN_RADIUS,
+        midY - ny * PIN_RADIUS,
+        midX + nx * PIN_RADIUS,
+        midY + ny * PIN_RADIUS
+      );
+      if (isHover || isHintPin) {
+        steelGrad.addColorStop(0, '#fde047');
+        steelGrad.addColorStop(0.35, '#fef9c3');
+        steelGrad.addColorStop(0.75, '#eab308');
+        steelGrad.addColorStop(1, '#854d0e');
+      } else {
+        steelGrad.addColorStop(0, '#94a3b8');
+        steelGrad.addColorStop(0.35, '#f1f5f9');
+        steelGrad.addColorStop(0.75, '#64748b');
+        steelGrad.addColorStop(1, '#1e293b');
+      }
+      ctx.strokeStyle = steelGrad;
       ctx.lineWidth = PIN_RADIUS * 2;
       ctx.beginPath();
       ctx.moveTo(seg.x1, seg.y1);
       ctx.lineTo(seg.x2, seg.y2);
       ctx.stroke();
 
-      // Rankenėlė traukimui
+      // Sriegio rievelės ant varžto koto
+      ctx.strokeStyle = 'rgba(15, 23, 42, 0.38)';
+      ctx.lineWidth = 1.6;
+      const ux = dx / len;
+      const uy = dy / len;
+      for (let d = 12; d < len - 10; d += 9) {
+        const px = seg.x1 + ux * d;
+        const py = seg.y1 + uy * d;
+        ctx.beginPath();
+        ctx.moveTo(px - nx * (PIN_RADIUS - 1), py - ny * (PIN_RADIUS - 1));
+        ctx.lineTo(px + nx * (PIN_RADIUS - 1) + ux * 3, py + ny * (PIN_RADIUS - 1) + uy * 3);
+        ctx.stroke();
+      }
+
+      // 3D metalinė traukimo rankenėlė
       const hx = pin.dirX >= 0 ? seg.x2 + 12 : seg.x1 - 12;
       const hy = pin.dirX >= 0 ? seg.y2 : seg.y1;
       if (isHintPin) {
         ctx.strokeStyle = '#fde047';
         ctx.lineWidth = 3.5;
         ctx.beginPath();
-        ctx.arc(hx, hy, 17 + nowPulse * 5, 0, Math.PI * 2);
+        ctx.arc(hx, hy, 18 + nowPulse * 5, 0, Math.PI * 2);
         ctx.stroke();
       }
-      ctx.fillStyle = isHover || isHintPin ? '#fef08a' : '#facc15';
+      const gripGrad = ctx.createRadialGradient(hx - 4, hy - 4, 2, hx, hy, 14);
+      gripGrad.addColorStop(0, '#fef9c3');
+      gripGrad.addColorStop(0.5, isHover || isHintPin ? '#fde047' : '#f59e0b');
+      gripGrad.addColorStop(1, '#92400e');
+      ctx.fillStyle = gripGrad;
       ctx.strokeStyle = '#020617';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(hx, hy, 11, 0, Math.PI * 2);
+      ctx.arc(hx, hy, 12.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
-      ctx.font = '900 10px "Russo One", sans-serif';
+      ctx.font = '700 10px "Fredoka", "Outfit", sans-serif';
       ctx.fillStyle = '#0f172a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -1347,19 +1472,34 @@ export class PinPullEngine {
       ctx.restore();
     }
 
-    // 6. Rutuliukai
+    // 6. Rutuliukai (2.5D tūrinis atspindys)
     for (const b of this.balls) {
       if (b.removed) continue;
       ctx.save();
+      ctx.shadowColor = 'rgba(2, 6, 23, 0.55)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 3;
+      const bGrad = ctx.createRadialGradient(
+        b.x - b.r * 0.35,
+        b.y - b.r * 0.35,
+        b.r * 0.12,
+        b.x,
+        b.y,
+        b.r
+      );
+      bGrad.addColorStop(0, '#ffffff');
+      bGrad.addColorStop(0.32, b.color);
+      bGrad.addColorStop(1, '#0f172a');
       ctx.beginPath();
       ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-      ctx.fillStyle = b.color;
+      ctx.fillStyle = bGrad;
       ctx.fill();
-      ctx.lineWidth = 2.5;
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.lineWidth = 2;
       ctx.strokeStyle = b.kind === 'gray' ? '#334155' : '#020617';
       ctx.stroke();
 
-      // Blizgesys arba užterštumo kryželis
       if (b.kind === 'gray') {
         ctx.strokeStyle = '#475569';
         ctx.lineWidth = 2;
@@ -1369,11 +1509,6 @@ export class PinPullEngine {
         ctx.moveTo(b.x + 4, b.y - 4);
         ctx.lineTo(b.x - 4, b.y + 4);
         ctx.stroke();
-      } else {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-        ctx.beginPath();
-        ctx.arc(b.x - b.r * 0.32, b.y - b.r * 0.32, b.r * 0.28, 0, Math.PI * 2);
-        ctx.fill();
       }
       ctx.restore();
     }

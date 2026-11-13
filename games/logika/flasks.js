@@ -778,6 +778,9 @@ export class PipeValveEngine {
       }
 
       if (this.isWinning && !this.winNotified) {
+        if (this.victoryTimer === 0) {
+          window.__protoLabJuice?.(true);
+        }
         this.victoryTimer += dt;
         if (this.victoryTimer >= 1.5) {
           this.isWinning = false;
@@ -1008,29 +1011,87 @@ export class PipeValveEngine {
               ? Math.min(1, 0.55 + ((this.victoryTimer || 1.5) / 1.1) * 0.45)
               : Math.min(0.65, Math.max(0.15, (this.flowProgress - 0.72) / 0.28));
 
-        // Kolbos kūnas
-        if (this.won) {
-          ctx.shadowBlur = 22;
-          ctx.shadowColor = '#4ade80';
-        }
-        ctx.fillStyle = '#0f172a';
-        ctx.strokeStyle = this.won ? '#4ade80' : '#cbd5e1';
-        ctx.lineWidth = this.won ? 4 : 3.5;
+        // 2.5D stiklinės kolbos kūnas su šešėliu
+        ctx.save();
+        ctx.shadowBlur = this.won ? 24 : 12;
+        ctx.shadowColor = this.won ? '#4ade80' : 'rgba(2, 6, 23, 0.7)';
+        const fGlass = ctx.createLinearGradient(n.x - 36, n.y, n.x + 36, n.y);
+        fGlass.addColorStop(0, 'rgba(30, 58, 138, 0.4)');
+        fGlass.addColorStop(0.5, 'rgba(15, 23, 42, 0.72)');
+        fGlass.addColorStop(1, 'rgba(30, 58, 138, 0.35)');
+        ctx.fillStyle = fGlass;
         ctx.beginPath();
-        ctx.roundRect(n.x - 36, n.y - 28, 72, 54, 14);
+        ctx.roundRect(n.x - 36, n.y - 28, 72, 54, [6, 6, 16, 16]);
         ctx.fill();
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+        ctx.restore();
 
-        // Kylantis skystis viduje
+        // Banguojantis skystis ir burbuliukai viduje
         if (resKey !== 'EMPTY' && fillProgress > 0) {
           const maxLiqH = 44;
           const liqH = Math.max(8, maxLiqH * fillProgress);
+          const liqTopY = n.y + 21 - liqH;
+          const liqBotY = n.y + 22;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.roundRect(n.x - 33, n.y - 25, 66, 48, [4, 4, 13, 13]);
+          ctx.clip();
+
           ctx.fillStyle = resSpec.hex;
           ctx.beginPath();
-          ctx.roundRect(n.x - 31, n.y + 21 - liqH, 62, liqH, 8);
+          ctx.moveTo(n.x - 33, liqBotY);
+          for (let wi = 0; wi <= 8; wi++) {
+            const wx = n.x - 33 + (66 * wi) / 8;
+            const wy = liqTopY + Math.sin(this.pulsePhase * 2.2 + wi * 0.9) * 2.4;
+            ctx.lineTo(wx, wy);
+          }
+          ctx.lineTo(n.x + 33, liqBotY);
+          ctx.closePath();
           ctx.fill();
+
+          // Paviršiaus atspindys ir kylančių burbuliukų efektas
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          for (let wi = 0; wi <= 8; wi++) {
+            const wx = n.x - 33 + (66 * wi) / 8;
+            const wy = liqTopY + Math.sin(this.pulsePhase * 2.2 + wi * 0.9) * 2.4;
+            if (wi === 0) ctx.moveTo(wx, wy);
+            else ctx.lineTo(wx, wy);
+          }
+          ctx.stroke();
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.58)';
+          for (let bi = 0; bi < 4; bi++) {
+            const bPh = (this.pulsePhase * 0.35 + bi * 0.25) % 1;
+            const bbx = n.x - 20 + bi * 13;
+            const bby = liqBotY - 3 - bPh * Math.max(6, liqH - 5);
+            ctx.beginPath();
+            ctx.arc(bbx, bby, 1.8 + (bi % 2) * 0.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
         }
+
+        // Storas dugnas + stiklo atspindžio linija
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.24)';
+        ctx.beginPath();
+        ctx.roundRect(n.x - 34, n.y + 18, 68, 8, [0, 0, 14, 14]);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.32)';
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(n.x - 27, n.y - 20);
+        ctx.lineTo(n.x - 27, n.y + 13);
+        ctx.stroke();
+
+        ctx.strokeStyle = this.won ? '#4ade80' : '#bae6fd';
+        ctx.lineWidth = this.won ? 4 : 3.2;
+        ctx.beginPath();
+        ctx.roundRect(n.x - 36, n.y - 28, 72, 54, [6, 6, 16, 16]);
+        ctx.stroke();
 
         // Žalia indikatoriaus šviesa virš kolbos
         ctx.save();
@@ -1205,6 +1266,7 @@ export class JugPourEngine {
       this.inputLocked = true;
       this.victoryTimer = 0;
       this.winNotified = false;
+      window.__protoLabJuice?.(true);
     }
   }
 
@@ -1325,45 +1387,102 @@ export class JugPourEngine {
         ctx.stroke();
       }
 
-      // Skysčio lygis
+      // 2.5D stiklinės kolbos fonas su šoniniu stiklo blizgesiu
+      const glassGrad = ctx.createLinearGradient(box.x, box.y, box.x + box.w, box.y);
+      glassGrad.addColorStop(0, 'rgba(56, 189, 248, 0.16)');
+      glassGrad.addColorStop(0.5, 'rgba(15, 23, 42, 0.56)');
+      glassGrad.addColorStop(1, 'rgba(56, 189, 248, 0.12)');
+      ctx.fillStyle = glassGrad;
+      ctx.beginPath();
+      ctx.roundRect(box.x, box.y, box.w, box.h, [4, 4, 14, 14]);
+      ctx.fill();
+
+      // Skysčio lygis su banguojančiu paviršiumi ir kylančiais burbuliukais
       const fillRatio = Math.max(0, Math.min(1, animL / box.cap));
       const fillH = box.h * fillRatio;
-      if (fillH > 1) {
-        const liqGrad = ctx.createLinearGradient(0, box.bottomY - fillH, 0, box.bottomY);
+      if (fillH > 2) {
+        const liqTopY = box.bottomY - fillH;
+        const liqGrad = ctx.createLinearGradient(0, liqTopY, 0, box.bottomY);
         if (isTargetMatch) {
-          liqGrad.addColorStop(0, '#4ade80');
-          liqGrad.addColorStop(1, '#16a34a');
+          liqGrad.addColorStop(0, '#86efac');
+          liqGrad.addColorStop(0.3, '#4ade80');
+          liqGrad.addColorStop(1, '#15803d');
         } else {
-          liqGrad.addColorStop(0, '#38bdf8');
-          liqGrad.addColorStop(1, '#0284c7');
+          liqGrad.addColorStop(0, '#7dd3fc');
+          liqGrad.addColorStop(0.3, '#38bdf8');
+          liqGrad.addColorStop(1, '#0369a1');
         }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(box.x + 2, box.y + 2, box.w - 4, box.h - 4, [2, 2, 12, 12]);
+        ctx.clip();
+
         ctx.fillStyle = liqGrad;
         ctx.beginPath();
-        ctx.roundRect(box.x + 3, box.bottomY - fillH, box.w - 6, fillH - 2, [4, 4, 10, 10]);
+        ctx.moveTo(box.x + 2, box.bottomY);
+        const wSteps = 10;
+        const waveAmp = fillRatio > 0.96 ? 1.2 : 2.8;
+        for (let wi = 0; wi <= wSteps; wi++) {
+          const wx = box.x + 2 + ((box.w - 4) * wi) / wSteps;
+          const wy = liqTopY + Math.sin((this.time || 0) * 4.5 + wi * 0.85 + box.idx) * waveAmp;
+          ctx.lineTo(wx, wy);
+        }
+        ctx.lineTo(box.x + box.w - 2, box.bottomY);
+        ctx.closePath();
         ctx.fill();
 
-        if (isTargetMatch && this.won) {
-          // Žalia šviesa ir burbuliukai tikslo kolboje
-          ctx.save();
-          ctx.fillStyle = 'rgba(220, 252, 231, 0.65)';
-          for (let bi = 0; bi < 4; bi++) {
-            const phase = ((this.time || 0) * 1.4 + bi * 0.27) % 1;
-            const bbx = box.x + 14 + ((bi * 23) % Math.max(16, box.w - 28));
-            const bby = box.bottomY - 8 - phase * Math.max(8, fillH - 14);
+        // Paviršiaus menisko švytėjimas
+        ctx.strokeStyle = isTargetMatch ? 'rgba(220, 252, 231, 0.85)' : 'rgba(224, 242, 254, 0.72)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let wi = 0; wi <= wSteps; wi++) {
+          const wx = box.x + 2 + ((box.w - 4) * wi) / wSteps;
+          const wy = liqTopY + Math.sin((this.time || 0) * 4.5 + wi * 0.85 + box.idx) * waveAmp;
+          if (wi === 0) ctx.moveTo(wx, wy);
+          else ctx.lineTo(wx, wy);
+        }
+        ctx.stroke();
+
+        // Kylantys burbuliukai skystyje
+        if (fillH > 14) {
+          ctx.fillStyle = isTargetMatch && this.won ? 'rgba(220, 252, 231, 0.78)' : 'rgba(255, 255, 255, 0.48)';
+          const bCount = isTargetMatch && this.won ? 6 : 4;
+          for (let bi = 0; bi < bCount; bi++) {
+            const phase = ((this.time || 0) * (isTargetMatch ? 1.15 : 0.75) + bi * 0.23 + box.idx * 0.17) % 1;
+            const bbx = box.x + 14 + ((bi * 21) % Math.max(16, box.w - 28));
+            const bby = box.bottomY - 8 - phase * Math.max(8, fillH - 12);
             ctx.beginPath();
-            ctx.arc(bbx, bby, 2.5 + (bi % 2), 0, Math.PI * 2);
+            ctx.arc(bbx + Math.sin((this.time || 0) * 3 + bi) * 2, bby, 2 + (bi % 2) * 1.1, 0, Math.PI * 2);
             ctx.fill();
           }
-          ctx.restore();
         }
+        ctx.restore();
       }
+
+      // Storas stiklo dugnas ir vertikalus šviesos atspindys
+      const baseThick = ctx.createLinearGradient(0, box.bottomY - 11, 0, box.bottomY);
+      baseThick.addColorStop(0, 'rgba(186, 230, 253, 0.18)');
+      baseThick.addColorStop(1, 'rgba(186, 230, 253, 0.45)');
+      ctx.fillStyle = baseThick;
+      ctx.beginPath();
+      ctx.roundRect(box.x + 2, box.bottomY - 10, box.w - 4, 10, [0, 0, 12, 12]);
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.34)';
+      ctx.lineWidth = 4.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(box.x + 11, box.y + 12);
+      ctx.lineTo(box.x + 11, box.bottomY - 16);
+      ctx.stroke();
 
       // Stiklinės kolbos kontūras + padalos
       if (isTargetMatch && this.won) {
-        ctx.shadowBlur = 18;
+        ctx.shadowBlur = 22;
         ctx.shadowColor = '#4ade80';
       }
-      ctx.strokeStyle = isTargetMatch ? '#4ade80' : isSelected ? '#fde047' : '#cbd5e1';
+      ctx.strokeStyle = isTargetMatch ? '#4ade80' : isSelected ? '#fde047' : '#bae6fd';
       ctx.lineWidth = 3.5;
       ctx.beginPath();
       ctx.roundRect(box.x, box.y, box.w, box.h, [4, 4, 14, 14]);

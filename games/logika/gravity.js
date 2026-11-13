@@ -655,6 +655,9 @@ export class GravityMazeEngine {
       last = now;
       this.time += dt;
       if (this.isWinning && !this.winNotified) {
+        if (this.victoryTimer === 0) {
+          window.__protoLabJuice?.(true);
+        }
         this.victoryTimer += dt;
         if (this.victoryTimer >= 2.0) {
           this.isWinning = false;

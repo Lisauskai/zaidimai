@@ -1,5 +1,5 @@
 // ==================== SMART HINT (UŽUOMINOS LEMPUTĖ) IR 3 KLASĖS PAR ĖJIMAI ====================
-import { solveJugFirstMoveBfs, solvePipeFirstValveBfs } from './flasks.js?v=20261113m';
+import { solveJugFirstMoveBfs, solvePipeFirstValveBfs } from './flasks.js?v=20261113n';
 
 export const OPTIMAL_PAR_MOVES = {
   // 1. Ištrauk kaištį (Pin-Pull)

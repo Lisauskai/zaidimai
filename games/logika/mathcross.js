@@ -907,6 +907,7 @@ export class MathCrossEngine {
       this.selectedSlotKey = null;
       this.notifyState();
       this.draw();
+      window.__protoLabJuice?.(true);
       this.callbacks.onCheckResult?.({ ok: true, won: true });
       this.startVictoryLoop();
       return { ok: true, won: true };
@@ -981,24 +982,35 @@ export class MathCrossEngine {
 
     ctx.save();
     if (this.won) {
-      ctx.shadowBlur = 14 + winGlow * 14;
+      ctx.shadowBlur = 16 + winGlow * 14;
       ctx.shadowColor = '#4ade80';
     } else if (isHinted || isSelected) {
-      ctx.shadowBlur = 16;
+      ctx.shadowBlur = 18;
       ctx.shadowColor = isHinted ? '#facc15' : '#38bdf8';
+    } else {
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = 'rgba(2, 6, 23, 0.72)';
+      ctx.shadowOffsetY = 4;
     }
 
-    ctx.fillStyle = this.won
-      ? isFixed
-        ? '#166534'
-        : '#15803d'
-      : isFixed
-        ? '#334155'
-        : isPlaced
-          ? '#0369a1'
-          : '#0f172a';
+    const nodeGrad = ctx.createRadialGradient(x - r * 0.25, y - r * 0.28, 3, x, y, r);
+    if (this.won) {
+      nodeGrad.addColorStop(0, '#4ade80');
+      nodeGrad.addColorStop(1, '#14532d');
+    } else if (isFixed) {
+      nodeGrad.addColorStop(0, '#475569');
+      nodeGrad.addColorStop(1, '#1e293b');
+    } else if (isPlaced) {
+      nodeGrad.addColorStop(0, '#38bdf8');
+      nodeGrad.addColorStop(1, '#075985');
+    } else {
+      nodeGrad.addColorStop(0, '#1e293b');
+      nodeGrad.addColorStop(1, '#090f20');
+    }
+
+    ctx.fillStyle = nodeGrad;
     ctx.strokeStyle = this.won
-      ? '#4ade80'
+      ? '#86efac'
       : isHinted
         ? '#facc15'
         : isSelected
@@ -1007,16 +1019,25 @@ export class MathCrossEngine {
             ? '#94a3b8'
             : isPlaced
               ? '#7dd3fc'
-              : '#6366f1';
-    ctx.lineWidth = isSelected || isHinted ? 4 : 3;
+              : '#818cf8';
+    ctx.lineWidth = isSelected || isHinted ? 3.8 : 2.8;
 
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
 
+    // Vidinis stiklinis blizgesys
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(x, y, r - 4, -Math.PI * 0.85, -Math.PI * 0.15);
+    ctx.stroke();
+
     ctx.fillStyle = isFixed ? '#e2e8f0' : isPlaced ? '#ffffff' : '#64748b';
-    ctx.font = '900 21px "Russo One", sans-serif';
+    ctx.font = '700 21px "Fredoka", "Outfit", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(value !== null && value !== undefined ? String(value) : '?', x, y + 1);
@@ -1141,8 +1162,19 @@ export class MathCrossEngine {
 
       if (cell.type === 'op') {
         ctx.save();
-        ctx.fillStyle = cell.text === '=' ? '#facc15' : '#38bdf8';
-        ctx.font = '900 28px "Russo One", sans-serif';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = cell.text === '=' ? 'rgba(250, 204, 21, 0.55)' : 'rgba(56, 189, 248, 0.5)';
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.strokeStyle = cell.text === '=' ? 'rgba(250, 204, 21, 0.65)' : 'rgba(56, 189, 248, 0.55)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = cell.text === '=' ? '#fde047' : '#7dd3fc';
+        ctx.font = '700 26px "Fredoka", "Outfit", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(cell.text, cx, cy + 1);
@@ -1151,19 +1183,28 @@ export class MathCrossEngine {
         const winGlow = this.won ? 0.5 + 0.5 * Math.sin(this.winPulse * 6 + cx * 0.02 + cy * 0.02) : 0;
         ctx.save();
         if (this.won) {
-          ctx.shadowBlur = 12 + winGlow * 10;
+          ctx.shadowBlur = 14 + winGlow * 10;
           ctx.shadowColor = '#4ade80';
+        } else {
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = 'rgba(2, 6, 23, 0.68)';
+          ctx.shadowOffsetY = 4;
         }
-        ctx.fillStyle = this.won ? '#166534' : '#1e293b';
-        ctx.strokeStyle = this.won ? '#4ade80' : '#64748b';
-        ctx.lineWidth = 3;
+        const numGrad = ctx.createLinearGradient(cx, cy - 28, cx, cy + 28);
+        numGrad.addColorStop(0, this.won ? '#22c55e' : '#334155');
+        numGrad.addColorStop(1, this.won ? '#14532d' : '#0f172a');
+        ctx.fillStyle = numGrad;
+        ctx.strokeStyle = this.won ? '#86efac' : '#64748b';
+        ctx.lineWidth = 2.6;
         ctx.beginPath();
-        ctx.roundRect(cx - 28, cy - 28, 56, 56, 12);
+        ctx.roundRect(cx - 28, cy - 28, 56, 56, 13);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = this.won ? '#dcfce7' : '#e2e8f0';
-        ctx.font = '900 21px "Russo One", sans-serif';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = this.won ? '#dcfce7' : '#f1f5f9';
+        ctx.font = '700 22px "Fredoka", "Outfit", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(String(cell.value), cx, cy + 1);
@@ -1177,15 +1218,30 @@ export class MathCrossEngine {
 
         ctx.save();
         if (this.won) {
-          ctx.shadowBlur = 14 + winGlow * 14;
+          ctx.shadowBlur = 16 + winGlow * 14;
           ctx.shadowColor = '#4ade80';
         } else if (isHinted || isSelected) {
-          ctx.shadowBlur = 16;
+          ctx.shadowBlur = 18;
           ctx.shadowColor = isHinted ? '#facc15' : '#38bdf8';
+        } else {
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = 'rgba(2, 6, 23, 0.72)';
+          ctx.shadowOffsetY = 4;
         }
-        ctx.fillStyle = this.won ? '#15803d' : placed ? '#0369a1' : '#0f172a';
+        const slotGrad = ctx.createLinearGradient(cx, cy - 28, cx, cy + 28);
+        if (this.won) {
+          slotGrad.addColorStop(0, '#22c55e');
+          slotGrad.addColorStop(1, '#14532d');
+        } else if (placed) {
+          slotGrad.addColorStop(0, '#0284c7');
+          slotGrad.addColorStop(1, '#0c4a6e');
+        } else {
+          slotGrad.addColorStop(0, '#1e293b');
+          slotGrad.addColorStop(1, '#090f20');
+        }
+        ctx.fillStyle = slotGrad;
         ctx.strokeStyle = this.won
-          ? '#4ade80'
+          ? '#86efac'
           : isHinted
             ? '#facc15'
             : isSelected
@@ -1193,14 +1249,16 @@ export class MathCrossEngine {
               : placed
                 ? '#7dd3fc'
                 : '#a855f7';
-        ctx.lineWidth = isSelected || isHinted ? 4 : 3;
+        ctx.lineWidth = isSelected || isHinted ? 3.8 : 2.8;
         ctx.beginPath();
-        ctx.roundRect(cx - 28, cy - 28, 56, 56, 12);
+        ctx.roundRect(cx - 28, cy - 28, 56, 56, 13);
         ctx.fill();
         ctx.stroke();
 
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
         ctx.fillStyle = placed ? '#ffffff' : '#94a3b8';
-        ctx.font = '900 22px "Russo One", sans-serif';
+        ctx.font = '700 22px "Fredoka", "Outfit", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(placed ? String(placed.value) : '?', cx, cy + 1);

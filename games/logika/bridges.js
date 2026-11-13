@@ -648,6 +648,9 @@ export class BridgesEngine {
       last = now;
       this.winPulse += dt;
       if (this.isWinning && !this.winNotified) {
+        if (this.victoryTimer === 0) {
+          window.__protoLabJuice?.(true);
+        }
         this.victoryTimer += dt;
         if (this.victoryTimer >= 1.6) {
           this.isWinning = false;
@@ -867,17 +870,18 @@ export class BridgesEngine {
       ctx.restore();
     }
 
-    // Piešiame pačias salas
+    // Piešiame 2.5D energijos salas su šešėliu, metaliniu rėmeliu ir švytinčia šerdimi
     for (const pos of this.islandCoords) {
       const deg = this.getDegree(pos.id);
       const isMatch = deg === pos.need;
       const isOver = deg > pos.need;
       const isSelected = pos.id === this.selectedIslandId;
       const isHinted = pos.id === this.hintIslandId;
+      const r = this.islandRadius;
 
       ctx.save();
       if (isHinted || isSelected || isMatch || isOver) {
-        ctx.shadowBlur = isHinted || isSelected ? 20 : 12;
+        ctx.shadowBlur = isHinted || isSelected ? 22 : 15;
         ctx.shadowColor = isHinted
           ? '#facc15'
           : isSelected
@@ -885,15 +889,31 @@ export class BridgesEngine {
             : isOver
               ? '#f43f5e'
               : '#22c55e';
+      } else {
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = 'rgba(2, 6, 23, 0.78)';
+        ctx.shadowOffsetY = 5;
       }
 
-      ctx.fillStyle = isOver
-        ? '#7f1d1d'
-        : isMatch
-          ? '#14532d'
-          : isSelected
-            ? '#0c4a6e'
-            : '#1e293b';
+      const islGrad = ctx.createRadialGradient(pos.x - r * 0.28, pos.y - r * 0.28, 3, pos.x, pos.y, r);
+      if (isOver) {
+        islGrad.addColorStop(0, '#ef4444');
+        islGrad.addColorStop(1, '#7f1d1d');
+      } else if (isMatch) {
+        islGrad.addColorStop(0, '#4ade80');
+        islGrad.addColorStop(0.55, '#15803d');
+        islGrad.addColorStop(1, '#052e16');
+      } else if (isSelected) {
+        islGrad.addColorStop(0, '#38bdf8');
+        islGrad.addColorStop(0.55, '#0369a1');
+        islGrad.addColorStop(1, '#082f49');
+      } else {
+        islGrad.addColorStop(0, '#475569');
+        islGrad.addColorStop(0.55, '#1e293b');
+        islGrad.addColorStop(1, '#090f20');
+      }
+
+      ctx.fillStyle = islGrad;
       ctx.strokeStyle = isHinted
         ? '#facc15'
         : isSelected
@@ -901,17 +921,26 @@ export class BridgesEngine {
           : isOver
             ? '#fb7185'
             : isMatch
-              ? '#4ade80'
-              : '#6366f1';
-      ctx.lineWidth = isSelected || isHinted ? 4.5 : 3.5;
+              ? '#86efac'
+              : '#818cf8';
+      ctx.lineWidth = isSelected || isHinted ? 4.2 : 3.2;
 
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, this.islandRadius, 0, Math.PI * 2);
+      ctx.arc(pos.x, pos.y, r, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
 
+      // Vidinis švytintis žiedas ir blizgesys
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, r - 4.5, 0, Math.PI * 2);
+      ctx.stroke();
+
       ctx.fillStyle = isOver ? '#fecdd3' : isMatch ? '#dcfce7' : '#ffffff';
-      ctx.font = '900 20px "Russo One", sans-serif';
+      ctx.font = '700 20px "Fredoka", "Outfit", sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(pos.need), pos.x, pos.y + 1);

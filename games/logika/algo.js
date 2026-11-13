@@ -991,6 +991,9 @@ export class AlgoEngine {
       last = now;
       this.pulsePhase += dt * 3.6;
       if (this.isWinning && !this.winNotified) {
+        if (this.victoryTimer === 0) {
+          window.__protoLabJuice?.(true);
+        }
         this.victoryTimer += dt;
         if (this.victoryTimer >= 2.0) {
           this.isWinning = false;
@@ -1272,55 +1275,132 @@ export class AlgoEngine {
   drawRobot(ctx, cx, cy, cellSize, dirKey) {
     const dirAngles = { U: -Math.PI / 2, R: 0, D: Math.PI / 2, L: Math.PI };
     const angle = dirAngles[dirKey] ?? 0;
-    const bodyR = cellSize * 0.33;
+    const bodyR = cellSize * 0.34;
     const jumpLift = this.won ? Math.abs(Math.sin(this.pulsePhase * 2.5)) * (cellSize * 0.24) : 0;
+    const jetActive = this.running || this.won;
 
     ctx.save();
     ctx.translate(cx, cy);
 
     const shadowScale = Math.max(0.55, 1 - jumpLift / (cellSize * 0.45));
-    ctx.fillStyle = 'rgba(2, 6, 23, 0.55)';
+    ctx.fillStyle = 'rgba(2, 6, 23, 0.58)';
     ctx.beginPath();
-    ctx.ellipse(0, bodyR * 0.65, bodyR * 0.9 * shadowScale, bodyR * 0.45 * shadowScale, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, bodyR * 0.68, bodyR * 0.94 * shadowScale, bodyR * 0.46 * shadowScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.translate(0, -jumpLift);
     ctx.rotate(angle);
 
-    ctx.fillStyle = this.won ? '#4ade80' : '#38bdf8';
-    ctx.strokeStyle = '#020617';
-    ctx.lineWidth = 3;
+    // Reaktyvinis pėdsakas (kibirkštys ir liepsna už roboto)
+    const flamePulse = 0.78 + 0.28 * Math.sin(this.pulsePhase * 8);
+    const jetLen = (jetActive ? bodyR * 1.15 : bodyR * 0.52) * flamePulse;
+    ctx.save();
+    ctx.shadowBlur = jetActive ? 16 : 8;
+    ctx.shadowColor = this.won ? '#4ade80' : '#38bdf8';
+    const jetGrad = ctx.createLinearGradient(-bodyR * 0.92, 0, -bodyR * 0.92 - jetLen, 0);
+    jetGrad.addColorStop(0, '#ffffff');
+    jetGrad.addColorStop(0.35, this.won ? '#4ade80' : '#38bdf8');
+    jetGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+    ctx.fillStyle = jetGrad;
     ctx.beginPath();
-    ctx.roundRect(-bodyR, -bodyR * 0.88, bodyR * 1.9, bodyR * 1.76, 10);
+    ctx.moveTo(-bodyR * 0.9, -bodyR * 0.34);
+    ctx.lineTo(-bodyR * 0.9 - jetLen, 0);
+    ctx.lineTo(-bodyR * 0.9, bodyR * 0.34);
+    ctx.closePath();
+    ctx.fill();
+
+    // Smulkios reaktyvinės dalelės pėdsake
+    for (let jp = 0; jp < 3; jp++) {
+      const ph = ((this.pulsePhase * 0.55 + jp * 0.33) % 1);
+      const px = -bodyR * 0.96 - ph * jetLen * 1.2;
+      const py = Math.sin(this.pulsePhase * 3 + jp * 2.1) * (bodyR * 0.25);
+      ctx.globalAlpha = 1 - ph;
+      ctx.fillStyle = jp % 2 === 0 ? '#a5f3fc' : '#fde047';
+      ctx.beginPath();
+      ctx.arc(px, py, 2.2 * (1 - ph * 0.4), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Šoniniai reaktyviniai purkštukai
+    ctx.fillStyle = '#334155';
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(-bodyR * 1.08, -bodyR * 0.5, bodyR * 0.3, bodyR * 1.0, 4);
     ctx.fill();
     ctx.stroke();
 
-    ctx.fillStyle = '#facc15';
+    // 2.5D metalinis roboto korpusas
+    const hullGrad = ctx.createRadialGradient(-bodyR * 0.22, -bodyR * 0.25, 2, 0, 0, bodyR * 1.25);
+    if (this.won) {
+      hullGrad.addColorStop(0, '#dcfce7');
+      hullGrad.addColorStop(0.45, '#4ade80');
+      hullGrad.addColorStop(1, '#15803d');
+    } else {
+      hullGrad.addColorStop(0, '#e0f2fe');
+      hullGrad.addColorStop(0.45, '#38bdf8');
+      hullGrad.addColorStop(1, '#1d4ed8');
+    }
+    ctx.fillStyle = hullGrad;
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 2.8;
     ctx.beginPath();
-    ctx.moveTo(bodyR * 1.18, 0);
-    ctx.lineTo(bodyR * 0.72, -bodyR * 0.36);
-    ctx.lineTo(bodyR * 0.72, bodyR * 0.36);
+    ctx.roundRect(-bodyR * 0.92, -bodyR * 0.88, bodyR * 1.84, bodyR * 1.76, 11);
+    ctx.fill();
+    ctx.stroke();
+
+    // Antena su švytinčiu švyturėliu
+    ctx.strokeStyle = '#bae6fd';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(-bodyR * 0.48, -bodyR * 0.65);
+    ctx.lineTo(-bodyR * 0.82, -bodyR * 1.06);
+    ctx.stroke();
+    ctx.save();
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = this.won ? '#4ade80' : '#fde047';
+    ctx.fillStyle = this.won ? '#4ade80' : '#fde047';
+    ctx.beginPath();
+    ctx.arc(-bodyR * 0.84, -bodyR * 1.08, bodyR * 0.17, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Kryptinis auksinis priekinis snapelis
+    ctx.fillStyle = '#fde047';
+    ctx.beginPath();
+    ctx.moveTo(bodyR * 1.16, 0);
+    ctx.lineTo(bodyR * 0.74, -bodyR * 0.34);
+    ctx.lineTo(bodyR * 0.74, bodyR * 0.34);
     ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = '#020617';
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.fillStyle = '#0f172a';
+    // Švytintis stiklinis vizorius su akių LED juosta
+    ctx.fillStyle = '#090d1f';
+    ctx.strokeStyle = '#7dd3fc';
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.roundRect(0, -bodyR * 0.62, bodyR * 0.72, bodyR * 1.24, 5);
+    ctx.roundRect(-bodyR * 0.04, -bodyR * 0.64, bodyR * 0.76, bodyR * 1.28, 6);
     ctx.fill();
+    ctx.stroke();
 
-    ctx.fillStyle = '#fef08a';
+    ctx.save();
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = this.won ? '#4ade80' : '#22d3ee';
+    ctx.fillStyle = this.won ? '#86efac' : '#67e8f9';
     ctx.beginPath();
-    ctx.arc(bodyR * 0.38, -bodyR * 0.28, bodyR * 0.16, 0, Math.PI * 2);
-    ctx.arc(bodyR * 0.38, bodyR * 0.28, bodyR * 0.16, 0, Math.PI * 2);
+    ctx.arc(bodyR * 0.38, -bodyR * 0.27, bodyR * 0.16, 0, Math.PI * 2);
+    ctx.arc(bodyR * 0.38, bodyR * 0.27, bodyR * 0.16, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
 
-    ctx.fillStyle = '#020617';
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(bodyR * 0.44, -bodyR * 0.28, bodyR * 0.06, 0, Math.PI * 2);
-    ctx.arc(bodyR * 0.44, bodyR * 0.28, bodyR * 0.06, 0, Math.PI * 2);
+    ctx.arc(bodyR * 0.42, -bodyR * 0.31, bodyR * 0.06, 0, Math.PI * 2);
+    ctx.arc(bodyR * 0.42, bodyR * 0.23, bodyR * 0.06, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
