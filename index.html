@@ -38,11 +38,11 @@
       </div>
     </header>
 
-    <!-- ==================== 2 AKTYVIŲ ŽAIDIMŲ BLOKELIAI ==================== -->
+    <!-- ==================== 3 AKTYVIŲ ŽAIDIMŲ BLOKELIAI ==================== -->
     <main class="games-grid-section">
       <div class="section-heading">
         <h2>🟩 PASIRINK ŽAIDIMĄ</h2>
-        <span class="games-count-badge">2 AKTYVŪS PASAULIAI</span>
+        <span class="games-count-badge">3 AKTYVŪS PASAULIAI</span>
       </div>
 
       <div class="games-grid">
@@ -121,6 +121,43 @@
             </div>
           </div>
         </article>
+
+        <!-- 3 KORTELĖ: PROTO LABORATORIJA (Lazerių, grandinių ir Proto kristalų fonas) -->
+        <article class="game-tile block-tile-lab" onclick="window.location.href='./games/logika/index.html'">
+          <div class="tile-art art-science-lab">
+            <div class="lab-top-strip"></div>
+            <div class="lab-laser-beam"></div>
+
+            <div class="tile-top-row">
+              <span class="tile-status-badge badge-purple">💎 NAUJA LABORATORIJA</span>
+              <span class="tile-block-id">#03</span>
+            </div>
+
+            <div class="tile-icon-cluster">
+              <span class="sub-icon">🔦</span>
+              <span class="main-icon">🧠</span>
+              <span class="sub-icon">⚙️</span>
+            </div>
+
+            <div class="art-tags">
+              <span>💎 Proto kristalai</span>
+              <span>🔦 Lazerių veidrodžiai</span>
+              <span>🧩 1–3 klasei</span>
+            </div>
+          </div>
+
+          <div class="tile-body">
+            <h3>Proto Laboratorija</h3>
+            <p class="tile-desc">
+              Loginiai galvosūkiai, lazeriai ir išradimai 1–3 klasei
+            </p>
+            <div class="tile-footer">
+              <a href="./games/logika/index.html" class="play-btn btn-plastic-purple">
+                ▶ ŽAISTI
+              </a>
+            </div>
+          </div>
+        </article>
       </div>
     </main>
 
@@ -174,23 +211,27 @@
 
         const rawLinas = localStorage.getItem('skaiciu_karalyste_save_linas_v2');
         const rawLukas = localStorage.getItem('skaiciu_karalyste_save_lukas_v2');
+        const rawLab = localStorage.getItem('proto_lab_progress');
         const p1 = rawLinas ? JSON.parse(rawLinas) : null;
         const p2 = rawLukas ? JSON.parse(rawLukas) : null;
+        const labData = rawLab ? JSON.parse(rawLab) : null;
+        const g1Crystals = labData?.grade1?.crystals || 0;
+        const g3Crystals = labData?.grade3?.crystals || 0;
 
         const el1 = document.getElementById('hub-linas-stats');
         if (el1) {
           const t1 = formatRemainingTime('bosas_global_time_linas', p1);
           el1.textContent = p1
-            ? `Lygis ${p1.unlockedLevel || 1}/50 • ${(p1.coins || 0).toLocaleString('lt-LT')} 🪙 • ${t1}`
-            : `Lygis 1/50 • 0 🪙 • ${t1}`;
+            ? `Lygis ${p1.unlockedLevel || 1}/50 • ${(p1.coins || 0).toLocaleString('lt-LT')} 🪙 • ${g1Crystals} 💎 • ${t1}`
+            : `Lygis 1/50 • 0 🪙 • ${g1Crystals} 💎 • ${t1}`;
         }
 
         const el2 = document.getElementById('hub-lukas-stats');
         if (el2) {
           const t2 = formatRemainingTime('bosas_global_time_lukas', p2);
           el2.textContent = p2
-            ? `Lygis ${p2.unlockedLevel || 1}/50 • ${(p2.coins || 0).toLocaleString('lt-LT')} 🪙 • ${t2}`
-            : `Lygis 1/50 • 0 🪙 • ${t2}`;
+            ? `Lygis ${p2.unlockedLevel || 1}/50 • ${(p2.coins || 0).toLocaleString('lt-LT')} 🪙 • ${g3Crystals} 💎 • ${t2}`
+            : `Lygis 1/50 • 0 🪙 • ${g3Crystals} 💎 • ${t2}`;
         }
       } catch (e) {
         // Ignoruojame localStorage klaidas

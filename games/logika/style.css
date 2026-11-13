@@ -1,0 +1,652 @@
+/* ==================== PROTO LABORATORIJA (3D LAB & LASER PUZZLE STILIUS) ==================== */
+:root {
+  --bg-deep: #0f172a;
+  --bg-indigo: #1e1b4b;
+  --panel-surface: #1e293b;
+  --card-light: #f8fafc;
+  --outline: #020617;
+
+  --lab-cyan: #06b6d4;
+  --lab-cyan-dark: #0e7490;
+  --lab-purple: #7c3aed;
+  --lab-purple-dark: #5b21b6;
+  --lab-green: #22c55e;
+  --lab-green-dark: #15803d;
+  --lab-yellow: #facc15;
+  --lab-pink: #f43f5e;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at 20% 15%, #312e81 0%, #0f172a 65%, #020617 100%);
+  color: #f8fafc;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.lab-bg-grid {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ==================== VIRŠUTINĖ JUOSTA ==================== */
+.top-bar {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border-bottom: 5px solid var(--outline);
+  box-shadow: 0 6px 0 rgba(2, 6, 23, 0.75);
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.back-portal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  background: #334155;
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.92rem;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 3px solid var(--outline);
+  box-shadow: 0 4px 0 var(--outline);
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.back-portal-btn:hover {
+  transform: translateY(-2px);
+  background: #475569;
+}
+
+.game-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  font-size: 2rem;
+  background: var(--lab-purple);
+  border: 3px solid var(--outline);
+  border-radius: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 4px 0 var(--outline);
+}
+
+.game-brand h1 {
+  font-family: 'Russo One', 'Bungee', sans-serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  color: #67e8f9;
+  text-shadow: 0 3px 0 var(--outline);
+}
+
+.brand-sub {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #cbd5e1;
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-pill {
+  padding: 9px 15px;
+  border-radius: 10px;
+  border: 3px solid var(--outline);
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 0 var(--outline);
+}
+
+.hud-rank {
+  background: #334155;
+  color: #fde047;
+}
+
+.hud-crystals {
+  background: #0e7490;
+  color: #ffffff;
+}
+
+/* ==================== PAGRINDINIS KONTEINERIS ==================== */
+.lab-container {
+  position: relative;
+  z-index: 2;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 20px 54px;
+}
+
+/* ==================== PRADŽIOS EKRANAS ==================== */
+.hero-lab-card {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border: 5px solid var(--outline);
+  border-radius: 18px;
+  padding: 26px 24px;
+  text-align: center;
+  margin-bottom: 26px;
+  box-shadow:
+    inset 0 5px 0 rgba(103, 232, 249, 0.2),
+    0 10px 0 var(--outline);
+}
+
+.lab-badge-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lab-pill-tag {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.68rem;
+  background: #0f172a;
+  color: #67e8f9;
+  border: 3px solid var(--outline);
+  padding: 7px 11px;
+  border-radius: 8px;
+}
+
+.hero-lab-card h2 {
+  font-family: 'Russo One', sans-serif;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  color: var(--lab-yellow);
+  text-shadow: 0 3px 0 var(--outline);
+  margin-bottom: 10px;
+}
+
+.hero-desc {
+  font-size: 1.05rem;
+  color: #e2e8f0;
+  font-weight: 800;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+.difficulty-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.diff-card {
+  background: var(--panel-surface);
+  border: 5px solid var(--outline);
+  border-radius: 18px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 0 var(--outline);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.diff-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 0 var(--outline);
+}
+
+.diff-grade1 {
+  border-top: 10px solid var(--lab-cyan);
+}
+
+.diff-grade3 {
+  border-top: 10px solid #a855f7;
+}
+
+.diff-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.diff-level-chip {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.68rem;
+  background: #0f172a;
+  color: #fde047;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 2px solid var(--outline);
+}
+
+.diff-icon {
+  font-size: 2.4rem;
+}
+
+.diff-card h3 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.38rem;
+  color: #ffffff;
+  text-shadow: 0 2px 0 var(--outline);
+}
+
+.diff-desc {
+  color: #cbd5e1;
+  font-weight: 800;
+  line-height: 1.48;
+  font-size: 0.98rem;
+}
+
+.diff-progress-box {
+  background: #0f172a;
+  border: 3px solid var(--outline);
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progress-stat {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 900;
+  font-size: 0.95rem;
+}
+
+.progress-stat strong {
+  color: #67e8f9;
+}
+
+.diff-start-btn {
+  margin-top: auto;
+  width: 100%;
+  padding: 15px 18px;
+  border-radius: 12px;
+  border: 4px solid var(--outline);
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.12rem;
+  color: #ffffff;
+  text-shadow: 0 2px 0 var(--outline);
+  cursor: pointer;
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+
+.diff-start-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.btn-cyan {
+  background: var(--lab-cyan);
+  box-shadow: inset 0 4px 0 #67e8f9, inset 0 -4px 0 var(--lab-cyan-dark), 0 6px 0 var(--outline);
+}
+
+.btn-purple {
+  background: var(--lab-purple);
+  box-shadow: inset 0 4px 0 #c4b5fd, inset 0 -4px 0 var(--lab-purple-dark), 0 6px 0 var(--outline);
+}
+
+/* ==================== LABORATORIJOS DARBO STENDAS ==================== */
+.lab-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.lab-toolbar-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.secondary-btn {
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 3px solid var(--outline);
+  background: #334155;
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--outline);
+}
+
+.secondary-btn:hover {
+  background: #475569;
+}
+
+.active-profile-banner {
+  background: #1e293b;
+  border: 3px solid var(--outline);
+  border-radius: 12px;
+  padding: 9px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+#lab-mode-title {
+  font-family: 'Russo One', sans-serif;
+  color: var(--lab-yellow);
+  font-size: 1rem;
+}
+
+.mode-stats-sub {
+  font-weight: 900;
+  color: #67e8f9;
+  font-size: 0.92rem;
+}
+
+.levels-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.level-tab-btn {
+  background: #1e293b;
+  border: 4px solid var(--outline);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #e2e8f0;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--outline);
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.level-tab-btn:hover {
+  transform: translateY(-2px);
+  background: #334155;
+}
+
+.level-tab-btn.active {
+  background: #312e81;
+  border-color: #67e8f9;
+}
+
+.level-tab-btn.solved {
+  border-left: 8px solid var(--lab-green);
+}
+
+.level-tab-top {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.88rem;
+  margin-bottom: 4px;
+}
+
+.level-tab-name {
+  font-weight: 900;
+  font-size: 0.96rem;
+  color: #ffffff;
+}
+
+/* ==================== GALVOSŪKIŲ ZONA ==================== */
+.puzzle-workspace {
+  background: #1e293b;
+  border: 5px solid var(--outline);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 0 var(--outline);
+}
+
+.puzzle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.puzzle-type-badge {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.64rem;
+  background: #0f172a;
+  color: #67e8f9;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 2px solid var(--outline);
+  margin-bottom: 8px;
+}
+
+.puzzle-header h2 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.45rem;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.puzzle-instruction {
+  color: #cbd5e1;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.puzzle-reward-badge {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.1rem;
+  background: #0e7490;
+  border: 3px solid var(--outline);
+  border-radius: 10px;
+  padding: 8px 14px;
+  color: #ffffff;
+  box-shadow: 0 4px 0 var(--outline);
+}
+
+.puzzle-stage {
+  background: #0f172a;
+  border: 4px solid var(--outline);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+/* LAZERIŲ TINKLELIS */
+.laser-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.laser-cell {
+  width: 68px;
+  height: 68px;
+  border-radius: 10px;
+  border: 3px solid #334155;
+  background: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 900;
+  position: relative;
+  user-select: none;
+}
+
+.laser-cell.lit {
+  border-color: #22d3ee;
+  box-shadow: inset 0 0 14px rgba(34, 211, 238, 0.35);
+}
+
+.laser-cell.emitter {
+  background: #7f1d1d;
+  border-color: #f43f5e;
+}
+
+.laser-cell.target {
+  background: #064e3b;
+  border-color: #10b981;
+}
+
+.laser-cell.target.hit {
+  background: #15803d;
+  box-shadow: 0 0 18px #4ade80;
+}
+
+.laser-cell.wall {
+  background: #475569;
+  border-color: #020617;
+}
+
+.laser-cell.mirror {
+  background: #312e81;
+  border-color: #818cf8;
+  cursor: pointer;
+}
+
+.laser-cell.mirror:hover {
+  background: #4338ca;
+}
+
+.mirror-symbol {
+  font-family: 'Russo One', sans-serif;
+  font-size: 2rem;
+  color: #fde047;
+}
+
+/* JUNGIKLIAI IR ŠIFRAI */
+.switches-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.switch-btn {
+  min-width: 112px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 4px solid var(--outline);
+  background: #334155;
+  color: #e2e8f0;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--outline);
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.switch-btn.on {
+  background: var(--lab-green);
+  color: #ffffff;
+}
+
+.power-meter {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.2rem;
+  color: #67e8f9;
+  background: #1e293b;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 3px solid var(--outline);
+}
+
+.sequence-display {
+  font-family: 'Russo One', sans-serif;
+  font-size: clamp(1.2rem, 2.5vw, 1.75rem);
+  color: #fde047;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.lab-choice-btn {
+  min-width: 100px;
+  padding: 13px 20px;
+  border-radius: 12px;
+  border: 4px solid var(--outline);
+  background: var(--lab-purple);
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--outline);
+}
+
+.lab-choice-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+.puzzle-feedback {
+  margin-top: 16px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 3px solid var(--outline);
+  font-family: 'Russo One', sans-serif;
+  text-align: center;
+  font-size: 1.02rem;
+}
+
+.puzzle-feedback.success {
+  background: #14532d;
+  color: #86efac;
+  border-color: #22c55e;
+}
+
+.puzzle-feedback.error {
+  background: #7f1d1d;
+  color: #fecaca;
+  border-color: #ef4444;
+}
+
+@media (max-width: 780px) {
+  .difficulty-grid,
+  .levels-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .laser-cell {
+    width: 54px;
+    height: 54px;
+    font-size: 1.3rem;
+  }
+}

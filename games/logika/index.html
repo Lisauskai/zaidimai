@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#312e81" />
+  <title>Proto Laboratorija – Lino ir Luko Žaidimų Portalas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="lab-bg-grid" aria-hidden="true"></div>
+
+  <!-- ==================== VIRŠUTINĖ NAVIGACIJOS JUOSTA ==================== -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <a href="../../index.html" class="back-portal-btn">← Grįžti į portalą</a>
+      <div class="game-brand">
+        <span class="brand-icon" aria-hidden="true">🧠⚡</span>
+        <div>
+          <h1>PROTO LABORATORIJA</h1>
+          <span class="brand-sub">Loginiai galvosūkiai, lazeriai ir išradimai 1–3 klasei</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="top-bar-right">
+      <div id="top-difficulty-pill" class="hud-pill hud-rank hidden">
+        <span id="ui-active-rank">🔬 1 klasė</span>
+      </div>
+      <div class="hud-pill hud-crystals" title="Surinkti Proto kristalai">
+        <span>💎 <strong id="ui-total-crystals">0</strong></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="lab-container">
+    <!-- ==================== PRADŽIOS EKRANAS (SUDĖTINGUMO PASIRINKIMAS) ==================== -->
+    <section id="start-screen" class="start-screen">
+      <div class="hero-lab-card">
+        <div class="lab-badge-row">
+          <span class="lab-pill-tag">🔦 LAZERIAI</span>
+          <span class="lab-pill-tag">⚙️ GRANDINĖS</span>
+          <span class="lab-pill-tag">💎 PROTO KRISTALAI</span>
+        </div>
+        <h2>SVEIKAS ATVYKĘS Į PROTO LABORATORIJĄ!</h2>
+        <p class="hero-desc">
+          Pasirink savo išradėjo lygį ir pradėk spręsti loginius eksperimentus.
+          Kiekvienos klasės pažanga ir surinkti <strong>Proto kristalai</strong> saugomi atskirai!
+        </p>
+      </div>
+
+      <div class="difficulty-grid">
+        <!-- 1 KLASĖ -->
+        <article class="diff-card diff-grade1" data-difficulty="grade1">
+          <div class="diff-card-header">
+            <span class="diff-level-chip">GRADE 1</span>
+            <span class="diff-icon" aria-hidden="true">🔭</span>
+          </div>
+          <h3>1 klasė (Jaunasis išradėjas)</h3>
+          <p class="diff-desc">
+            Aiškūs lazerių atspindžiai, pirmosios jungiklių grandinės ir smagios sekos jaunajam tyrinėtojui.
+          </p>
+
+          <div class="diff-progress-box">
+            <div class="progress-stat">
+              <span>✅ Išspręsti lygiai:</span>
+              <strong id="g1-solved-text">0 / 3</strong>
+            </div>
+            <div class="progress-stat">
+              <span>💎 Proto kristalai:</span>
+              <strong id="g1-crystals-text">0</strong>
+            </div>
+          </div>
+
+          <button id="btn-select-grade1" class="diff-start-btn btn-cyan" type="button">
+            🔬 ŽAISTI: 1 KLASĖ
+          </button>
+        </article>
+
+        <!-- 3 KLASĖ -->
+        <article class="diff-card diff-grade3" data-difficulty="grade3">
+          <div class="diff-card-header">
+            <span class="diff-level-chip">GRADE 3</span>
+            <span class="diff-icon" aria-hidden="true">🧪</span>
+          </div>
+          <h3>3 klasė (Vyriausiasis inžinierius)</h3>
+          <p class="diff-desc">
+            Sudėtingesni kelių veidrodžių lazerių labirintai, tikslios energijos sistemos ir inžineriniai šifrai.
+          </p>
+
+          <div class="diff-progress-box">
+            <div class="progress-stat">
+              <span>✅ Išspręsti lygiai:</span>
+              <strong id="g3-solved-text">0 / 3</strong>
+            </div>
+            <div class="progress-stat">
+              <span>💎 Proto kristalai:</span>
+              <strong id="g3-crystals-text">0</strong>
+            </div>
+          </div>
+
+          <button id="btn-select-grade3" class="diff-start-btn btn-purple" type="button">
+            ⚡ ŽAISTI: 3 KLASĖ
+          </button>
+        </article>
+      </div>
+    </section>
+
+    <!-- ==================== LABORATORIJOS DARBO STENDAS ==================== -->
+    <section id="lab-screen" class="lab-screen hidden">
+      <div class="lab-toolbar">
+        <div class="lab-toolbar-info">
+          <button id="btn-back-difficulty" class="secondary-btn" type="button">
+            ← Keisti klasę
+          </button>
+          <div class="active-profile-banner">
+            <span id="lab-mode-title">1 klasė (Jaunasis išradėjas)</span>
+            <span id="lab-mode-stats" class="mode-stats-sub">Išspręsta: 0 / 3 • 💎 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lygių / Eksperimentų juosta -->
+      <div id="levels-strip" class="levels-strip"></div>
+
+      <!-- Aktyvaus galvosūkio zona -->
+      <div class="puzzle-workspace">
+        <div class="puzzle-header">
+          <div>
+            <span id="puzzle-type-badge" class="puzzle-type-badge">🔦 LAZERIO KELIAS</span>
+            <h2 id="puzzle-title">Eksperimentas #1</h2>
+            <p id="puzzle-instruction" class="puzzle-instruction"></p>
+          </div>
+          <div id="puzzle-reward-badge" class="puzzle-reward-badge">+10 💎</div>
+        </div>
+
+        <div id="puzzle-stage" class="puzzle-stage"></div>
+
+        <div id="puzzle-feedback" class="puzzle-feedback hidden"></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./game.js"></script>
+</body>
+</html>
