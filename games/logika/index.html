@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css" />
+  <link rel="stylesheet" href="./style.css?v=20261113b" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -143,6 +143,9 @@
           <button id="btn-back-difficulty" class="secondary-btn" type="button">
             ← Keisti klasę
           </button>
+          <button id="btn-open-worldmap" class="secondary-btn worldmap-toggle-btn" type="button">
+            🗺️ Nuotykių žemėlapis
+          </button>
           <div class="active-profile-banner">
             <span id="lab-mode-title">1 klasė (Jaunasis išradėjas)</span>
             <span id="lab-mode-stats" class="mode-stats-sub">Išspręsta: 0 / 8 • 💎 0</span>
@@ -168,12 +171,28 @@
           <button id="tab-mode-matrix" class="mode-tab-btn" type="button">
             🧩 Raštai ir atmintis (5)
           </button>
+          <button id="tab-mode-algo" class="mode-tab-btn" type="button">
+            🧑‍💻 Algoritmų trasa (5)
+          </button>
           <button id="tab-mode-mini" class="mode-tab-btn" type="button">
             🧪 Mini Eksperimentai (3)
           </button>
         </div>
       </div>
 
+      <!-- NUOTYKIŲ ŽEMĖLAPIS (7 LABORATORIJOS ZONOS) -->
+      <section id="world-map-panel" class="world-map-panel" aria-label="Proto laboratorijos nuotykių žemėlapis">
+        <div class="world-map-head">
+          <div>
+            <h2 class="world-map-title">🗺️ Proto Laboratorijos nuotykių žemėlapis</h2>
+            <p class="world-map-sub">Laisvai rinkis bet kurią iš 7 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
+          </div>
+          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 105</div>
+        </div>
+        <div id="world-map-grid" class="world-map-grid"></div>
+      </section>
+
+      <div id="lab-puzzle-area">
       <!-- Lygių / Eksperimentų juosta -->
       <div id="levels-strip" class="levels-strip"></div>
 
@@ -350,10 +369,71 @@
           <div id="matrix-choices" class="matrix-choices" aria-label="Atsakymų variantai"></div>
         </div>
 
+        <!-- 7. ALGORITMŲ TRASA (PROGRAMAVIMO BLOKELIAI) -->
+        <div id="algo-stage" class="pinpull-stage hidden">
+          <div class="pinpull-controls-bar">
+            <span id="algo-counter" class="pinpull-counter">📋 Programa: 0 / 6 vietų</span>
+            <div class="pinpull-btn-group">
+              <button id="btn-algo-undo" class="sok-undo-btn" type="button">
+                ↩ Atgal
+              </button>
+              <button id="btn-algo-reset" class="pin-reset-btn" type="button">
+                🗑 Išvalyti
+              </button>
+              <button id="btn-algo-next" class="pin-next-btn hidden" type="button">
+                Kitas lygis ▶
+              </button>
+            </div>
+          </div>
+
+          <div class="pinpull-canvas-wrap">
+            <canvas
+              id="algo-canvas"
+              class="pinpull-canvas"
+              width="540"
+              height="440"
+              aria-label="Algoritmų trasos žaidimo lenta"
+            ></canvas>
+          </div>
+
+          <div class="algo-program-panel">
+            <div class="algo-queue-header">
+              <span class="algo-queue-title">PROGRAMOS EILĖ (spausk ant blokelio, kad pašalintum):</span>
+              <span id="algo-loop-hint" class="algo-loop-hint hidden">👆 Spausk „🔁 2x / 3x“, kad pakeistum kartojimus</span>
+            </div>
+            <div id="algo-queue-slots" class="algo-queue-slots" aria-label="Programos komandų eilė"></div>
+
+            <div class="algo-controls-footer">
+              <div class="algo-cmd-palette" aria-label="Komandų mygtukai">
+                <button id="btn-algo-fwd" class="algo-cmd-btn cmd-fwd" data-algo-cmd="FWD" type="button">
+                  ⬆️ Pirmyn
+                </button>
+                <button id="btn-algo-left" class="algo-cmd-btn cmd-left" data-algo-cmd="LEFT" type="button">
+                  ↰ Sukti kairėn
+                </button>
+                <button id="btn-algo-right" class="algo-cmd-btn cmd-right" data-algo-cmd="RIGHT" type="button">
+                  ↱ Sukti dešinėn
+                </button>
+                <button id="btn-algo-act" class="algo-cmd-btn cmd-act" data-algo-cmd="ACT" type="button">
+                  ⚡ Aktyvuoti / Šuolis
+                </button>
+                <button id="btn-algo-loop" class="algo-cmd-btn cmd-loop hidden" data-algo-cmd="LOOP" type="button">
+                  🔁 Kartoti [2x / 3x]
+                </button>
+              </div>
+
+              <button id="btn-algo-run" class="algo-run-btn" type="button">
+                ▶️ Paleisti programą
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- MINI EKSPERIMENTŲ ZONA -->
         <div id="puzzle-stage" class="puzzle-stage hidden"></div>
 
         <div id="puzzle-feedback" class="puzzle-feedback hidden"></div>
+      </div>
       </div>
     </section>
   </main>
@@ -378,6 +458,6 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js"></script>
+  <script type="module" src="./game.js?v=20261113b"></script>
 </body>
 </html>

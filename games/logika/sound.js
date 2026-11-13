@@ -187,3 +187,9 @@ export function playVictoryFanfare() {
     playTone({ type: 'sine', freqStart: n.f * 2, freqEnd: n.f * 2, duration: n.d, gain: 0.05, delay: n.t });
   });
 }
+
+// 13. Algoritmų trasos šuolis / jungiklio aktyvavimas
+export function playAlgoJump() {
+  playTone({ type: 'sine', freqStart: 360, freqEnd: 740, duration: 0.14, gain: 0.11 });
+  playTone({ type: 'triangle', freqStart: 540, freqEnd: 920, duration: 0.1, gain: 0.06, delay: 0.05 });
+}

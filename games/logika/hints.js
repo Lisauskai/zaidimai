@@ -43,7 +43,14 @@ export const OPTIMAL_PAR_MOVES = {
   mat_g3_4: 5,
   mat_g3_5: 1,
 
-  // 7. Mini eksperimentai
+  // 7. Algoritmų trasa
+  alg_g3_1: 11,
+  alg_g3_2: 11,
+  alg_g3_3: 14,
+  alg_g3_4: 13,
+  alg_g3_5: 14,
+
+  // 8. Mini eksperimentai
   g3_laser_1: 4,
   g3_switches_1: 4,
   g3_sequence_1: 1
@@ -482,6 +489,32 @@ export function computeFirstHint(mode, level, context = {}) {
       kind: 'matrix-eliminate',
       eliminateIndices: wrongIndices,
       message: '💡 Užuomina: du netinkami atsakymai pritemdyti – išrink iš likusių!'
+    };
+  }
+
+  if (mode === 'algo') {
+    const firstCmdMap = {
+      alg_g1_1: 'FWD',
+      alg_g1_2: 'FWD',
+      alg_g1_3: 'FWD',
+      alg_g1_4: 'FWD',
+      alg_g1_5: 'FWD',
+      alg_g3_1: 'LOOP',
+      alg_g3_2: 'LOOP',
+      alg_g3_3: 'LOOP',
+      alg_g3_4: 'LOOP',
+      alg_g3_5: 'LOOP'
+    };
+    const firstCmd = firstCmdMap[level.id] || 'FWD';
+    const desc =
+      firstCmd === 'LOOP'
+        ? '💡 Pirmas žingsnis: pridėk ciklo blokelį „🔁 Kartoti“, kad sutalpintum kelią!'
+        : '💡 Pirmas žingsnis: paspausk paryškintą pirmąją komandą „⬆️ Pirmyn“!';
+    return {
+      mode,
+      kind: 'algo-cmd',
+      cmd: firstCmd,
+      message: desc
     };
   }
 
