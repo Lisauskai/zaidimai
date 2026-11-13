@@ -77,7 +77,17 @@ export const OPTIMAL_PAR_MOVES = {
   mc_g3_7: 7,
   mc_g3_8: 5,
 
-  // 11. Mini eksperimentai
+  // 11. Energijos tiltai (Hashi)
+  br_g3_1: 15,
+  br_g3_2: 20,
+  br_g3_3: 20,
+  br_g3_4: 20,
+  br_g3_5: 22,
+  br_g3_6: 28,
+  br_g3_7: 25,
+  br_g3_8: 30,
+
+  // 12. Mini eksperimentai
   g3_laser_1: 4,
   g3_switches_1: 4,
   g3_sequence_1: 1
@@ -607,6 +617,20 @@ export function computeFirstHint(mode, level, context = {}) {
       kind: 'mathcross-place',
       message: '💡 Užuomina: vienas teisingas skaičius įdėtas į tuščią langelį!'
     };
+  }
+
+  if (mode === 'bridges') {
+    const eng = context.bridgesEngine;
+    if (!eng) return null;
+    const islandId = eng.getGuaranteedHintIslandId?.();
+    if (islandId !== null && islandId !== undefined) {
+      return {
+        mode,
+        kind: 'bridge-island',
+        islandId,
+        message: '💡 Užuomina: pažymėta geltona sala privalo tiesti tiltą! Paspausk ją ir sujunk su kaimynu.'
+      };
+    }
   }
 
   if (mode === 'mini') {

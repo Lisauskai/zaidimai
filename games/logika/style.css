@@ -2514,3 +2514,24 @@ body {
   cursor: not-allowed;
   transform: none;
 }
+
+/* ==================== 11. ENERGIJOS TILTAI (HASHI) ==================== */
+#bridges-canvas {
+  width: auto;
+  max-width: 100%;
+  max-height: min(52dvh, 420px);
+  height: auto;
+  display: block;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.bridges-legend {
+  margin: 10px 0 0;
+  max-width: 580px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.4;
+}

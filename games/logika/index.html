@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261113f" />
+  <link rel="stylesheet" href="./style.css?v=20261113g" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -183,20 +183,23 @@
           <button id="tab-mode-mathcross" class="mode-tab-btn" type="button">
             🔢 Skaičių kryžiažodžiai (8)
           </button>
+          <button id="tab-mode-bridges" class="mode-tab-btn" type="button">
+            🌉 Energijos tiltai (8)
+          </button>
           <button id="tab-mode-mini" class="mode-tab-btn" type="button">
             🧪 Mini Eksperimentai (3)
           </button>
         </div>
       </div>
 
-      <!-- NUOTYKIŲ ŽEMĖLAPIS (10 LABORATORIJOS ZONŲ) -->
+      <!-- NUOTYKIŲ ŽEMĖLAPIS (11 LABORATORIJOS ZONŲ) -->
       <section id="world-map-panel" class="world-map-panel" aria-label="Proto laboratorijos nuotykių žemėlapis">
         <div class="world-map-head">
           <div>
             <h2 class="world-map-title">🗺️ Proto Laboratorijos žemėlapis</h2>
-            <p class="world-map-sub">Laisvai rinkis bet kurią iš 10 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
+            <p class="world-map-sub">Laisvai rinkis bet kurią iš 11 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
           </div>
-          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 168</div>
+          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 192</div>
         </div>
         <div id="world-map-grid" class="world-map-grid"></div>
       </section>
@@ -545,6 +548,35 @@
           <div id="mathcross-tray" class="mathcross-tray" aria-label="Skaičių kortelių rinkinys"></div>
         </div>
 
+        <!-- 11. ENERGIJOS TILTAI (HASHI / BRIDGES) -->
+        <div id="bridges-stage" class="pinpull-stage hidden">
+          <div class="pinpull-controls-bar">
+            <span id="bridges-counter" class="pinpull-counter">🌉 Salos: 0 / 5 • Tiltai: 0</span>
+            <div class="pinpull-btn-group">
+              <button id="btn-bridges-reset" class="pin-reset-btn" type="button">
+                🔄 Iš naujo
+              </button>
+              <button id="btn-bridges-next" class="pin-next-btn hidden" type="button">
+                Kitas lygis ▶
+              </button>
+            </div>
+          </div>
+
+          <div class="pinpull-canvas-wrap">
+            <canvas
+              id="bridges-canvas"
+              class="pinpull-canvas"
+              width="580"
+              height="420"
+              aria-label="Energijos tiltų žaidimo lenta"
+            ></canvas>
+          </div>
+
+          <p class="bridges-legend">
+            Spausk dvi gretimas salas (arba perbrauk tarp jų): 1× = vienas tiltas, 2× = dvigubas tiltas, 3× = nuimti. Visos salos turi būti sujungtos į vieną tinklą!
+          </p>
+        </div>
+
         <!-- MINI EKSPERIMENTŲ ZONA -->
         <div id="puzzle-stage" class="puzzle-stage hidden"></div>
 
@@ -574,6 +606,6 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js?v=20261113f"></script>
+  <script type="module" src="./game.js?v=20261113g"></script>
 </body>
 </html>

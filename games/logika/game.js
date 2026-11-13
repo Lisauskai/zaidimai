@@ -1,27 +1,33 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113f';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113f';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113f';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113f';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113g';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113g';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113g';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113g';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113f';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113f';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113f';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113f';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113f';
+} from './balance.js?v=20261113g';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113g';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113g';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113g';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113g';
 import {
   MathCrossEngine,
   MATHCROSS_LEVELS,
   MATHCROSS_CANVAS_W,
   MATHCROSS_CANVAS_H
-} from './mathcross.js?v=20261113f';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113f';
+} from './mathcross.js?v=20261113g';
+import {
+  BridgesEngine,
+  BRIDGES_LEVELS,
+  BRIDGES_CANVAS_W,
+  BRIDGES_CANVAS_H
+} from './bridges.js?v=20261113g';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113g';
 import {
   isSoundEnabled,
   toggleSound,
@@ -45,8 +51,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113f';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113f';
+} from './sound.js?v=20261113g';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113g';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -55,7 +61,7 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113f';
+} from './robot.js?v=20261113g';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -234,6 +240,7 @@ let algoEngine = null;
 let gearsEngine = null;
 let gravityEngine = null;
 let mathCrossEngine = null;
+let bridgesEngine = null;
 let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
@@ -275,6 +282,8 @@ const gravityCanvas = document.getElementById('gravity-canvas');
 const gravityStage = document.getElementById('gravity-stage');
 const mathCrossCanvas = document.getElementById('mathcross-canvas');
 const mathCrossStage = document.getElementById('mathcross-stage');
+const bridgesCanvas = document.getElementById('bridges-canvas');
+const bridgesStage = document.getElementById('bridges-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
@@ -295,6 +304,7 @@ function getAllLevelsForDiff(diff) {
     ...GEARS_LEVELS[diff],
     ...GRAVITY_LEVELS[diff],
     ...MATHCROSS_LEVELS[diff],
+    ...BRIDGES_LEVELS[diff],
     ...LAB_LEVELS[diff]
   ];
 }
@@ -369,6 +379,13 @@ const LAB_WORLD_ZONES = [
     desc: 'Kryžiažodžiai ir magiškieji trikampiai',
     icon: '🔢',
     accent: '#facc15'
+  },
+  {
+    mode: 'bridges',
+    title: '11. Energijos tiltai',
+    desc: 'Dedukciniai salų tinklai (Hashi)',
+    icon: '🌉',
+    accent: '#38bdf8'
   }
 ];
 
@@ -383,6 +400,7 @@ function getLevelsForMode(mode, diff = currentDifficulty) {
   if (mode === 'gears') return GEARS_LEVELS[diff];
   if (mode === 'gravity') return GRAVITY_LEVELS[diff];
   if (mode === 'mathcross') return MATHCROSS_LEVELS[diff];
+  if (mode === 'bridges') return BRIDGES_LEVELS[diff];
   return LAB_LEVELS[diff];
 }
 
@@ -592,6 +610,7 @@ export function showWorldMapView() {
   destroyGearsEngine();
   destroyGravityEngine();
   destroyMathCrossEngine();
+  destroyBridgesEngine();
 
   worldMapPanel?.classList.remove('hidden');
   labPuzzleArea?.classList.add('hidden');
@@ -653,6 +672,7 @@ function showDifficultyScreen() {
   destroyGearsEngine();
   destroyGravityEngine();
   destroyMathCrossEngine();
+  destroyBridgesEngine();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -673,6 +693,7 @@ function syncModeTabsUI() {
   document.getElementById('tab-mode-gears')?.classList.toggle('active', currentMode === 'gears');
   document.getElementById('tab-mode-gravity')?.classList.toggle('active', currentMode === 'gravity');
   document.getElementById('tab-mode-mathcross')?.classList.toggle('active', currentMode === 'mathcross');
+  document.getElementById('tab-mode-bridges')?.classList.toggle('active', currentMode === 'bridges');
   document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
 }
 
@@ -688,6 +709,7 @@ function switchLabMode(mode) {
     mode !== 'gears' &&
     mode !== 'gravity' &&
     mode !== 'mathcross' &&
+    mode !== 'bridges' &&
     mode !== 'mini'
   ) {
     return;
@@ -739,7 +761,9 @@ function renderLevelsStrip() {
                           ? '🧊 Ledas'
                           : currentMode === 'mathcross'
                             ? lvl.kind === 'crossword' ? '🔢 Kryžiažodis' : '🔺 Magiškas'
-                            : '🧩 Užduotis';
+                            : currentMode === 'bridges'
+                              ? '🌉 Tiltai'
+                              : '🧩 Užduotis';
     btn.innerHTML = `
       <div class="level-tab-top">
         <span>${label}</span>
@@ -930,6 +954,13 @@ function destroyMathCrossEngine() {
   mathCrossEngine = null;
 }
 
+function destroyBridgesEngine() {
+  if (bridgesEngine) {
+    bridgesEngine.destroy();
+    bridgesEngine = null;
+  }
+}
+
 // ==================== UŽUOMINOS LEMPUTĖ IR ĖJIMŲ SKAITIKLIS ====================
 function stopLevelTimer() {
   if (levelTimerId !== null) {
@@ -1000,6 +1031,7 @@ function clearAllHints() {
   memoryCtrl?.setHintCell(null);
   gearsEngine?.setHint(null);
   gravityEngine?.setHint(null);
+  bridgesEngine?.setHintIsland(null);
 }
 
 function recordPlayerMove() {
@@ -1032,6 +1064,7 @@ function applyFirstHint() {
     gearsEngine,
     gravityEngine,
     mathCrossEngine,
+    bridgesEngine,
     mirrorStates,
     switchStates
   });
@@ -1092,6 +1125,8 @@ function applyFirstHint() {
     btn?.classList.add('hint-btn-pulse');
   } else if (hint.kind === 'mathcross-place') {
     mathCrossEngine?.applyOneHint();
+  } else if (hint.kind === 'bridge-island') {
+    bridgesEngine?.setHintIsland(hint.islandId);
   }
 
   hintUsedInLevel = true;
@@ -1123,6 +1158,7 @@ function loadActiveLevel() {
   destroyGearsEngine();
   destroyGravityEngine();
   destroyMathCrossEngine();
+  destroyBridgesEngine();
   sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
@@ -1148,7 +1184,9 @@ function loadActiveLevel() {
                       ? `🧊 GRAVITACIJOS LABIRINTAS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
                       : currentMode === 'mathcross'
                         ? `🔢 SKAIČIŲ KRYŽIAŽODŽIAI • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-                        : level.badge;
+                        : currentMode === 'bridges'
+                          ? `🌉 ENERGIJOS TILTAI • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+                          : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -1167,6 +1205,7 @@ function loadActiveLevel() {
   document.getElementById('btn-gears-next')?.classList.add('hidden');
   document.getElementById('btn-gravity-next')?.classList.add('hidden');
   document.getElementById('btn-mathcross-next')?.classList.add('hidden');
+  document.getElementById('btn-bridges-next')?.classList.add('hidden');
 
   if (currentMode === 'pinpull') {
     pinPullStage.classList.remove('hidden');
@@ -1179,6 +1218,7 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startPinPullLevel(level, levels.length);
   } else if (currentMode === 'sokoban') {
@@ -1192,6 +1232,7 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startSokobanLevel(level, levels.length);
   } else if (currentMode === 'laser') {
@@ -1205,6 +1246,7 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startLaserLevel(level, levels.length);
   } else if (currentMode === 'circuit') {
@@ -1218,6 +1260,7 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startCircuitLevel(level, levels.length);
   } else if (currentMode === 'balance') {
@@ -1231,6 +1274,7 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startBalanceLevel(level, levels.length);
   } else if (currentMode === 'matrix') {
@@ -1244,6 +1288,7 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startMatrixLevel(level, levels.length);
   } else if (currentMode === 'algo') {
@@ -1257,6 +1302,7 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startAlgoLevel(level, levels.length);
   } else if (currentMode === 'gears') {
@@ -1270,6 +1316,7 @@ function loadActiveLevel() {
     gearsStage?.classList.remove('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startGearsLevel(level, levels.length);
   } else if (currentMode === 'gravity') {
@@ -1283,6 +1330,7 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.remove('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startGravityLevel(level, levels.length);
   } else if (currentMode === 'mathcross') {
@@ -1296,8 +1344,23 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.remove('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startMathCrossLevel(level, levels.length);
+  } else if (currentMode === 'bridges') {
+    pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.add('hidden');
+    laserStage?.classList.add('hidden');
+    circuitStage?.classList.add('hidden');
+    balanceStage?.classList.add('hidden');
+    matrixStage?.classList.add('hidden');
+    algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startBridgesLevel(level, levels.length);
   } else {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.add('hidden');
@@ -1309,6 +1372,7 @@ function loadActiveLevel() {
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
     mathCrossStage?.classList.add('hidden');
+    bridgesStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
 
@@ -2180,6 +2244,65 @@ function startMathCrossLevel(level, totalInMode) {
   });
 }
 
+// ==================== 11. ENERGIJOS TILTAI (HASHI / BRIDGES) ====================
+function getBridgesCanvasCoords(evt) {
+  const rect = bridgesCanvas.getBoundingClientRect();
+  return {
+    mx: ((evt.clientX - rect.left) / rect.width) * BRIDGES_CANVAS_W,
+    my: ((evt.clientY - rect.top) / rect.height) * BRIDGES_CANVAS_H
+  };
+}
+
+function startBridgesLevel(level, totalInMode) {
+  const counterEl = document.getElementById('bridges-counter');
+  const nextBtn = document.getElementById('btn-bridges-next');
+
+  bridgesEngine = new BridgesEngine(bridgesCanvas, level, {
+    onBridgeToggle: (newCount) => {
+      playBalancePop(newCount === 0);
+      recordPlayerMove();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (feedbackEl) {
+        feedbackEl.className = 'puzzle-feedback hidden';
+        feedbackEl.textContent = '';
+      }
+    },
+    onCrossBlocked: () => {
+      playWrongBuzz();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (feedbackEl) {
+        feedbackEl.textContent = '⚠️ Tiltai negali kirsti vienas kito!';
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
+    },
+    onDisconnected: () => {
+      playWrongBuzz();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (feedbackEl) {
+        feedbackEl.textContent =
+          '⚠️ Visos salos turi savo skaičių, bet liko atskirtų salų grupių! Sujunk visas salas į vieną tinklą.';
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
+    },
+    onStateChange: ({ satisfiedCount, totalIslands, bridgeTotal, won }) => {
+      if (counterEl) {
+        counterEl.textContent = won
+          ? `🟢 Tinklas sujungtas! (${totalIslands} / ${totalIslands})`
+          : `🌉 Salos: ${satisfiedCount} / ${totalIslands} • Tiltai: ${bridgeTotal}`;
+      }
+    },
+    onWin: () => {
+      playBalanceBell();
+      markLevelSolved(level);
+      if (nextBtn && activeLevelIndex < totalInMode - 1) {
+        nextBtn.classList.remove('hidden');
+      }
+    }
+  });
+}
+
 // ==================== ROBO-STUMDUKAS RENDERIS IR VALDYMAS ====================
 const GATE_ICON = {
   '>': '➡️',
@@ -2472,6 +2595,7 @@ document.getElementById('tab-mode-algo')?.addEventListener('click', () => switch
 document.getElementById('tab-mode-gears')?.addEventListener('click', () => switchLabMode('gears'));
 document.getElementById('tab-mode-gravity')?.addEventListener('click', () => switchLabMode('gravity'));
 document.getElementById('tab-mode-mathcross')?.addEventListener('click', () => switchLabMode('mathcross'));
+document.getElementById('tab-mode-bridges')?.addEventListener('click', () => switchLabMode('bridges'));
 document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
 
 document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
@@ -3029,12 +3153,51 @@ if (mathCrossCanvas) {
   });
 }
 
+// 11. Energijos tiltų (Hashi) įvykiai
+document.getElementById('btn-bridges-reset')?.addEventListener('click', () => {
+  if (!bridgesEngine) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-bridges-next')?.classList.add('hidden');
+  bridgesEngine.reset();
+  resetAttemptState();
+});
+
+document.getElementById('btn-bridges-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
+
+if (bridgesCanvas) {
+  bridgesCanvas.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!bridgesEngine) return;
+      e.preventDefault();
+      const { mx, my } = getBridgesCanvasCoords(e);
+      bridgesEngine.handlePointerDown(mx, my);
+    },
+    { passive: false }
+  );
+
+  bridgesCanvas.addEventListener('pointerup', (e) => {
+    if (!bridgesEngine) return;
+    const { mx, my } = getBridgesCanvasCoords(e);
+    bridgesEngine.handlePointerUp(mx, my);
+  });
+}
+
 btnSoundToggle?.addEventListener('click', () => {
   toggleSound();
   syncSoundToggleUI();
 });
 
-const MODE_SEQUENCE = ['pinpull', 'sokoban', 'laser', 'circuit', 'balance', 'matrix', 'algo', 'gears', 'gravity', 'mathcross', 'mini'];
+const MODE_SEQUENCE = ['pinpull', 'sokoban', 'laser', 'circuit', 'balance', 'matrix', 'algo', 'gears', 'gravity', 'mathcross', 'bridges', 'mini'];
 
 document.getElementById('btn-victory-next')?.addEventListener('click', () => {
   hideVictoryOverlay();
