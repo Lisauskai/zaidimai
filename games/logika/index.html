@@ -61,13 +61,13 @@
           </div>
           <h3>1 klasė (Jaunasis išradėjas)</h3>
           <p class="diff-desc">
-            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“ (4×4) lygiai ir 3 mini eksperimentai.
+            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“ lygiai ir 3 mini eksperimentai.
           </p>
 
           <div class="diff-progress-box">
             <div class="progress-stat">
               <span>✅ Išspręsti lygiai:</span>
-              <strong id="g1-solved-text">0 / 23</strong>
+              <strong id="g1-solved-text">0 / 28</strong>
             </div>
             <div class="progress-stat">
               <span>💎 Proto kristalai:</span>
@@ -88,13 +88,13 @@
           </div>
           <h3>3 klasė (Vyriausiasis inžinierius)</h3>
           <p class="diff-desc">
-            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“ (6×6, tiltai, spynos) lygiai + 3 mini eksperimentai.
+            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“ (dvigubos lygtys) lygiai + 3 mini eksperimentai.
           </p>
 
           <div class="diff-progress-box">
             <div class="progress-stat">
               <span>✅ Išspręsti lygiai:</span>
-              <strong id="g3-solved-text">0 / 23</strong>
+              <strong id="g3-solved-text">0 / 28</strong>
             </div>
             <div class="progress-stat">
               <span>💎 Proto kristalai:</span>
@@ -134,6 +134,9 @@
           </button>
           <button id="tab-mode-circuit" class="mode-tab-btn" type="button">
             🚂 Sujunk grandinę (5)
+          </button>
+          <button id="tab-mode-balance" class="mode-tab-btn" type="button">
+            ⚖️ Kosminės svarstyklės (5)
           </button>
           <button id="tab-mode-mini" class="mode-tab-btn" type="button">
             🧪 Mini Eksperimentai (3)
@@ -267,6 +270,29 @@
             <span>⭐ Žvaigždutės ant kelio (surink visas!)</span>
             <span id="circuit-legend-g3" class="hidden">🌉 Tiltas + 🔒 Užrakinta detalė</span>
           </div>
+        </div>
+
+        <!-- KOSMINĖS SVARSTYKLĖS (VISUAL LOGIC BALANCE) ZONA -->
+        <div id="balance-stage" class="balance-stage hidden">
+          <div class="pinpull-controls-bar">
+            <span id="balance-counter" class="pinpull-counter">⚖️ Dešinėje lėkštėje: 0 vnt.</span>
+            <div class="pinpull-btn-group">
+              <button id="btn-balance-reset" class="pin-reset-btn" type="button">
+                🔄 Iš naujo (Reset)
+              </button>
+              <button id="btn-balance-next" class="pin-next-btn hidden" type="button">
+                Kitas lygis ▶
+              </button>
+            </div>
+          </div>
+
+          <div id="balance-hints" class="balance-hints" aria-label="Svorių taisyklės"></div>
+
+          <div class="pinpull-canvas-wrap">
+            <canvas id="balance-canvas" width="640" height="380"></canvas>
+          </div>
+
+          <div id="balance-tray" class="balance-tray" aria-label="Objektų pasirinkimas"></div>
         </div>
 
         <!-- MINI EKSPERIMENTŲ ZONA -->

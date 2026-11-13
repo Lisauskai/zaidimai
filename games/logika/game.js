@@ -4,6 +4,13 @@ import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js'
 import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js';
 import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js';
 import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js';
+import {
+  BalanceScaleEngine,
+  BALANCE_LEVELS,
+  ITEM_CATALOG,
+  BALANCE_CANVAS_W,
+  BALANCE_CANVAS_H
+} from './balance.js';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -151,7 +158,7 @@ export const LAB_LEVELS = {
 // ==================== BŪSENA ====================
 let progress = loadLabProgress();
 let currentDifficulty = null;
-let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'circuit' | 'mini'
+let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'circuit' | 'balance' | 'mini'
 let activeLevelIndex = 0;
 let mirrorStates = [];
 let switchStates = [];
@@ -159,6 +166,7 @@ let pinEngine = null;
 let sokobanGame = null;
 let laserEngine = null;
 let circuitEngine = null;
+let balanceEngine = null;
 let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
@@ -176,6 +184,8 @@ const laserCanvas = document.getElementById('laser-canvas');
 const laserStage = document.getElementById('laser-stage');
 const circuitCanvas = document.getElementById('circuit-canvas');
 const circuitStage = document.getElementById('circuit-stage');
+const balanceCanvas = document.getElementById('balance-canvas');
+const balanceStage = document.getElementById('balance-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
@@ -190,6 +200,7 @@ function getAllLevelsForDiff(diff) {
     ...SOKOBAN_LEVELS[diff],
     ...LASER_LEVELS[diff],
     ...CIRCUIT_LEVELS[diff],
+    ...BALANCE_LEVELS[diff],
     ...LAB_LEVELS[diff]
   ];
 }
@@ -199,6 +210,7 @@ function getCurrentModeLevels(diff = currentDifficulty) {
   if (currentMode === 'sokoban') return SOKOBAN_LEVELS[diff];
   if (currentMode === 'laser') return LASER_LEVELS[diff];
   if (currentMode === 'circuit') return CIRCUIT_LEVELS[diff];
+  if (currentMode === 'balance') return BALANCE_LEVELS[diff];
   return LAB_LEVELS[diff];
 }
 
@@ -257,6 +269,7 @@ function showDifficultyScreen() {
   destroyPinEngine();
   destroyLaserEngine();
   destroyCircuitEngine();
+  destroyBalanceEngine();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -269,11 +282,21 @@ function syncModeTabsUI() {
   document.getElementById('tab-mode-sokoban')?.classList.toggle('active', currentMode === 'sokoban');
   document.getElementById('tab-mode-laser')?.classList.toggle('active', currentMode === 'laser');
   document.getElementById('tab-mode-circuit')?.classList.toggle('active', currentMode === 'circuit');
+  document.getElementById('tab-mode-balance')?.classList.toggle('active', currentMode === 'balance');
   document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
 }
 
 function switchLabMode(mode) {
-  if (mode !== 'pinpull' && mode !== 'sokoban' && mode !== 'laser' && mode !== 'circuit' && mode !== 'mini') return;
+  if (
+    mode !== 'pinpull' &&
+    mode !== 'sokoban' &&
+    mode !== 'laser' &&
+    mode !== 'circuit' &&
+    mode !== 'balance' &&
+    mode !== 'mini'
+  ) {
+    return;
+  }
   currentMode = mode;
   activeLevelIndex = 0;
   syncModeTabsUI();
@@ -302,7 +325,9 @@ function renderLevelsStrip() {
             ? '🔦 Optika'
             : currentMode === 'circuit'
               ? '🚂 Grandinė'
-              : '🧩 Užduotis';
+              : currentMode === 'balance'
+                ? '⚖️ Svoriai'
+                : '🧩 Užduotis';
     btn.innerHTML = `
       <div class="level-tab-top">
         <span>${label}</span>
@@ -360,10 +385,18 @@ function destroyCircuitEngine() {
   }
 }
 
+function destroyBalanceEngine() {
+  if (balanceEngine) {
+    balanceEngine.destroy();
+    balanceEngine = null;
+  }
+}
+
 function loadActiveLevel() {
   destroyPinEngine();
   destroyLaserEngine();
   destroyCircuitEngine();
+  destroyBalanceEngine();
   sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
@@ -377,7 +410,9 @@ function loadActiveLevel() {
           ? `🔦 LAZERIŲ VEIDRODŽIAI • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
           : currentMode === 'circuit'
             ? `🚂 SUJUNK GRANDINĘ • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-            : level.badge;
+            : currentMode === 'balance'
+              ? `⚖️ KOSMINĖS SVARSTYKLĖS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+              : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -390,12 +425,14 @@ function loadActiveLevel() {
   document.getElementById('btn-sok-next')?.classList.add('hidden');
   document.getElementById('btn-laser-next')?.classList.add('hidden');
   document.getElementById('btn-circuit-next')?.classList.add('hidden');
+  document.getElementById('btn-balance-next')?.classList.add('hidden');
 
   if (currentMode === 'pinpull') {
     pinPullStage.classList.remove('hidden');
     sokobanStage?.classList.add('hidden');
     laserStage?.classList.add('hidden');
     circuitStage?.classList.add('hidden');
+    balanceStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startPinPullLevel(level, levels.length);
   } else if (currentMode === 'sokoban') {
@@ -403,6 +440,7 @@ function loadActiveLevel() {
     sokobanStage?.classList.remove('hidden');
     laserStage?.classList.add('hidden');
     circuitStage?.classList.add('hidden');
+    balanceStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startSokobanLevel(level, levels.length);
   } else if (currentMode === 'laser') {
@@ -410,6 +448,7 @@ function loadActiveLevel() {
     sokobanStage?.classList.add('hidden');
     laserStage?.classList.remove('hidden');
     circuitStage?.classList.add('hidden');
+    balanceStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startLaserLevel(level, levels.length);
   } else if (currentMode === 'circuit') {
@@ -417,13 +456,23 @@ function loadActiveLevel() {
     sokobanStage?.classList.add('hidden');
     laserStage?.classList.add('hidden');
     circuitStage?.classList.remove('hidden');
+    balanceStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startCircuitLevel(level, levels.length);
+  } else if (currentMode === 'balance') {
+    pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.add('hidden');
+    laserStage?.classList.add('hidden');
+    circuitStage?.classList.add('hidden');
+    balanceStage?.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startBalanceLevel(level, levels.length);
   } else {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.add('hidden');
     laserStage?.classList.add('hidden');
     circuitStage?.classList.add('hidden');
+    balanceStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
 
@@ -578,6 +627,83 @@ function startCircuitLevel(level, totalInMode) {
     }
   });
   circuitEngine.startLoop();
+}
+
+function getBalanceCanvasCoords(evt) {
+  const rect = balanceCanvas.getBoundingClientRect();
+  return {
+    mx: ((evt.clientX - rect.left) / rect.width) * BALANCE_CANVAS_W,
+    my: ((evt.clientY - rect.top) / rect.height) * BALANCE_CANVAS_H
+  };
+}
+
+function renderBalanceHints(level) {
+  const hintsEl = document.getElementById('balance-hints');
+  if (!hintsEl) return;
+  hintsEl.innerHTML = '';
+
+  const formatSide = (groups) =>
+    groups
+      .map((g) => (ITEM_CATALOG[g.kind]?.icon || '').repeat(g.count))
+      .join(' + ');
+
+  level.hints.forEach((h) => {
+    const pill = document.createElement('div');
+    pill.className = 'balance-hint-pill';
+    pill.innerHTML = `<span>${formatSide(h.left)}</span><span class="balance-hint-eq">=</span><span>${formatSide(h.right)}</span>`;
+    hintsEl.appendChild(pill);
+  });
+}
+
+function renderBalanceTray(level) {
+  const trayEl = document.getElementById('balance-tray');
+  if (!trayEl) return;
+  trayEl.innerHTML = '';
+
+  level.palette.forEach((kind) => {
+    const meta = ITEM_CATALOG[kind];
+    if (!meta) return;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'balance-add-btn';
+    btn.dataset.kind = kind;
+    btn.innerHTML = `<span class="balance-add-icon">${meta.icon}</span><span>+ ${meta.label}</span>`;
+    btn.addEventListener('click', () => {
+      if (!balanceEngine) return;
+      balanceEngine.addItem(kind);
+    });
+    trayEl.appendChild(btn);
+  });
+}
+
+function startBalanceLevel(level, totalInMode) {
+  const counterEl = document.getElementById('balance-counter');
+  const nextBtn = document.getElementById('btn-balance-next');
+
+  renderBalanceHints(level);
+  renderBalanceTray(level);
+
+  balanceEngine = new BalanceScaleEngine(balanceCanvas, level, {
+    onStatusChange: ({ rightCount, balanced, won }) => {
+      if (counterEl) {
+        counterEl.textContent = won
+          ? `🟢 Pusiausvyra pasiekta! (${rightCount} vnt.)`
+          : balanced
+            ? `🟢 Lygu! Svarstyklės išsilygina... (${rightCount} vnt.)`
+            : `⚖️ Dešinėje lėkštėje: ${rightCount} vnt.`;
+      }
+      document.querySelectorAll('.balance-add-btn').forEach((b) => {
+        b.disabled = !!won || rightCount >= 16;
+      });
+    },
+    onWin: () => {
+      markLevelSolved(level);
+      if (nextBtn && activeLevelIndex < totalInMode - 1) {
+        nextBtn.classList.remove('hidden');
+      }
+    }
+  });
+  balanceEngine.startLoop();
 }
 
 // ==================== ROBO-STUMDUKAS RENDERIS IR VALDYMAS ====================
@@ -839,6 +965,7 @@ document.getElementById('tab-mode-pinpull')?.addEventListener('click', () => swi
 document.getElementById('tab-mode-sokoban')?.addEventListener('click', () => switchLabMode('sokoban'));
 document.getElementById('tab-mode-laser')?.addEventListener('click', () => switchLabMode('laser'));
 document.getElementById('tab-mode-circuit')?.addEventListener('click', () => switchLabMode('circuit'));
+document.getElementById('tab-mode-balance')?.addEventListener('click', () => switchLabMode('balance'));
 document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
 
 document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
@@ -1012,6 +1139,32 @@ if (circuitCanvas) {
     if (!circuitEngine) return;
     const { mx, my } = getCircuitCanvasCoords(e);
     circuitEngine.handlePointerDown(mx, my);
+  });
+}
+
+document.getElementById('btn-balance-reset')?.addEventListener('click', () => {
+  if (!balanceEngine) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-balance-next')?.classList.add('hidden');
+  balanceEngine.reset();
+});
+
+document.getElementById('btn-balance-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
+
+if (balanceCanvas) {
+  balanceCanvas.addEventListener('pointerdown', (e) => {
+    if (!balanceEngine) return;
+    const { mx, my } = getBalanceCanvasCoords(e);
+    balanceEngine.handlePointerDown(mx, my);
   });
 }
 
