@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bulių Kautynių Lenktynės – Lino ir Luko Žaidimų Portalas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- ==================== VIRŠUTINĖ PORTALO IR HUD JUOSTA ==================== -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <a href="../../index.html" class="back-portal-btn">🏠 Atgal į Portalą</a>
+      <div class="game-brand">
+        <span class="brand-icon">🏎️💥</span>
+        <div>
+          <h1>BULIŲ KAUTYNIŲ LENKTYNĖS</h1>
+          <span class="brand-sub">2D Top-Down Demolition Derby &amp; Tiuningo Garažas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rodoma pasirinkus profilį (Garaže ir Lenktynėse) -->
+    <div id="top-bar-active-driver" class="top-bar-right hidden">
+      <button id="btn-open-profiles" class="profile-switch-pill" title="Grįžti į profilių pasirinkimą">
+        👤 <span id="ui-driver-name">Linas (1 Klasė)</span>
+      </button>
+
+      <!-- GLOBALUS PORTALO LAIKMATIS (MM:SS) -->
+      <button id="btn-global-timer" class="wallet-pill timer-pill" title="Dienos žaidimo laikas (Tėvų kontrolė)">
+        <span id="ui-global-timer">⏳ Liko: 20:00</span>
+      </button>
+
+      <div class="wallet-pill coins-pill">
+        <span>🪙</span>
+        <strong id="ui-coins">500</strong>
+      </div>
+      <div class="wallet-pill wins-pill">
+        <span>🏆</span>
+        <strong id="ui-wins">0</strong>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== 0 EKRANAS: PRADINIS LINO IR LUKO PROFILIŲ PASIRINKIMAS ==================== -->
+  <section id="screen-profiles" class="profiles-screen">
+    <div class="profiles-card">
+      <div class="profiles-header">
+        <span class="profiles-badge">🏁 PASIRINK SAVO VAIRUOTOJĄ</span>
+        <h2>KAS ŠIANDIEN VAIRUOS KOVINĮ BOLIDĄ?</h2>
+        <p>Pasirink savo profilį – tavo bolidas, tiuningas, pinigai ir matematikos klasė bus užkrauti automatiškai!</p>
+      </div>
+
+      <div id="named-profiles-grid" class="named-profiles-grid"></div>
+    </div>
+  </section>
+
+  <!-- ==================== 1 EKRANAS: IŠSAMUS GARAŽAS (TUNING SHOP) ==================== -->
+  <main id="screen-garage" class="garage-layout hidden">
+    <!-- KAIRĖ PUSĖ: DIDELIS MAŠINOS MODELIS, REMONTAS, TRASOS PASIRINKIMAS IR STARTAS -->
+    <section class="garage-showcase-card">
+      <div class="showcase-header">
+        <div>
+          <span class="garage-badge">🔧 TIUNINGO PAKĖLĖJAS</span>
+          <h2 id="garage-driver-title">Lino Kovinis Bolidas</h2>
+        </div>
+        <button id="btn-toggle-spin" class="spin-toggle-btn" title="Pasukti apžiūros kampą">
+          🔄 Sukti: Įjungta
+        </button>
+      </div>
+
+      <!-- DIDELIS TOP-DOWN MAŠINOS MODELIO CANVAS -->
+      <div class="car-turntable-wrap">
+        <canvas id="garage-preview-canvas" width="460" height="235"></canvas>
+        <div class="turntable-hint">
+          Visos detalės (bamperis, 7 stogo ginklai, padangos, spalva) realiai matomos ir veikia trasoje!
+        </div>
+      </div>
+
+      <!-- MAŠINOS BŪKLĖ (HP) IR REMONTAS -->
+      <div class="car-health-panel">
+        <div class="hp-header-row">
+          <span>🛡️ Kėbulo Būklė (HP):</span>
+          <strong id="garage-hp-text">100 / 100 HP</strong>
+        </div>
+        <div class="hp-bar-outer">
+          <div id="garage-hp-fill" class="hp-bar-fill" style="width: 100%;"></div>
+        </div>
+
+        <div id="repair-actions-row" class="repair-actions-row hidden">
+          <button id="btn-repair-math" class="repair-btn repair-math-btn">
+            🧠 Mechaniko Iššūkis: Remontuoti NEMOKAMAI (0 🪙)!
+          </button>
+          <button id="btn-repair-coins" class="repair-btn repair-coins-btn">
+            🪙 Greitas remontas (200 🪙)
+          </button>
+        </div>
+      </div>
+
+      <!-- BOLIDO CHARAKTERISTIKOS (KLASĖ, ASFALTAS vs PURVAS, GINKLAS, GALIOS LYGIS) -->
+      <div class="car-stats-grid">
+        <div class="stat-box">
+          <span class="stat-label">🚘 Kėbulo Klasė</span>
+          <strong id="stat-chassis">🛺 Lengvasis Bagis</strong>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">🏎️ Greitis (Asfaltas / Purvas)</span>
+          <strong id="stat-speed">180 / 180 km/h</strong>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">💥 Taranas (Smūgio Galia)</span>
+          <strong id="stat-ram">75%</strong>
+        </div>
+        <div class="stat-box">
+          <span class="stat-label">⚡ Galios Lygis (Power Lvl)</span>
+          <strong id="stat-micro-total">0 (AI prisitaiko!)</strong>
+        </div>
+      </div>
+
+      <!-- 3 PUNKTAS: TRASOS PASIRINKIMAS (ASFALTO ŽIEDAS vs PURVO/BEKELĖS ARENA) -->
+      <div class="track-picker-panel">
+        <div class="track-picker-title">🗺️ PASIRINK LENKTYNIŲ TRASĄ:</div>
+        <div id="track-selector-cards" class="track-selector-cards"></div>
+        <div class="track-layout-picker-row">
+          <span class="track-layout-title">📐 TRASOS FORMA:</span>
+          <div id="layout-selector-pills" class="layout-selector-pills">
+            <button class="layout-pill active" data-layout="auto">⭐ Pagal temą</button>
+            <button class="layout-pill" data-layout="ring">🔄 Žiedas</button>
+            <button class="layout-pill" data-layout="figure8">♾️ Aštuoniukė</button>
+            <button class="layout-pill" data-layout="zigzag">⚡ Zigzagas</button>
+          </div>
+        </div>
+        <div id="tire-surface-advice" class="tire-surface-advice"></div>
+      </div>
+
+      <!-- DIDELIS MYGTUKAS „Į TRASĄ!“ -->
+      <button id="btn-start-race" class="start-race-btn">
+        🏁 VAŽIUOTI Į TRASĄ! (3 RATAI / 90s)
+      </button>
+    </section>
+
+    <!-- DEŠINĖ PUSĖ: TIUNINGO DETALIŲ IR 50 LYGIŲ MIKRO-TOBULINIMŲ PARDUOTUVĖ -->
+    <section class="garage-shop-card">
+      <div class="shop-top-banner">
+        <div>
+          <h2>🛠️ TIUNINGO DIRBTUVĖS IR GINKLUOTĖ</h2>
+          <p>Išspręsk 3 greitus <strong>Mechaniko uždavinius</strong> ir pirk ginklus, padangas bei 50 lygių mikro-tobulinimus su <strong>-60% nuolaida</strong>!</p>
+        </div>
+      </div>
+
+      <!-- 6 KATEGORIJŲ KORTELĖS (TABS) SU AUTOMOBILIŲ SALONU! -->
+      <div class="tuning-tabs" role="tablist">
+        <button class="tuning-tab active" data-slot="chassis">🚘 Automobilių Salonas</button>
+        <button class="tuning-tab" data-slot="micro">📈 Mikro-Tobulinimai (50 lyg.)</button>
+        <button class="tuning-tab" data-slot="roof">🔫 7 Stogo Ginklai</button>
+        <button class="tuning-tab" data-slot="wheels">🛞 Padangos (Grip)</button>
+        <button class="tuning-tab" data-slot="bumper">🚜 Bamperiai</button>
+        <button class="tuning-tab" data-slot="paint">🎨 Spalva</button>
+      </div>
+
+      <!-- DETALIŲ ARBA MIKRO-TOBULINIMŲ SĄRAŠAS -->
+      <div id="tuning-parts-grid" class="tuning-parts-grid"></div>
+    </section>
+  </main>
+
+  <!-- ==================== 2 EKRANAS: 2D TOP-DOWN LENKTYNIŲ ARENA ==================== -->
+  <section id="screen-race" class="race-layout hidden">
+    <!-- LENKTYNIŲ HUD JUOSTA -->
+    <div class="race-hud">
+      <div class="hud-item hud-pos-box">
+        <span class="hud-label">VIETA</span>
+        <strong id="hud-pos">1 / 5</strong>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">RATAS</span>
+        <strong id="hud-lap">1 / 3</strong>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">LAIKAS</span>
+        <strong id="hud-time">01:30</strong>
+      </div>
+      <div class="hud-item">
+        <span class="hud-label">SPIDOMETRAS</span>
+        <strong id="hud-speed">0 km/h</strong>
+      </div>
+      <div class="hud-item hud-weapon-box">
+        <span class="hud-label">GINKLAS (TARPAS/F)</span>
+        <strong id="hud-weapon-status">🔫 Paruošta</strong>
+      </div>
+      <div class="hud-item hud-derby-box">
+        <span class="hud-label">BULIŲ ŽALA</span>
+        <strong id="hud-dmg-score">💥 0 DMG</strong>
+      </div>
+      <div class="hud-item hud-hp-box">
+        <div class="hud-hp-top">
+          <span>❤️ BOLIDO HP</span>
+          <strong id="hud-race-hp-text">100 / 100</strong>
+        </div>
+        <div class="hud-hp-bar">
+          <div id="hud-race-hp-fill" class="hud-hp-fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <!-- GLOBALUS DIENOS LAIKMATIS LENKTYNIŲ HUD'E -->
+      <button id="btn-race-global-timer" class="hud-global-timer-btn" title="Globalus dienos žaidimo laikas">
+        <span id="hud-global-timer">⏳ Liko: 20:00</span>
+      </button>
+
+      <button id="btn-exit-race" class="exit-race-btn">🔧 Į Garažą</button>
+    </div>
+
+    <!-- PAGRINDINIS 2D TOP-DOWN CANVAS -->
+    <div class="race-canvas-container">
+      <canvas id="race-canvas" width="1060" height="600"></canvas>
+
+      <!-- Ekrano pranešimų juosta (Startas / Susidūrimai / Ratai) -->
+      <div id="race-banner-toast" class="race-banner-toast hidden">🏁 STARTAS!</div>
+
+      <!-- Startinis šviesoforas ir atskaita (3, 2, 1, VAŽIUOJAM!) -->
+      <div id="race-countdown" class="race-countdown hidden" aria-live="assertive">
+        <div class="countdown-lights">
+          <span class="cd-light" id="cd-light-0"></span>
+          <span class="cd-light" id="cd-light-1"></span>
+          <span class="cd-light" id="cd-light-2"></span>
+        </div>
+        <div id="race-countdown-text" class="countdown-text">3</div>
+      </div>
+
+      <!-- HUD ANTRINIO GINKLO / DĖŽĖS INVENTORIAUS LANGELIS -->
+      <div id="hud-inventory-box" class="hud-inventory-box empty" aria-label="Antrinis ginklas">
+        <div class="inventory-card">
+          <div id="hud-inventory-icon" class="inventory-icon"></div>
+          <div id="hud-inventory-hint" class="inventory-hint">SUPER<br>DĖŽĖ</div>
+        </div>
+        <div id="hud-inventory-badge" class="inventory-badge">SHIFT / ENTER</div>
+      </div>
+
+      <!-- GREITAS PABAIGOS EKRANAS (GAME OVER) -->
+      <div id="overlay-game-over" class="game-over-overlay hidden" aria-live="assertive">
+        <div class="game-over-box">
+          <h2 class="game-over-title">MAŠINA SUNAIKINTA!</h2>
+          <p id="game-over-coins" class="game-over-coins">Surinkta monetų: +0 🪙</p>
+          <button id="btn-game-over-to-garage" class="game-over-btn">
+            🔧 Grįžti į garažą
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VALDYMO PAGALBA IR EKRANINIAI MYGTUKAI -->
+    <div class="race-controls-bar">
+      <div class="controls-hint">
+        <span><kbd>W</kbd> / <kbd>↑</kbd> Gazas</span>
+        <span><kbd>S</kbd> / <kbd>↓</kbd> Stabdys / Atbulas</span>
+        <span><kbd>A</kbd> <kbd>D</kbd> / <kbd>←</kbd> <kbd>→</kbd> Vairavimas (Drift)</span>
+        <span><kbd>TARPAS (SPACE)</kbd> Šauti ginklu / Pilti tepalą / Dėti miną</span>
+      </div>
+
+      <div class="touch-controls">
+        <button id="touch-left" class="touch-btn">⬅️</button>
+        <button id="touch-right" class="touch-btn">➡️</button>
+        <button id="touch-gas" class="touch-btn touch-gas">⛽ GAZAS</button>
+        <button id="touch-brake" class="touch-btn touch-brake">🛑 ATGAL</button>
+        <button id="touch-fire" class="touch-btn touch-fire">🔫 UGNIS (SPACE)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MODALAS: BOSO BILIETAS IR TRASOS ATRAKINIMAS ==================== -->
+  <div id="modal-boss-ticket" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card boss-ticket-modal-card">
+      <div class="boss-ticket-header">
+        <span class="boss-ticket-badge">👑 MATEMATIKOS BOSO IŠŠŪKIS</span>
+        <button id="btn-close-boss-ticket" class="modal-close-btn" title="Uždaryti">✖</button>
+      </div>
+
+      <div class="boss-ticket-content">
+        <div id="boss-ticket-icon" class="boss-ticket-icon">❄️</div>
+        <h2 id="boss-ticket-title">Žiema / Ledo trasa</h2>
+        <p class="boss-ticket-subtitle">
+          Norint atrakinti šią trasą, privalai įveikti Matematikos Bosą!
+        </p>
+
+        <div class="boss-price-badge-row">
+          <span class="boss-price-tag-label">Bilieto kaina:</span>
+          <span id="boss-ticket-price-display" class="boss-price-tag-val">2000 🪙</span>
+        </div>
+
+        <div class="boss-rules-card">
+          <h4>⚠️ BOSO IŠŠŪKIO TAISYKLĖS IR RIZIKA:</h4>
+          <ul>
+            <li>🎯 Reikia išspręsti <strong>5 matematinius uždavinius iš eilės</strong> be klaidų!</li>
+            <li>⚡ <strong>Viena klaida = Pralaimėjimas!</strong> Padarius bent vieną klaidą, kova iškart nutraukiama.</li>
+            <li>🔥 <strong>Pinigai sudega:</strong> Bilieto kaina nurašoma iškart ir negrįžtamai sudega, trasa lieka užrakinta!</li>
+            <li>🏆 <strong>Pergalė:</strong> Atsakius į visus 5 klausimus teisingai, trasa atrakinama <strong>visam laikui</strong>!</li>
+          </ul>
+        </div>
+
+        <div class="boss-balance-row">
+          <span>Tavo turimos monetos:</span>
+          <strong id="boss-ticket-user-coins">0 🪙</strong>
+        </div>
+
+        <div id="boss-ticket-warning" class="boss-ticket-warning hidden">
+          ⚠️ Nepakanka monetų bilietui įsigyti! Laimėk daugiau lenktynių arenoje.
+        </div>
+
+        <div class="boss-ticket-actions">
+          <button id="btn-buy-boss-ticket" class="boss-buy-btn">
+            👑 PIRKTI BILIETĄ IR KOVOTI (<span id="boss-btn-cost-text">2000</span> 🪙)
+          </button>
+          <button id="btn-cancel-boss-ticket" class="boss-cancel-btn">
+            Atšaukti
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODALAS 1: GREITA MATEMATIKA GARAŽE (PIT STOP MATH) ==================== -->
+  <div id="modal-pitstop-math" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card pitstop-modal-card">
+      <div class="pitstop-top-row">
+        <span id="pitstop-title-badge" class="pitstop-title-badge">🔧 MECHANIKO PIT-STOP IŠŠŪKIS (3 UŽDUOTYS)</span>
+        <button id="btn-close-math" class="modal-close-btn" title="Atšaukti">✖</button>
+      </div>
+
+      <p id="pitstop-target-desc" class="pitstop-target-desc">
+        Išspręsk visas 3 užduotis teisingai ir gauk <strong>-60% Mechaniko nuolaidą</strong>!
+      </p>
+
+      <!-- 3 ARBA 5 UŽDUOČIŲ PROGRESO LEMPUTĖS -->
+      <div id="pitstop-progress-row" class="pitstop-progress-row">
+        <div id="pit-dot-0" class="pit-dot active">1</div>
+        <div id="pit-dot-1" class="pit-dot">2</div>
+        <div id="pit-dot-2" class="pit-dot">3</div>
+      </div>
+
+      <!-- GREITOS REAKCIJOS LAIKMAČIO JUOSTA -->
+      <div class="pitstop-timer-outer">
+        <div id="math-timer-fill" class="pitstop-timer-fill" style="width: 100%;"></div>
+      </div>
+
+      <!-- UŽDAVINIO BLOKAS -->
+      <div class="pitstop-question-box">
+        <span id="math-q-badge" class="math-q-badge">⛽ KURO BAKAS</span>
+        <div id="math-q-formula" class="math-q-formula">15 + [ ? ] = 30</div>
+        <p id="math-q-hint" class="math-q-hint">Kiek litrų trūksta iki pilno bako?</p>
+      </div>
+
+      <!-- 4 GREITI ATSAKYMO MYGTUKAI -->
+      <div id="math-choices-grid" class="math-choices-grid"></div>
+
+      <div id="math-feedback-msg" class="math-feedback-msg"></div>
+    </div>
+  </div>
+
+  <!-- ==================== MODALAS 2: LENKTYNIŲ PABAIGOS IR PRIZŲ EKRANAS ==================== -->
+  <div id="modal-race-results" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card results-modal-card">
+      <div id="res-trophy-icon" class="res-trophy-icon">🏆</div>
+      <h2 id="res-title">1 VIETA – ARENOS ČEMPIONAS!</h2>
+      <p id="res-subtitle" class="res-subtitle">Puikiai įveikei trasą ir bulių kautynes!</p>
+
+      <div class="results-breakdown">
+        <div class="res-row">
+          <span>🏁 Užimta vieta lenktynėse:</span>
+          <strong id="res-place-reward">+1000 🪙</strong>
+        </div>
+        <div class="res-row">
+          <span>💥 Bulių kautynių ir ginklų žalos bonusas:</span>
+          <strong id="res-damage-reward">+180 🪙</strong>
+        </div>
+        <div class="res-row">
+          <span>💀 Sunaikinti priešų bolidai:</span>
+          <strong id="res-takedown-reward">+150 🪙</strong>
+        </div>
+        <div class="res-row total-row">
+          <span>💰 IŠ VISO UŽDIRBTA:</span>
+          <strong id="res-total-coins">+1330 🪙</strong>
+        </div>
+      </div>
+
+      <button id="btn-results-to-garage" class="start-race-btn">
+        🔧 GRĮŽTI Į GARAŽĄ IR TIUNINGUOTI!
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODALAS 3: GLOBALUS DIENOS LAIKO LIMITAS IR TĖVŲ KONTROLĖ ==================== -->
+  <div id="modal-time-limit" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-card timelimit-modal-card">
+      <div class="res-trophy-icon">⏳</div>
+      <h2 id="time-limit-title">⏳ Šios dienos žaidimo laikas baigėsi!</h2>
+      <p id="time-limit-subtitle" class="res-subtitle">
+        Šiandien jau puikiai pažaidei 20 minučių! Visi tavo bolido patobulinimai ir monetos yra saugiai išsaugoti.
+      </p>
+
+      <div class="parent-control-box">
+        <label for="parent-password-input" class="parent-label">
+          🔐 Tėvų kontrolė (įveskite slaptažodį, kad pridėtumėte +10 min.):
+        </label>
+        <div class="parent-input-row">
+          <input
+            type="password"
+            id="parent-password-input"
+            class="parent-input"
+            placeholder="Tėvų slaptažodis..."
+            autocomplete="off"
+          />
+          <button id="btn-parent-extend" class="parent-extend-btn">
+            ➕ Pridėti +10 min.
+          </button>
+        </div>
+        <div id="parent-password-feedback" class="parent-feedback hidden"></div>
+      </div>
+
+      <div class="timelimit-actions">
+        <button id="btn-time-resume" class="part-btn btn-buy-math hidden">
+          ▶️ Tęsti žaidimą
+        </button>
+        <button id="btn-time-switch-profile" class="part-btn btn-equip">
+          👤 Keisti vairuotoją (Profiliai)
+        </button>
+        <a href="../../index.html" class="part-btn btn-buy-full" style="text-decoration:none;text-align:center;">
+          🏠 Grįžti į Žaidimų Portalą
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./game.js"></script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <title>Lino ir Luko Žaidimų Portalas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- Kvadratiniai Minecraft/Roblox stiliaus debesėliai fone -->
+  <div class="voxel-cloud cloud-1"></div>
+  <div class="voxel-cloud cloud-2"></div>
+  <div class="voxel-cloud cloud-3"></div>
+
+  <div class="portal-wrapper">
+    <!-- ==================== PORTALO ANTRAŠTĖ (3D BLOKELIS) ==================== -->
+    <header class="portal-header">
+      <div class="portal-logo-badge" aria-hidden="true">🧱🎮</div>
+      <h1>LINO IR LUKO ŽAIDIMŲ PORTALAS</h1>
+      <p class="portal-subtitle">
+        PASIRINK SAVO PASAULĮ, STATYK REKORDUS IR NUGALĖK IŠŠŪKIUS!
+      </p>
+
+      <!-- Gyva Lino ir Luko progreso juosta iš localStorage -->
+      <div id="portal-heroes-bar" class="portal-heroes-bar">
+        <div class="hero-stat-pill pill-linas">
+          <span class="hero-dot">👦</span>
+          <span><strong>Linas (1 kl.):</strong> <span id="hub-linas-stats">Lygis 1 • 0 🪙</span></span>
+        </div>
+        <div class="hero-stat-pill pill-lukas">
+          <span class="hero-dot">🧑</span>
+          <span><strong>Lukas (3 kl.):</strong> <span id="hub-lukas-stats">Lygis 1 • 0 🪙</span></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ==================== 2 AKTYVIŲ ŽAIDIMŲ BLOKELIAI ==================== -->
+    <main class="games-grid-section">
+      <div class="section-heading">
+        <h2>🟩 PASIRINK ŽAIDIMĄ</h2>
+        <span class="games-count-badge">2 AKTYVŪS PASAULIAI</span>
+      </div>
+
+      <div class="games-grid">
+        <!-- 1 KORTELĖ: MATEMATIKOS RPG (Žalias/žemės blokelio fonas su kardo ir skydo ikona) -->
+        <article class="game-tile block-tile-rpg" onclick="window.location.href='./games/math-rpg/index.html'">
+          <div class="tile-art art-grass-dirt">
+            <!-- Viršutinis žolės pikseliuotas sluoksnis -->
+            <div class="grass-top-strip"></div>
+
+            <div class="tile-top-row">
+              <span class="tile-status-badge badge-green">⭐ 5 PASAULIAI • 50 LYGIŲ</span>
+              <span class="tile-block-id">#01</span>
+            </div>
+
+            <div class="tile-icon-cluster">
+              <span class="sub-icon">🛡️</span>
+              <span class="main-icon">⚔️</span>
+              <span class="sub-icon">🐉</span>
+            </div>
+
+            <div class="art-tags">
+              <span>🧱 Nuotykių RPG</span>
+              <span>⚔️ Kardai ir Bumerangai</span>
+              <span>👑 Bosų kovos</span>
+            </div>
+          </div>
+
+          <div class="tile-body">
+            <h3>Matematikos RPG</h3>
+            <p class="tile-desc">
+              Tyrinėk 5 unikalius pasaulius, atrask slaptus lobių kambarius, derink Mados Sielų šarvus ir įveik galingus Pasaulių Bosus!
+            </p>
+            <div class="tile-footer">
+              <a href="./games/math-rpg/index.html" class="play-btn btn-plastic-green">
+                ▶ ŽAISTI
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <!-- 2 KORTELĖ: LENKTYNĖS (Asfalto / lenktynių vėliavos langelių fonas su sportinio automobilio ikona) -->
+        <article class="game-tile block-tile-racing" onclick="window.location.href='./games/lenktynes/index.html'">
+          <div class="tile-art art-asphalt-checkered">
+            <!-- Lenktynių vėliavos langelių juosta viršuje -->
+            <div class="checkered-top-strip"></div>
+            <!-- Asfalto kelio juostos -->
+            <div class="road-lane-line"></div>
+
+            <div class="tile-top-row">
+              <span class="tile-status-badge badge-orange">🔥 NAUJAS ŽAIDIMAS</span>
+              <span class="tile-block-id">#02</span>
+            </div>
+
+            <div class="tile-icon-cluster">
+              <span class="sub-icon">🏁</span>
+              <span class="main-icon">🏎️</span>
+              <span class="sub-icon">⚡</span>
+            </div>
+
+            <div class="art-tags">
+              <span>🏁 Turbo trasos</span>
+              <span>🔧 Bolidų tiuningas</span>
+              <span>🏆 Čempiono taurė</span>
+            </div>
+          </div>
+
+          <div class="tile-body">
+            <h3>Lenktynės</h3>
+            <p class="tile-desc">
+              Sėsk prie sportinio bolido vairo, spausk nitro greitintuvą ant asfalto, aplenk varžovus ir kisk finišo vėliavą pirmas!
+            </p>
+            <div class="tile-footer">
+              <a href="./games/lenktynes/index.html" class="play-btn btn-plastic-orange">
+                ▶ ŽAISTI
+              </a>
+            </div>
+          </div>
+        </article>
+      </div>
+    </main>
+
+    <!-- ==================== PORAŠTĖ (ŽOLĖS IR ŽEMĖS BLOKELIS) ==================== -->
+    <footer class="portal-footer">
+      <p>🧱 LINO IR LUKO ŽAIDIMŲ PORTALAS • VISI REKORDAI IR LOBIAI SAUGOMI ŠIAME ĮRENGINYJE</p>
+    </footer>
+  </div>
+
+  <!-- Užkrauname Lino ir Luko statistiką iš bendro localStorage -->
+  <script>
+    (function () {
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            regs.forEach(function (reg) {
+              if (reg.scope && !reg.scope.includes('/games/')) {
+                reg.unregister();
+              }
+            });
+          });
+        }
+
+        function getTodayStr() {
+          const d = new Date();
+          return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+
+        function formatRemainingTime(globalKey, fallbackProfile) {
+          const today = getTodayStr();
+          let played = 0;
+          let limit = 1200;
+          try {
+            const rawT = localStorage.getItem(globalKey);
+            if (rawT) {
+              const tObj = JSON.parse(rawT);
+              if (tObj && tObj.lastPlayedDate === today) {
+                played = Math.max(0, Number(tObj.timePlayedTodaySeconds) || 0);
+                limit = Math.max(60, Number(tObj.dailyTimeLimitSeconds) || 1200);
+              }
+            } else if (fallbackProfile && fallbackProfile.lastPlayedDate === today) {
+              played = Math.max(0, Number(fallbackProfile.timePlayedTodaySeconds) || 0);
+              limit = Math.max(60, Number(fallbackProfile.dailyTimeLimitSeconds) || 1200);
+            }
+          } catch (e) {}
+          const rem = Math.max(0, limit - played);
+          const mm = String(Math.floor(rem / 60)).padStart(2, '0');
+          const ss = String(rem % 60).padStart(2, '0');
+          return `⏳ ${mm}:${ss}`;
+        }
+
+        const rawLinas = localStorage.getItem('skaiciu_karalyste_save_linas_v2');
+        const rawLukas = localStorage.getItem('skaiciu_karalyste_save_lukas_v2');
+        const p1 = rawLinas ? JSON.parse(rawLinas) : null;
+        const p2 = rawLukas ? JSON.parse(rawLukas) : null;
+
+        const el1 = document.getElementById('hub-linas-stats');
+        if (el1) {
+          const t1 = formatRemainingTime('bosas_global_time_linas', p1);
+          el1.textContent = p1
+            ? `Lygis ${p1.unlockedLevel || 1}/50 • ${(p1.coins || 0).toLocaleString('lt-LT')} 🪙 • ${t1}`
+            : `Lygis 1/50 • 0 🪙 • ${t1}`;
+        }
+
+        const el2 = document.getElementById('hub-lukas-stats');
+        if (el2) {
+          const t2 = formatRemainingTime('bosas_global_time_lukas', p2);
+          el2.textContent = p2
+            ? `Lygis ${p2.unlockedLevel || 1}/50 • ${(p2.coins || 0).toLocaleString('lt-LT')} 🪙 • ${t2}`
+            : `Lygis 1/50 • 0 🪙 • ${t2}`;
+        }
+      } catch (e) {
+        // Ignoruojame localStorage klaidas
+      }
+    })();
+  </script>
+</body>
+</html>

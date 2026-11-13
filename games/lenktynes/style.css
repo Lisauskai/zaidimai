@@ -1,0 +1,2019 @@
+/* ==================== BULIŲ KAUTYNIŲ LENKTYNĖS & RPG GARAŽAS ==================== */
+:root {
+  --bg-asphalt: #0f172a;
+  --bg-panel: #1e293b;
+  --bg-card: #334155;
+  --outline-black: #020617;
+
+  --plastic-green: #22c55e;
+  --plastic-green-dark: #15803d;
+
+  --plastic-orange: #f97316;
+  --plastic-orange-dark: #c2410c;
+
+  --plastic-blue: #2563eb;
+  --plastic-blue-dark: #1d4ed8;
+
+  --plastic-yellow: #facc15;
+  --plastic-red: #ef4444;
+
+  --text-light: #f8fafc;
+  --text-muted: #cbd5e1;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-asphalt);
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 2px, transparent 2px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 2px, transparent 2px),
+    radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 78%);
+  background-size: 48px 48px, 48px 48px, 100% 100%;
+  color: var(--text-light);
+  overflow-x: hidden;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ==================== VIRŠUTINĖ JUOSTA ==================== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 22px;
+  background: #1e293b;
+  border-bottom: 5px solid var(--outline-black);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+}
+
+.top-bar-left,
+.top-bar-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.back-portal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--plastic-green);
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 10px;
+  border: 4px solid var(--outline-black);
+  text-shadow: 0 2px 0 var(--outline-black);
+  box-shadow:
+    inset 0 4px 0 #86efac,
+    inset 0 -4px 0 var(--plastic-green-dark),
+    0 5px 0 var(--outline-black);
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.back-portal-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow:
+    inset 0 4px 0 #86efac,
+    inset 0 -4px 0 var(--plastic-green-dark),
+    0 7px 0 var(--outline-black);
+}
+
+.game-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  font-size: 2rem;
+}
+
+.game-brand h1 {
+  font-family: 'Russo One', sans-serif;
+  font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+  color: var(--plastic-yellow);
+  text-shadow: 0 3px 0 var(--outline-black);
+  letter-spacing: 0.04em;
+}
+
+.brand-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+.profile-switch-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  border-radius: 10px;
+  border: 4px solid var(--outline-black);
+  background: var(--plastic-blue);
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-shadow: 0 2px 0 var(--outline-black);
+  box-shadow: 0 5px 0 var(--outline-black);
+  transition: transform 0.12s ease;
+}
+
+.profile-switch-pill:hover {
+  transform: translateY(-2px);
+}
+
+.wallet-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 4px solid var(--outline-black);
+  font-family: 'Russo One', sans-serif;
+  font-size: 1rem;
+  box-shadow: 0 5px 0 var(--outline-black);
+}
+
+.timer-pill {
+  background: #0f172a;
+  color: #38bdf8;
+  cursor: pointer;
+}
+
+.timer-pill.low-time,
+.hud-global-timer-btn.low-time {
+  background: #7f1d1d;
+  color: #fecaca;
+  border-color: #ef4444;
+  animation: pulseLowTime 1s infinite alternate;
+}
+
+@keyframes pulseLowTime {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+
+.coins-pill {
+  background: #facc15;
+  color: var(--outline-black);
+}
+
+.wins-pill {
+  background: #f97316;
+  color: #ffffff;
+  text-shadow: 0 2px 0 var(--outline-black);
+}
+
+/* ==================== 0 EKRANAS: PRADINIS PROFILIŲ PASIRINKIMAS ==================== */
+.profiles-screen {
+  max-width: 1040px;
+  margin: 34px auto 50px;
+  padding: 0 20px;
+}
+
+.profiles-card {
+  background: var(--bg-panel);
+  border: 5px solid var(--outline-black);
+  border-radius: 18px;
+  padding: 30px 26px;
+  box-shadow:
+    inset 0 5px 0 rgba(255, 255, 255, 0.08),
+    0 14px 0 var(--outline-black);
+}
+
+.profiles-header {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.profiles-badge {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.72rem;
+  background: var(--plastic-yellow);
+  color: var(--outline-black);
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 3px solid var(--outline-black);
+  box-shadow: 0 4px 0 var(--outline-black);
+  margin-bottom: 12px;
+}
+
+.profiles-header h2 {
+  font-family: 'Russo One', sans-serif;
+  font-size: clamp(1.5rem, 3.2vw, 2.2rem);
+  color: #ffffff;
+  text-shadow: 0 4px 0 var(--outline-black);
+  margin-bottom: 8px;
+}
+
+.profiles-header p {
+  color: var(--text-muted);
+  font-size: 1.02rem;
+  font-weight: 800;
+}
+
+.named-profiles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+}
+
+.driver-profile-card {
+  background: #0f172a;
+  border: 5px solid var(--outline-black);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 10px 0 var(--outline-black);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.driver-profile-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 16px 0 var(--outline-black);
+}
+
+.driver-card-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-car-canvas {
+  background: radial-gradient(circle, #334155 0%, #020617 90%);
+  border: 3px solid var(--outline-black);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.driver-card-info h3 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.45rem;
+  color: var(--plastic-yellow);
+  text-shadow: 0 2px 0 var(--outline-black);
+  margin-bottom: 5px;
+}
+
+.fixed-grade-badge {
+  display: inline-block;
+  background: var(--plastic-blue);
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 2px solid var(--outline-black);
+  margin-bottom: 6px;
+}
+
+.driver-card-sub {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.driver-slot-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: #1e293b;
+  border: 3px solid var(--outline-black);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #e2e8f0;
+}
+
+.driver-slot-stats strong {
+  color: #fde047;
+}
+
+.driver-slot-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.driver-play-btn {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 11px;
+  border: 4px solid var(--outline-black);
+  background: var(--plastic-green);
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.08rem;
+  cursor: pointer;
+  text-shadow: 0 2px 0 var(--outline-black);
+  box-shadow:
+    inset 0 4px 0 #86efac,
+    inset 0 -4px 0 var(--plastic-green-dark),
+    0 6px 0 var(--outline-black);
+  transition: transform 0.14s ease, filter 0.14s ease;
+}
+
+.driver-play-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.driver-reset-btn {
+  padding: 0 14px;
+  border-radius: 11px;
+  border: 4px solid var(--outline-black);
+  background: #334155;
+  color: #f87171;
+  font-size: 1.15rem;
+  cursor: pointer;
+  box-shadow: 0 6px 0 var(--outline-black);
+}
+
+/* ==================== 1 EKRANAS: GARAŽO IŠDĖSTYMAS ==================== */
+.garage-layout {
+  max-width: 1320px;
+  margin: 22px auto 40px;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: 490px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.garage-showcase-card,
+.garage-shop-card {
+  background: var(--bg-panel);
+  border: 5px solid var(--outline-black);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow:
+    inset 0 4px 0 rgba(255, 255, 255, 0.08),
+    0 12px 0 var(--outline-black);
+}
+
+.showcase-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.garage-badge {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+  background: var(--plastic-orange);
+  color: #ffffff;
+  padding: 5px 9px;
+  border-radius: 6px;
+  border: 2px solid var(--outline-black);
+  margin-bottom: 6px;
+}
+
+.showcase-header h2 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.45rem;
+  color: #ffffff;
+  text-shadow: 0 3px 0 var(--outline-black);
+}
+
+.spin-toggle-btn {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 3px solid var(--outline-black);
+  background: #334155;
+  color: #e2e8f0;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--outline-black);
+}
+
+.spin-toggle-btn:hover {
+  background: #475569;
+}
+
+/* DIDELIS MAŠINOS MODELIO CANVAS */
+.car-turntable-wrap {
+  background: radial-gradient(circle at 50% 50%, #334155 0%, #0f172a 85%);
+  border: 4px solid var(--outline-black);
+  border-radius: 14px;
+  padding: 12px;
+  text-align: center;
+  margin-bottom: 16px;
+  box-shadow: inset 0 6px 18px rgba(0, 0, 0, 0.65);
+}
+
+#garage-preview-canvas {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.turntable-hint {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  font-weight: 800;
+  margin-top: 6px;
+}
+
+/* KĖBULO HP IR REMONTAS */
+.car-health-panel {
+  background: #0f172a;
+  border: 3px solid var(--outline-black);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.hp-header-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 900;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.hp-bar-outer {
+  height: 18px;
+  background: #1e293b;
+  border: 3px solid var(--outline-black);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.hp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  transition: width 0.25s ease, background 0.25s ease;
+}
+
+.repair-actions-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.repair-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 3px solid var(--outline-black);
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--outline-black);
+  transition: transform 0.12s ease;
+}
+
+.repair-btn:hover {
+  transform: translateY(-2px);
+}
+
+.repair-math-btn {
+  background: var(--plastic-green);
+  color: #ffffff;
+  text-shadow: 0 2px 0 var(--outline-black);
+}
+
+.repair-coins-btn {
+  background: #facc15;
+  color: var(--outline-black);
+}
+
+/* CHARAKTERISTIKŲ TINKLELIS */
+.car-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.stat-box {
+  background: #0f172a;
+  border: 3px solid var(--outline-black);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-weight: 800;
+}
+
+.stat-box strong {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.05rem;
+  color: #fde047;
+}
+
+/* TRASOS PASIRINKIMO BLOKAS GARAŽE */
+.track-picker-panel {
+  background: #0f172a;
+  border: 3px solid var(--outline-black);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 14px;
+}
+
+.track-picker-title {
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.86rem;
+  color: #fde047;
+  margin-bottom: 8px;
+}
+
+.track-selector-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.track-option-btn {
+  background: #1e293b;
+  border: 3px solid var(--outline-black);
+  border-radius: 10px;
+  padding: 9px 10px;
+  text-align: left;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.track-option-btn:hover {
+  transform: translateY(-2px);
+}
+
+.track-option-btn.active {
+  background: #1e3a8a;
+  border-color: var(--plastic-yellow);
+  color: #ffffff;
+  box-shadow: 0 4px 0 var(--outline-black);
+}
+
+.track-option-btn.locked {
+  background: #0f172a;
+  border-color: #334155;
+  color: #64748b;
+  opacity: 0.88;
+  position: relative;
+}
+
+.track-option-btn.locked:hover {
+  background: #1e1e2e;
+  border-color: #f59e0b;
+  color: #e2e8f0;
+  opacity: 1;
+}
+
+.track-option-btn.locked strong {
+  color: #94a3b8;
+}
+
+.track-option-btn.locked:hover strong {
+  color: #f8fafc;
+}
+
+.track-option-btn.locked span {
+  color: #64748b;
+}
+
+.track-option-btn.locked:hover span {
+  color: #cbd5e1;
+}
+
+.track-lock-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 5px;
+  padding: 3px 6px;
+  background: rgba(180, 83, 9, 0.25);
+  border: 1.5px dashed #f59e0b;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fef08a;
+}
+
+.track-lock-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #fbbf24;
+  font-family: 'Russo One', sans-serif;
+}
+
+.track-lock-price {
+  color: #fde047;
+  font-family: 'Russo One', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.track-option-btn strong {
+  display: block;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.88rem;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.track-option-btn span {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #93c5fd;
+}
+
+.track-layout-picker-row {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  background: rgba(15, 23, 42, 0.65);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 2px solid #334155;
+}
+
+.track-layout-title {
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.74rem;
+  color: #facc15;
+  letter-spacing: 0.5px;
+}
+
+.layout-selector-pills {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.layout-pill {
+  background: #1e293b;
+  border: 2px solid #475569;
+  color: #cbd5e1;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.layout-pill:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.layout-pill.active {
+  background: #2563eb;
+  border-color: #facc15;
+  color: #ffffff;
+  box-shadow: 0 2px 0 var(--outline-black);
+}
+
+.tire-surface-advice {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 6px 9px;
+  border-radius: 7px;
+  border: 2px solid var(--outline-black);
+}
+
+.tire-surface-advice.good-match {
+  background: rgba(22, 163, 74, 0.22);
+  color: #86efac;
+  border-color: #22c55e;
+}
+
+.tire-surface-advice.warn-match {
+  background: rgba(220, 38, 38, 0.25);
+  color: #fca5a5;
+  border-color: #ef4444;
+}
+
+/* DIDELIS LENKTYNIŲ STARTO MYGTUKAS */
+.start-race-btn {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 4px solid var(--outline-black);
+  background: var(--plastic-orange);
+  color: #ffffff;
+  font-family: 'Russo One', 'Bungee', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  text-shadow: 0 3px 0 var(--outline-black);
+  box-shadow:
+    inset 0 5px 0 #fdba74,
+    inset 0 -5px 0 var(--plastic-orange-dark),
+    0 8px 0 var(--outline-black);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.start-race-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    inset 0 5px 0 #fdba74,
+    inset 0 -5px 0 var(--plastic-orange-dark),
+    0 11px 0 var(--outline-black);
+}
+
+/* ==================== TIUNINGO PARDUOTUVĖS KORTELĖ ==================== */
+.shop-top-banner {
+  margin-bottom: 16px;
+}
+
+.shop-top-banner h2 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.5rem;
+  color: var(--plastic-yellow);
+  text-shadow: 0 3px 0 var(--outline-black);
+  margin-bottom: 4px;
+}
+
+.shop-top-banner p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.tuning-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.micro-level-bar-outer {
+  height: 12px;
+  background: #1e293b;
+  border: 2px solid var(--outline-black);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.micro-level-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #22c55e);
+  transition: width 0.2s ease;
+}
+
+.hud-weapon-box strong {
+  color: #38bdf8;
+}
+
+.tuning-tab {
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: 4px solid var(--outline-black);
+  background: #0f172a;
+  color: #cbd5e1;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--outline-black);
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+
+.tuning-tab:hover {
+  transform: translateY(-2px);
+  background: #334155;
+}
+
+.tuning-tab.active {
+  background: var(--plastic-blue);
+  color: #ffffff;
+  text-shadow: 0 2px 0 var(--outline-black);
+  box-shadow:
+    inset 0 4px 0 #60a5fa,
+    0 5px 0 var(--outline-black);
+}
+
+.tuning-parts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+  gap: 16px;
+}
+
+.part-card {
+  background: #0f172a;
+  border: 4px solid var(--outline-black);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 8px 0 var(--outline-black);
+  transition: transform 0.15s ease;
+}
+
+.part-card.equipped-card {
+  border-color: var(--plastic-green);
+  box-shadow: 0 8px 0 var(--outline-black), 0 0 0 2px var(--plastic-green);
+}
+
+.part-card:hover {
+  transform: translateY(-4px);
+}
+
+.part-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.part-icon-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  border: 3px solid var(--outline-black);
+  background: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.part-title-wrap h3 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.08rem;
+  color: #ffffff;
+  margin-bottom: 3px;
+}
+
+.part-stats-badge {
+  display: inline-block;
+  background: rgba(250, 204, 21, 0.18);
+  border: 1px solid #facc15;
+  color: #fde047;
+  font-size: 0.75rem;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.part-desc {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+  font-weight: 700;
+}
+
+.part-upgrade-preview {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 2px solid #22c55e;
+  color: #bbf7d0;
+  font-size: 0.84rem;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.part-upgrade-preview strong {
+  color: #fde047;
+}
+
+.part-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.part-btn {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 3px solid var(--outline-black);
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.86rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--outline-black);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.part-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.part-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-equip {
+  background: var(--plastic-blue);
+  color: #ffffff;
+}
+
+.btn-equipped {
+  background: #15803d;
+  color: #bbf7d0;
+}
+
+.btn-buy-math {
+  background: var(--plastic-green);
+  color: #ffffff;
+  text-shadow: 0 2px 0 var(--outline-black);
+}
+
+.btn-buy-full {
+  background: #334155;
+  color: #fde047;
+}
+
+/* ==================== 2 EKRANAS: LENKTYNIŲ ARENA ==================== */
+.race-layout {
+  max-width: 1120px;
+  margin: 14px auto 30px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.race-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #1e293b;
+  border: 4px solid var(--outline-black);
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 7px 0 var(--outline-black);
+}
+
+.hud-item {
+  background: #0f172a;
+  border: 3px solid var(--outline-black);
+  border-radius: 10px;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 88px;
+}
+
+.hud-label {
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.hud-item strong {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.02rem;
+  color: #ffffff;
+}
+
+.hud-pos-box strong {
+  color: var(--plastic-yellow);
+}
+
+.hud-derby-box strong {
+  color: #fb923c;
+}
+
+.hud-hp-box {
+  min-width: 160px;
+}
+
+.hud-hp-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.hud-hp-bar {
+  height: 12px;
+  background: #1e293b;
+  border: 2px solid var(--outline-black);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.hud-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #4ade80);
+  transition: width 0.2s ease;
+}
+
+.hud-global-timer-btn {
+  padding: 9px 13px;
+  border-radius: 10px;
+  border: 3px solid var(--outline-black);
+  background: #0f172a;
+  color: #38bdf8;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--outline-black);
+}
+
+.exit-race-btn {
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 3px solid var(--outline-black);
+  background: #ef4444;
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--outline-black);
+}
+
+.race-canvas-container {
+  position: relative;
+  background: #020617;
+  border: 5px solid var(--outline-black);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 0 var(--outline-black);
+}
+
+#race-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.race-banner-toast {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  border: 4px solid var(--plastic-yellow);
+  color: var(--plastic-yellow);
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.45rem;
+  padding: 10px 26px;
+  border-radius: 12px;
+  box-shadow: 0 8px 0 var(--outline-black);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.race-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #1e293b;
+  border: 4px solid var(--outline-black);
+  border-radius: 12px;
+  padding: 10px 16px;
+}
+
+.controls-hint {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #cbd5e1;
+}
+
+kbd {
+  background: #0f172a;
+  border: 2px solid var(--outline-black);
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-family: 'Russo One', sans-serif;
+  color: #fde047;
+  font-size: 0.78rem;
+}
+
+.touch-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.touch-btn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 3px solid var(--outline-black);
+  background: #334155;
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 4px 0 var(--outline-black);
+}
+
+.touch-gas {
+  background: var(--plastic-green);
+}
+
+.touch-brake {
+  background: #ef4444;
+}
+
+.touch-fire {
+  background: var(--plastic-orange);
+}
+
+/* ==================== MODALAI (PIT STOP MATH, REZULTATAI, LAIKO LIMITAS) ==================== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.84);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.modal-card {
+  background: #1e293b;
+  border: 5px solid var(--outline-black);
+  border-radius: 18px;
+  padding: 26px;
+  max-width: 560px;
+  width: 100%;
+  box-shadow:
+    inset 0 5px 0 rgba(255, 255, 255, 0.1),
+    0 14px 0 var(--outline-black);
+}
+
+.pitstop-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pitstop-title-badge {
+  background: var(--plastic-yellow);
+  color: var(--outline-black);
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.88rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 3px solid var(--outline-black);
+}
+
+.modal-close-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 3px solid var(--outline-black);
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.pitstop-target-desc {
+  color: #e2e8f0;
+  font-size: 0.96rem;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+
+.pitstop-progress-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.pit-dot {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 3px solid var(--outline-black);
+  background: #0f172a;
+  color: #64748b;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pit-dot.active {
+  background: var(--plastic-blue);
+  color: #ffffff;
+  box-shadow: 0 4px 0 var(--outline-black);
+}
+
+.pit-dot.done-ok {
+  background: var(--plastic-green);
+  color: #ffffff;
+}
+
+.pit-dot.done-fail {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.pitstop-timer-outer {
+  height: 12px;
+  background: #0f172a;
+  border: 3px solid var(--outline-black);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.pitstop-timer-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #facc15, #22c55e);
+  transition: width 0.1s linear;
+}
+
+.pitstop-question-box {
+  background: #0f172a;
+  border: 4px solid var(--outline-black);
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.math-q-badge {
+  display: inline-block;
+  background: #334155;
+  color: #fde047;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.math-q-formula {
+  font-family: 'Russo One', sans-serif;
+  font-size: clamp(1.5rem, 3.5vw, 2.15rem);
+  color: #ffffff;
+  margin-bottom: 8px;
+  letter-spacing: 0.03em;
+}
+
+.math-q-hint {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.math-choices-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.math-choice-btn {
+  padding: 16px;
+  border-radius: 12px;
+  border: 4px solid var(--outline-black);
+  background: var(--plastic-blue);
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.45rem;
+  cursor: pointer;
+  box-shadow:
+    inset 0 4px 0 #60a5fa,
+    0 6px 0 var(--outline-black);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.math-choice-btn:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.1);
+}
+
+.math-feedback-msg {
+  min-height: 26px;
+  margin-top: 12px;
+  text-align: center;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1rem;
+}
+
+/* REZULTATŲ IR LAIKO LIMITO MODALAI */
+.results-modal-card,
+.timelimit-modal-card {
+  text-align: center;
+}
+
+.res-trophy-icon {
+  font-size: 4.2rem;
+  margin-bottom: 8px;
+}
+
+.results-modal-card h2,
+.timelimit-modal-card h2 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.65rem;
+  color: var(--plastic-yellow);
+  text-shadow: 0 3px 0 var(--outline-black);
+  margin-bottom: 6px;
+}
+
+.res-subtitle {
+  color: #cbd5e1;
+  font-weight: 800;
+  margin-bottom: 18px;
+}
+
+.results-breakdown {
+  background: #0f172a;
+  border: 4px solid var(--outline-black);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.res-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #e2e8f0;
+}
+
+.res-row strong {
+  font-family: 'Russo One', sans-serif;
+  color: #4ade80;
+}
+
+.res-row.total-row {
+  border-top: 2px dashed #334155;
+  padding-top: 10px;
+  font-size: 1.18rem;
+}
+
+.res-row.total-row strong {
+  color: var(--plastic-yellow);
+  font-size: 1.3rem;
+}
+
+/* TĖVŲ KONTROLĖS DĖŽUTĖ */
+.parent-control-box {
+  background: #0f172a;
+  border: 4px solid var(--outline-black);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.parent-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: #fde047;
+  margin-bottom: 10px;
+}
+
+.parent-input-row {
+  display: flex;
+  gap: 10px;
+}
+
+.parent-input {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 9px;
+  border: 3px solid var(--outline-black);
+  background: #1e293b;
+  color: #ffffff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.parent-extend-btn {
+  padding: 11px 16px;
+  border-radius: 9px;
+  border: 3px solid var(--outline-black);
+  background: var(--plastic-orange);
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.88rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--outline-black);
+}
+
+.parent-feedback {
+  margin-top: 10px;
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+
+.parent-feedback.error {
+  color: #f87171;
+}
+
+.timelimit-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 980px) {
+  .garage-layout {
+    grid-template-columns: 1fr;
+  }
+  .tuning-tabs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
+/* ==================== 1. SKAITOMESNIS ŠRIFTAS (UI FONT FIX) ====================
+   Žaidybinis šriftas ('Russo One') paliekamas TIK didelėms antraštėms.
+   Visi meniu mygtukai, aprašymai, garažo UI ir užduočių tekstai – aiškus 'Baloo 2' / 'Nunito'. */
+:root {
+  --font-readable: 'Baloo 2', 'Nunito', system-ui, -apple-system, 'Segoe UI', Verdana, sans-serif;
+  --font-display: 'Russo One', 'Baloo 2', sans-serif;
+}
+
+body,
+button,
+input,
+select,
+textarea,
+.back-portal-btn,
+.profile-switch-pill,
+.wallet-pill,
+.profiles-badge,
+.driver-card-info h3,
+.fixed-grade-badge,
+.driver-card-sub,
+.driver-slot-stats,
+.driver-play-btn,
+.garage-badge,
+.spin-toggle-btn,
+.repair-btn,
+.stat-box,
+.stat-box strong,
+.track-picker-title,
+.track-option-btn,
+.track-option-btn strong,
+.tire-surface-advice,
+.tuning-tab,
+.part-title-wrap h3,
+.part-stats-badge,
+.part-desc,
+.part-btn,
+.hud-item,
+.hud-item strong,
+.hud-global-timer-btn,
+.exit-race-btn,
+.controls-hint,
+kbd,
+.touch-btn,
+.pitstop-title-badge,
+.pit-dot,
+.math-q-badge,
+.math-q-hint,
+.math-choice-btn,
+.math-feedback-msg,
+.res-row,
+.res-row strong,
+.parent-input,
+.parent-extend-btn,
+.parent-feedback,
+.modal-card p {
+  font-family: var(--font-readable);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+/* Smulkūs ženkliukai anksčiau buvo pikseliuoti ('Press Start 2P') – dabar aiškūs */
+.profiles-badge,
+.garage-badge {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.part-desc,
+.driver-card-sub,
+.tire-surface-advice,
+.math-q-hint {
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+/* Matematikos formulė – didelė ir labai aiški */
+.math-q-formula {
+  font-family: var(--font-readable);
+  font-weight: 800;
+}
+
+/* Didelės antraštės – lieka žaidybinis šriftas */
+.game-brand h1,
+.profiles-header h2,
+.showcase-header h2,
+.shop-top-banner h2,
+.timelimit-modal-card h2,
+.start-race-btn,
+.race-banner-toast,
+.countdown-text {
+  font-family: var(--font-display);
+}
+
+/* ==================== 2. STARTINIS ŠVIESOFORAS (3, 2, 1, STARTAS!) ==================== */
+.race-countdown {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  background: transparent;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.race-countdown.hidden {
+  display: none;
+}
+
+.countdown-lights {
+  display: flex;
+  gap: 14px;
+  padding: 8px 20px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 4px solid var(--outline-black, #020617);
+  border-radius: 16px;
+  box-shadow: 0 6px 0 var(--outline-black, #020617), 0 0 24px rgba(0, 0, 0, 0.45);
+}
+
+.cd-light {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #334155;
+  border: 3.5px solid #020617;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+.cd-light.on-red {
+  background: #ef4444;
+  box-shadow: 0 0 24px #ef4444;
+}
+
+.cd-light.on-yellow {
+  background: #facc15;
+  box-shadow: 0 0 24px #facc15;
+}
+
+.cd-light.on-green {
+  background: #22c55e;
+  box-shadow: 0 0 28px #22c55e;
+}
+
+.countdown-text {
+  font-size: clamp(2.8rem, 6.5vw, 4.8rem);
+  line-height: 1;
+  color: #ffffff;
+  -webkit-text-stroke: 3.5px #020617;
+  text-shadow: 0 6px 0 #020617, 0 0 35px rgba(250, 204, 21, 0.65);
+  animation: countdownPop 0.9s ease-out;
+}
+
+.countdown-text.go {
+  color: #4ade80;
+  text-shadow: 0 8px 0 #020617, 0 0 50px rgba(34, 197, 94, 0.85);
+}
+
+@keyframes countdownPop {
+  0% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  25% {
+    transform: scale(0.92);
+    opacity: 1;
+  }
+  45% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ==================== 1 PUNKTAS: HUD IKONA EKRANO KAMPE (ŽAIDĖJUI) ==================== */
+.hud-inventory-box {
+  position: absolute;
+  bottom: 22px;
+  right: 22px;
+  width: 84px;
+  height: 84px;
+  background: rgba(15, 23, 42, 0.88);
+  border: 2px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 15;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.hud-inventory-box.empty {
+  border: 2px dashed rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.hud-inventory-box.empty .inventory-icon {
+  display: none;
+}
+
+.hud-inventory-box.empty .inventory-hint {
+  font-family: 'Russo One', sans-serif;
+  font-size: 10px;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.25;
+  letter-spacing: 0.5px;
+}
+
+.hud-inventory-box.empty .inventory-badge {
+  display: none;
+}
+
+.hud-inventory-box.has-weapon {
+  border: 3px solid #facc15;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.96));
+  box-shadow: 0 0 24px rgba(250, 204, 21, 0.55), inset 0 0 14px rgba(250, 204, 21, 0.2);
+  animation: pulse-weapon-box 1.6s infinite ease-in-out;
+}
+
+.hud-inventory-box.has-weapon .inventory-hint {
+  display: none;
+}
+
+.hud-inventory-box.has-weapon .inventory-icon {
+  font-size: 38px;
+  line-height: 1;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7));
+}
+
+.hud-inventory-box .inventory-badge {
+  position: absolute;
+  bottom: -10px;
+  background: #facc15;
+  color: #020617;
+  font-family: 'Russo One', sans-serif;
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  border: 1.5px solid #020617;
+}
+
+@keyframes pulse-weapon-box {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 18px rgba(250, 204, 21, 0.5);
+  }
+  50% {
+    transform: scale(1.06);
+    box-shadow: 0 0 30px rgba(250, 204, 21, 0.85);
+  }
+}
+
+/* ==================== BOSO BILIETAS IR TRASOS ATRAKINIMO MODALAS ==================== */
+.boss-ticket-modal-card {
+  background: linear-gradient(165deg, #1e1e2e 0%, #0f172a 100%);
+  border: 5px solid #b45309;
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 540px;
+  width: 100%;
+  box-shadow:
+    inset 0 4px 0 rgba(255, 255, 255, 0.12),
+    0 16px 36px rgba(0, 0, 0, 0.85),
+    0 0 25px rgba(245, 158, 11, 0.2);
+}
+
+.boss-ticket-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.boss-ticket-badge {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #0f172a;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.88rem;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 3px solid #78350f;
+  box-shadow: 0 3px 0 #78350f;
+  letter-spacing: 0.5px;
+}
+
+.boss-ticket-content {
+  text-align: center;
+}
+
+.boss-ticket-icon {
+  font-size: 3.2rem;
+  line-height: 1;
+  margin-bottom: 6px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+.boss-ticket-content h2 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.4rem;
+  color: #f8fafc;
+  margin: 0 0 4px 0;
+}
+
+.boss-ticket-subtitle {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.boss-price-badge-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 2px solid #f59e0b;
+  border-radius: 10px;
+  padding: 8px 18px;
+  margin-bottom: 14px;
+}
+
+.boss-price-tag-label {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #cbd5e1;
+}
+
+.boss-price-tag-val {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.35rem;
+  color: #fde047;
+  letter-spacing: 0.5px;
+}
+
+.boss-rules-card {
+  background: rgba(15, 23, 42, 0.9);
+  border: 2px solid #78350f;
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.boss-rules-card h4 {
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.82rem;
+  color: #f59e0b;
+  margin: 0 0 8px 0;
+  letter-spacing: 0.5px;
+}
+
+.boss-rules-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.boss-rules-card li {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+
+.boss-rules-card strong {
+  color: #fde047;
+}
+
+.boss-balance-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #94a3b8;
+  margin-bottom: 10px;
+}
+
+.boss-balance-row strong {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.05rem;
+  color: #f8fafc;
+}
+
+.boss-ticket-warning {
+  background: rgba(239, 68, 68, 0.2);
+  border: 2px solid #ef4444;
+  color: #fca5a5;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.boss-ticket-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.boss-buy-btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  color: #ffffff;
+  border: 3px solid #78350f;
+  border-radius: 12px;
+  padding: 13px 20px;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.05rem;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  box-shadow: 0 5px 0 #78350f;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.boss-buy-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.boss-buy-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #78350f;
+}
+
+.boss-buy-btn:disabled {
+  background: #334155;
+  border-color: #1e293b;
+  color: #64748b;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.boss-cancel-btn {
+  background: #1e293b;
+  border: 2px solid #475569;
+  color: #94a3b8;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.boss-cancel-btn:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+/* ==================== GREITAS PABAIGOS EKRANAS (GAME OVER) ==================== */
+.game-over-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  backdrop-filter: blur(3px);
+}
+
+.game-over-overlay.hidden {
+  display: none !important;
+}
+
+.game-over-box {
+  text-align: center;
+  background: rgba(15, 23, 42, 0.9);
+  border: 4px solid #ef4444;
+  border-radius: 20px;
+  padding: 36px 48px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(239, 68, 68, 0.45);
+  animation: popInGameOver 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popInGameOver {
+  0% { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.game-over-title {
+  font-family: 'Russo One', 'Bungee', sans-serif;
+  font-size: 46px;
+  color: #ef4444;
+  text-shadow: 0 0 24px rgba(239, 68, 68, 0.85), 0 4px 10px rgba(0, 0, 0, 0.9);
+  margin-bottom: 14px;
+  letter-spacing: 1.5px;
+}
+
+.game-over-coins {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  color: #fde047;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  margin-bottom: 26px;
+}
+
+.game-over-btn {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  padding: 14px 38px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0f172a;
+  border: 3px solid #ffffff;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 16px rgba(245, 158, 11, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.game-over-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.6), 0 0 22px rgba(245, 158, 11, 0.6);
+}

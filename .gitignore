@@ -1,0 +1,18 @@
+# Saugumas: API raktai, slaptažodžiai ir lokalios taisyklės
+AGENTS.md
+agents.md
+.env
+.env.*
+*.env
+*.key
+*.pem
+secrets.*
+config.local.*
+
+# Sistema ir redaktoriai
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+node_modules/

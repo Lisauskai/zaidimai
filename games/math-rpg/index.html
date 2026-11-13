@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>Skaičių Karalystė – Lino ir Luko Nuotykių RPG</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app-container">
+    <!-- Pagrindinis Žaidimo Canvas -->
+    <canvas id="game-canvas" width="1024" height="576"></canvas>
+
+    <!-- Viršutinė Žaidimo Juosta (HUD lygio metu) -->
+    <div id="game-hud" class="hidden">
+      <div class="hud-left">
+        <div class="hud-hero-chip">
+          <span id="hud-hero-name">LINAS (1 Klasė)</span>
+        </div>
+        <div id="hud-hearts" class="hud-pill">❤️❤️❤️</div>
+        <div id="hud-shields" class="hud-pill hidden">🫧 0</div>
+        <div id="hud-shield-status" class="hud-pill hidden">🛡️ Skydas</div>
+        <div id="hud-bow-status" class="hud-pill">⚔️ Kirtis: 1 DMG (F/Z)</div>
+        <div id="hud-set-status" class="hud-pill set-pill hidden">🔥 Rinkinys!</div>
+        <div id="hud-combo" class="hud-pill combo-pill hidden">🔥 COMBO x1</div>
+      </div>
+      <div class="hud-center">
+        <span id="hud-level-title">1 Pasaulis – 1 Lygis</span>
+      </div>
+      <div class="hud-right">
+        <button id="hud-playtime" class="hud-pill playtime-pill" title="Dienos žaidimo laikas (Tėvams: paspauskite laiko pratęsimui)">⏳ Liko: 20:00</button>
+        <div class="hud-pill coin-pill">🪙 <span id="hud-coins">0</span></div>
+        <div class="hud-pill crystal-pill">💎 <span id="hud-crystals">0</span></div>
+        <button id="btn-hud-mute" class="icon-btn" title="Garsas">🔊</button>
+        <button id="btn-hud-map" class="hud-btn">🗺️ Žemėlapis</button>
+        <a href="../../index.html" id="btn-hud-portal" class="hud-btn" style="text-decoration:none;display:inline-flex;align-items:center">🏠 Atgal į Portalą</a>
+      </div>
+    </div>
+
+    <!-- Planšetės / Telefono Ekrano Mygtukai (su PASILENKIMO / SKYDAS ir KARDO / LANKO ATAKOS mygtuku!) -->
+    <div id="touch-controls" class="hidden">
+      <div class="touch-dpad">
+        <button id="touch-left" class="touch-btn">⬅️</button>
+        <button id="touch-down" class="touch-btn crouch-btn" title="Pasilenkti / Skydas">⬇️🛡️</button>
+        <button id="touch-right" class="touch-btn">➡️</button>
+      </div>
+      <div class="touch-actions">
+        <button id="touch-shoot" class="touch-btn shoot-btn" title="Kardo kirtis arba Lanko šūvis (F / Z)">⚔️ ATAKA</button>
+        <button id="touch-jump" class="touch-btn jump-btn">🚀 ŠUOLIS</button>
+      </div>
+    </div>
+
+    <!-- ==================== 1. LINO IR LUKO PROFILIŲ EKRANAS ==================== -->
+    <section id="screen-profiles" class="overlay-screen">
+      <div class="panel-card wide-card">
+        <div class="brand-header">
+          <div class="crown-badge">👑</div>
+          <h1>SKAIČIŲ KARALYSTĖ</h1>
+          <p class="subtitle">Pasirink savo herojų, rink Daiktų Rinkinius (Set Items), kovok kardu ir tobulink Augintinius!</p>
+        </div>
+
+        <!-- 2 didelės vardinės kortelės: Linas (1 Klasė) ir Lukas (3 Klasė) -->
+        <div id="named-profiles-grid" class="named-profiles-grid"></div>
+
+        <div class="save-tools-bar">
+          <a href="../../index.html" class="secondary-btn" style="text-decoration:none;display:inline-flex;align-items:center">🏠 Atgal į Portalą</a>
+          <button id="btn-export-save" class="secondary-btn">📤 Eksportuoti progresą</button>
+          <button id="btn-import-save" class="secondary-btn">📥 Importuoti progresą</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Eksporto / Importo Modalas -->
+    <section id="modal-transfer" class="overlay-screen modal-backdrop hidden">
+      <div class="panel-card">
+        <h2 id="transfer-title">📤 Eksportuoti / Importuoti Progresą</h2>
+        <p id="transfer-desc" class="subtitle">Nukopijuok šį kodą arba atsisiųsk JSON failą, kad perkeltum Lino ir Luko progresą į kitą kompiuterį ar planšetę.</p>
+        <textarea id="transfer-textarea" rows="6" placeholder="Įklijuok išsaugojimo kodą arba JSON čia..."></textarea>
+        <div class="save-tools-bar">
+          <button id="btn-download-json" class="secondary-btn">💾 Atsisiųsti .JSON failą</button>
+          <label class="secondary-btn file-label">
+            📂 Įkelti .JSON failą
+            <input type="file" id="input-upload-json" accept=".json,application/json" class="hidden" />
+          </label>
+        </div>
+        <div id="transfer-feedback" class="feedback-banner hidden"></div>
+        <div class="modal-actions">
+          <button id="btn-close-transfer" class="secondary-btn">Uždaryti</button>
+          <button id="btn-apply-import" class="primary-btn hidden">✅ Importuoti dabar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 2. PASAULIŲ ŽEMĖLAPIS (WORLD MAP) ==================== -->
+    <section id="screen-map" class="overlay-screen hidden">
+      <div class="panel-card map-card">
+        <div class="top-profile-bar">
+          <div class="profile-summary">
+            <canvas id="map-hero-canvas" width="76" height="76" class="mini-hero-canvas"></canvas>
+            <div>
+              <strong id="map-hero-name">Linas (1 Klasė)</strong>
+              <div class="controls-hint">Valdymas: ⬅️➡️ bėgti | ⬆️/Space šokti | ⬇️/S pasilenkti + skydas 🛡️ | F/Z kardo kirtis ⚔️ arba lankas 🏹</div>
+            </div>
+          </div>
+
+          <div class="currency-bar">
+            <div class="currency-chip coin-chip">🪙 <span id="map-coins">0</span></div>
+            <div class="currency-chip crystal-chip">💎 <span id="map-crystals">0</span></div>
+          </div>
+
+          <div class="nav-buttons">
+            <button id="btn-open-shop" class="primary-btn glow-btn">🎒 Inventorius, Kalvė ir Įgūdžiai</button>
+            <button id="btn-switch-profile" class="secondary-btn">👦 Keisti herojų (Linas / Lukas)</button>
+            <a href="../../index.html" class="secondary-btn" style="text-decoration:none;display:inline-flex;align-items:center">🏠 Atgal į Portalą</a>
+          </div>
+        </div>
+
+        <!-- Dienos iššūkio juosta -->
+        <div id="daily-challenge-banner" class="daily-banner">
+          <div>
+            <strong>🎯 Dienos iššūkis:</strong> Išspręsk 15 matematikos užduočių šiandien!
+            <span id="daily-progress-text">(0 / 15)</span>
+          </div>
+          <button id="btn-claim-daily" class="small-claim-btn" disabled>🎁 +150 🪙 ir +3 💎</button>
+        </div>
+
+        <!-- 5 Pasaulių Skirtukai -->
+        <div id="world-tabs" class="world-tabs"></div>
+
+        <!-- Pasirinkto pasaulio informacija ir 10 lygių tinklelis -->
+        <div class="world-showcase">
+          <div class="world-header">
+            <h2 id="world-title">🌲 1 Pasaulis: Žaliasis Miškas</h2>
+            <p id="world-subtitle">Uolų tuneliai, šokinėjantys gleiviai ir Miško Golemai</p>
+          </div>
+          <div id="levels-grid" class="levels-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 3. INVENTORIUS (DRAG & DROP), KALVĖ IR ĮGŪDŽIAI ==================== -->
+    <section id="screen-shop" class="overlay-screen hidden">
+      <div class="panel-card map-card shop-wide-card">
+        <div class="top-profile-bar">
+          <h2>🎒 Herojaus Inventorius, Kalvė ir Įgūdžiai</h2>
+          <div class="currency-bar">
+            <div class="currency-chip coin-chip">🪙 <span id="shop-coins">0</span></div>
+            <div class="currency-chip crystal-chip">💎 <span id="shop-crystals">0</span></div>
+          </div>
+          <button id="btn-close-shop" class="secondary-btn">⬅️ Grįžti</button>
+        </div>
+
+        <!-- TIKRAS INVENTORIUS SU DRAG & DROP: 5 Herojaus vietos + 15 Kuprinės vietų + Kalvio Supirktuvė -->
+        <div class="inventory-dashboard">
+          <!-- Kairė pusė: Herojaus Modelis + 5 Įrangos Vietos + Spalvos -->
+          <div class="hero-paperdoll-panel">
+            <div class="paperdoll-title-row">
+              <strong id="shop-preview-label">Linas (1 Klasė)</strong>
+              <span id="hero-live-stats" class="hero-live-stats">❤️ 3 | ⚔️ 1 DMG</span>
+            </div>
+
+            <div class="paperdoll-stage">
+              <!-- Kairės pusės įrangos lizdai: Šalmas, Šarvai, Apsiaustas -->
+              <div class="equip-column">
+                <div class="equip-slot" data-equip-slot="hat" title="Šalmas (Nutempk čia arba paspausk)"></div>
+                <div class="equip-slot" data-equip-slot="armor" title="Šarvai (Nutempk čia arba paspausk)"></div>
+                <div class="equip-slot" data-equip-slot="cape" title="Apsiaustas (Nutempk čia arba paspausk)"></div>
+              </div>
+
+              <!-- Centrinis Herojaus Canvas -->
+              <div class="preview-box">
+                <canvas id="shop-preview-canvas" width="144" height="144"></canvas>
+              </div>
+
+              <!-- Dešinės pusės įrangos lizdai: Ginklas, Skydas -->
+              <div class="equip-column">
+                <div class="equip-slot" data-equip-slot="weapon" title="Ginklas / Lankas (Nutempk čia arba paspausk)"></div>
+                <div class="equip-slot" data-equip-slot="shield" title="Skydas (Nutempk čia arba paspausk)"></div>
+              </div>
+            </div>
+
+            <!-- Aktyvaus Daiktų Rinkinio (Set Bonus) indikatorius -->
+            <div id="active-set-banner" class="set-bonus-banner">
+              🛡️ Surink visus 4 vieno rinkinio daiktus iš Pasaulio Bosų ir gauk galingą Rinkinio Bonusą!
+            </div>
+          </div>
+
+          <!-- Dešinė pusė: 15 Kuprinės Vietų (Backpack) + Kalvio Supirktuvė (Sell Slot 50%) -->
+          <div class="backpack-panel">
+            <div class="backpack-header">
+              <div>
+                <strong>🎒 Inventorius / Kuprinė (<span id="backpack-count">0</span> / 15 vietų)</strong>
+                <div class="inv-help-text">Rasti „Loot“ daiktai iš skrynių ir Bosų patenka čia! Paspausk „Užsidėti“ arba parduok Kalviui!</div>
+              </div>
+              <!-- Kalvio Supirktuvė (Sell Drop Zone) -->
+              <div id="blacksmith-sell-zone" class="blacksmith-sell-slot" title="Nutempk nereikalingą daiktą čia, kad parduotum kalviui už 50% vertės!">
+                <span class="sell-icon">🔨🪙</span>
+                <div>
+                  <strong>Parduoti Kalviui (50% vertės)</strong>
+                  <small id="sell-zone-hint">Nutempk daiktą čia arba paspausk!</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Inventoriaus (Kuprinės) filtravimo kortelės -->
+            <div id="inventory-filter-tabs" class="inv-filter-tabs">
+              <button class="inv-tab active" data-inv-filter="all">📦 Visi</button>
+              <button class="inv-tab" data-inv-filter="weapons">⚔️ Ginklai</button>
+              <button class="inv-tab" data-inv-filter="armor_hats">🥋 Šarvai ir Šalmai</button>
+              <button class="inv-tab" data-inv-filter="shields">🛡️ Skydai</button>
+              <button class="inv-tab" data-inv-filter="capes">🧣 Apsiaustai</button>
+              <button class="inv-tab" data-inv-filter="sets">👑 Rinkiniai (Sets)</button>
+            </div>
+
+            <!-- 15 Kuprinės Lizdų Tinklelis -->
+            <div id="backpack-grid" class="backpack-grid"></div>
+
+            <!-- Pasirinkto daikto informacinė juosta + greiti veiksmai planšetei -->
+            <div id="selected-item-bar" class="selected-item-bar">
+              <span id="selected-item-info">💡 Patarimas: Geresnius daiktus rasi lygio skryniose, duryse, „Proto Žvaigždėse“ ir nugalėjęs Bosus!</span>
+              <div id="selected-item-actions" class="selected-item-actions hidden">
+                <button id="btn-quick-equip" class="primary-btn small-action-btn">👕 Užsidėti</button>
+                <button id="btn-quick-sell" class="danger-btn small-action-btn">🪙 Parduoti (50%)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parduotuvės (Kalvės) ir Katalogo Skirtukai (Tabs) -->
+        <div class="shop-tabs">
+          <button class="shop-tab active" data-tab="weapons">⚔️ Ginklai</button>
+          <button class="shop-tab" data-tab="armor_hats">🥋 Šarvai ir Šalmai</button>
+          <button class="shop-tab" data-tab="shields">🛡️ Skydai</button>
+          <button class="shop-tab" data-tab="capes">🧣 Apsiaustai</button>
+          <button class="shop-tab" data-tab="sets">👑 Rinkiniai (Sets)</button>
+          <button class="shop-tab" data-tab="pets">🐉 Augintiniai</button>
+          <button class="shop-tab" data-tab="upgrades">⚡ Įgūdžiai</button>
+          <button class="shop-tab" data-tab="achievements">🏆 Medaliai (<span id="ach-badge-count">0</span>)</button>
+        </div>
+
+        <div id="shop-content" class="shop-content-area"></div>
+      </div>
+    </section>
+
+    <!-- ==================== 4. MATEMATINĖS DVIKOVOS LANGAS ==================== -->
+    <section id="modal-math" class="overlay-screen modal-backdrop hidden">
+      <div class="panel-card math-duel-card">
+        <div class="duel-header">
+          <div class="duel-opponent">
+            <span id="math-enemy-icon" class="enemy-big-icon">👹</span>
+            <div>
+              <h3 id="math-enemy-name">Skaičių Sargybinis</h3>
+              <div id="math-boss-hp" class="boss-hp-bar hidden"></div>
+            </div>
+          </div>
+          <div class="duel-streak-box">
+            <span id="math-combo-badge" class="combo-badge">🔥 Serija: 0</span>
+            <button id="btn-math-helper" class="helper-btn" title="Pašalinti neteisingą atsakymą">
+              ⚡ Pagalba 50/50 (<span id="math-helper-count">1</span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- Kelių užduočių serijos (Chained Math) progreso juosta -->
+        <div id="math-chain-banner" class="chain-progress-banner">
+          <span id="math-chain-text">⛓️ Užduočių serija: 0 / 3 įveikta!</span>
+          <div id="math-chain-dots" class="chain-dots"></div>
+        </div>
+
+        <!-- „Proto Žvaigždės“ ir Serijos 1 bandymo įspėjimas -->
+        <div id="math-risk-banner" class="risk-warning-banner">
+          ⚠️ <strong>TAISYKLĖ:</strong> Atsakyti reikia be klaidų! Suklydus bent vienoje serijos užduotyje – serija nutrūksta ir prarandi <strong>1 ❤️ širdelę</strong>!
+        </div>
+
+        <div class="question-box">
+          <p id="math-subtitle" class="math-subtitle">Išspręsk uždavinį!</p>
+          <div id="math-prompt" class="math-prompt">9 + [ ? ] = 16</div>
+          <div id="math-visual-aid" class="math-visual-aid hidden"></div>
+        </div>
+
+        <!-- Atsakymų mygtukai -->
+        <div id="math-options" class="math-options-grid"></div>
+
+        <!-- Arba skaičių klaviatūros perjungimas -->
+        <div class="keypad-toggle-row">
+          <button id="btn-toggle-keypad" class="link-btn">🔢 Perjungti į skaičių klaviatūrą</button>
+        </div>
+
+        <div id="math-keypad" class="math-keypad hidden">
+          <div class="keypad-display-row">
+            <input type="text" id="keypad-input" readonly placeholder="Įvesk atsakymą..." />
+            <button id="keypad-clear" class="key-btn clear-btn">⌫</button>
+          </div>
+          <div class="keypad-grid">
+            <button class="key-btn" data-key="1">1</button>
+            <button class="key-btn" data-key="2">2</button>
+            <button class="key-btn" data-key="3">3</button>
+            <button class="key-btn" data-key="4">4</button>
+            <button class="key-btn" data-key="5">5</button>
+            <button class="key-btn" data-key="6">6</button>
+            <button class="key-btn" data-key="7">7</button>
+            <button class="key-btn" data-key="8">8</button>
+            <button class="key-btn" data-key="9">9</button>
+            <button class="key-btn" data-key="0">0</button>
+            <button id="keypad-submit" class="key-btn submit-key">✅ TIKRINTI</button>
+          </div>
+        </div>
+
+        <!-- Draugiška užuomina suklydus -->
+        <div id="math-hint-box" class="hint-box hidden"></div>
+      </div>
+    </section>
+
+    <!-- „Proto Žvaigždės“ Prizų / Gacha Laimėjimo Langas -->
+    <section id="modal-loot" class="overlay-screen modal-backdrop hidden">
+      <div class="panel-card result-card" style="border-color:#facc15;max-width:520px">
+        <div id="loot-icon" class="crown-badge">🌟</div>
+        <h2 id="loot-title" style="color:#fde047">Proto Žvaigždės Prizas!</h2>
+        <p id="loot-desc" class="subtitle" style="font-size:1.08rem;color:#f8fafc;margin:12px 0"></p>
+        <div class="modal-actions" style="justify-content:center">
+          <button id="btn-close-loot" class="primary-btn">🎉 Puiku! Tęsti žaidimą</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pergalės / Lygio Pabaigos Ekranas -->
+    <section id="modal-level-result" class="overlay-screen modal-backdrop hidden">
+      <div class="panel-card result-card">
+        <div id="result-icon" class="crown-badge">🏆</div>
+        <h2 id="result-title">Lygis Įveiktas!</h2>
+        <p id="result-subtitle" class="subtitle">Puikus darbas, skaičių riteri!</p>
+
+        <div id="result-stars" class="stars-row">⭐⭐⭐</div>
+
+        <div class="result-stats-grid">
+          <div class="stat-box">
+            <span>Surinkta aukso</span>
+            <strong id="result-coins">+0 🪙</strong>
+          </div>
+          <div class="stat-box">
+            <span>Gauta kristalų</span>
+            <strong id="result-crystals">+0 💎</strong>
+          </div>
+          <div class="stat-box">
+            <span>Išspręsta užduočių</span>
+            <strong id="result-solved">0</strong>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="btn-result-map" class="secondary-btn">🗺️ Pasaulio žemėlapis</button>
+          <button id="btn-result-shop" class="secondary-btn">🎒 Inventorius ir Kalvė</button>
+          <button id="btn-result-next" class="primary-btn">➡️ Kitas lygis</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 5. TĖVŲ KONTROLĖ: „LAIKAS BAIGĖSI“ MODALAS ==================== -->
+    <section id="modal-time-limit" class="overlay-screen modal-backdrop time-limit-backdrop hidden">
+      <div class="panel-card result-card time-limit-card">
+        <div class="crown-badge">⏳</div>
+        <h2 id="time-limit-title">⏳ Šios dienos žaidimo laikas baigėsi! Pailsėkime akis.</h2>
+        <p id="time-limit-subtitle" class="subtitle" style="margin-top:8px">
+          Šiandien jau puikiai pasportavai su skaičiais! Visas tavo herojaus auksas, kristalai ir daiktai yra saugiai išsaugoti.
+        </p>
+
+        <div class="modal-actions" style="justify-content:center;margin-top:18px">
+          <button id="btn-time-resume" class="secondary-btn hidden">▶️ Grįžti į žaidimą</button>
+          <button id="btn-time-save-exit" class="primary-btn">💾 Išsaugoti ir išeiti į Meniu</button>
+        </div>
+
+        <!-- Paslėpta / kompaktiška Tėvų kontrolės skiltis -->
+        <div class="parent-override-box">
+          <div class="parent-override-title">🔐 Tėvams: Pratęsti laiką</div>
+          <div class="parent-override-row">
+            <input
+              type="password"
+              id="parent-password-input"
+              class="parent-password-input"
+              placeholder="Tėvų slaptažodis..."
+              autocomplete="off"
+            />
+            <button id="btn-parent-extend" class="secondary-btn parent-extend-btn">
+              ➕ Pratęsti 10 minučių
+            </button>
+          </div>
+          <div id="parent-password-feedback" class="parent-feedback hidden"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
