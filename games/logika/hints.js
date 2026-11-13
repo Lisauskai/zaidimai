@@ -67,7 +67,17 @@ export const OPTIMAL_PAR_MOVES = {
   grv_g3_4: 4,
   grv_g3_5: 5,
 
-  // 10. Mini eksperimentai
+  // 10. Skaičių kryžiažodžiai ir magiškieji kvadratai
+  mc_g3_1: 5,
+  mc_g3_2: 5,
+  mc_g3_3: 6,
+  mc_g3_4: 5,
+  mc_g3_5: 7,
+  mc_g3_6: 5,
+  mc_g3_7: 7,
+  mc_g3_8: 5,
+
+  // 11. Mini eksperimentai
   g3_laser_1: 4,
   g3_switches_1: 4,
   g3_sequence_1: 1
@@ -586,6 +596,16 @@ export function computeFirstHint(mode, level, context = {}) {
       kind: 'gravity-dir',
       dir,
       message: `💡 Pirmas žingsnis: pakreipk lauką ${dirNames[dir]}!`
+    };
+  }
+
+  if (mode === 'mathcross') {
+    const eng = context.mathCrossEngine;
+    if (!eng) return null;
+    return {
+      mode,
+      kind: 'mathcross-place',
+      message: '💡 Užuomina: vienas teisingas skaičius įdėtas į tuščią langelį!'
     };
   }
 

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261113e" />
+  <link rel="stylesheet" href="./style.css?v=20261113f" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -180,20 +180,23 @@
           <button id="tab-mode-gravity" class="mode-tab-btn" type="button">
             🧊 Gravitacijos labirintas (5)
           </button>
+          <button id="tab-mode-mathcross" class="mode-tab-btn" type="button">
+            🔢 Skaičių kryžiažodžiai (8)
+          </button>
           <button id="tab-mode-mini" class="mode-tab-btn" type="button">
             🧪 Mini Eksperimentai (3)
           </button>
         </div>
       </div>
 
-      <!-- NUOTYKIŲ ŽEMĖLAPIS (9 LABORATORIJOS ZONOS) -->
+      <!-- NUOTYKIŲ ŽEMĖLAPIS (10 LABORATORIJOS ZONŲ) -->
       <section id="world-map-panel" class="world-map-panel" aria-label="Proto laboratorijos nuotykių žemėlapis">
         <div class="world-map-head">
           <div>
             <h2 class="world-map-title">🗺️ Proto Laboratorijos žemėlapis</h2>
-            <p class="world-map-sub">Laisvai rinkis bet kurią iš 9 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
+            <p class="world-map-sub">Laisvai rinkis bet kurią iš 10 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
           </div>
-          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 144</div>
+          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 168</div>
         </div>
         <div id="world-map-grid" class="world-map-grid"></div>
       </section>
@@ -512,6 +515,36 @@
           </div>
         </div>
 
+        <!-- 10. SKAIČIŲ KRYŽIAŽODŽIAI IR MAGIŠKIEJI TRIKAMPIAI -->
+        <div id="mathcross-stage" class="pinpull-stage hidden">
+          <div class="pinpull-controls-bar">
+            <span id="mathcross-counter" class="pinpull-counter">🔢 Užpildyta: 0 / 3</span>
+            <div class="pinpull-btn-group">
+              <button id="btn-mathcross-check" class="balance-check-btn" type="button">
+                ✅ Patikrinti
+              </button>
+              <button id="btn-mathcross-reset" class="pin-reset-btn" type="button">
+                🔄 Iš naujo
+              </button>
+              <button id="btn-mathcross-next" class="pin-next-btn hidden" type="button">
+                Kitas lygis ▶
+              </button>
+            </div>
+          </div>
+
+          <div class="pinpull-canvas-wrap">
+            <canvas
+              id="mathcross-canvas"
+              class="pinpull-canvas"
+              width="580"
+              height="400"
+              aria-label="Skaičių kryžiažodžio ir magiškojo trikampio lenta"
+            ></canvas>
+          </div>
+
+          <div id="mathcross-tray" class="mathcross-tray" aria-label="Skaičių kortelių rinkinys"></div>
+        </div>
+
         <!-- MINI EKSPERIMENTŲ ZONA -->
         <div id="puzzle-stage" class="puzzle-stage hidden"></div>
 
@@ -541,6 +574,6 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js?v=20261113e"></script>
+  <script type="module" src="./game.js?v=20261113f"></script>
 </body>
 </html>

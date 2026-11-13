@@ -1,21 +1,27 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113e';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113e';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113e';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113e';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113f';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113f';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113f';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113f';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113e';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113e';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113e';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113e';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113e';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113e';
+} from './balance.js?v=20261113f';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113f';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113f';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113f';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113f';
+import {
+  MathCrossEngine,
+  MATHCROSS_LEVELS,
+  MATHCROSS_CANVAS_W,
+  MATHCROSS_CANVAS_H
+} from './mathcross.js?v=20261113f';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113f';
 import {
   isSoundEnabled,
   toggleSound,
@@ -39,8 +45,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113e';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113e';
+} from './sound.js?v=20261113f';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113f';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -49,7 +55,7 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113e';
+} from './robot.js?v=20261113f';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -227,6 +233,7 @@ let memoryCtrl = null;
 let algoEngine = null;
 let gearsEngine = null;
 let gravityEngine = null;
+let mathCrossEngine = null;
 let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
@@ -266,6 +273,8 @@ const gearsCanvas = document.getElementById('gears-canvas');
 const gearsStage = document.getElementById('gears-stage');
 const gravityCanvas = document.getElementById('gravity-canvas');
 const gravityStage = document.getElementById('gravity-stage');
+const mathCrossCanvas = document.getElementById('mathcross-canvas');
+const mathCrossStage = document.getElementById('mathcross-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
@@ -285,6 +294,7 @@ function getAllLevelsForDiff(diff) {
     ...ALGO_LEVELS[diff],
     ...GEARS_LEVELS[diff],
     ...GRAVITY_LEVELS[diff],
+    ...MATHCROSS_LEVELS[diff],
     ...LAB_LEVELS[diff]
   ];
 }
@@ -352,6 +362,13 @@ const LAB_WORLD_ZONES = [
     desc: 'Slydimas ledu, portalai ir prarajos',
     icon: '🧊',
     accent: '#60a5fa'
+  },
+  {
+    mode: 'mathcross',
+    title: '10. Skaičių kryžiažodžiai',
+    desc: 'Kryžiažodžiai ir magiškieji trikampiai',
+    icon: '🔢',
+    accent: '#facc15'
   }
 ];
 
@@ -365,6 +382,7 @@ function getLevelsForMode(mode, diff = currentDifficulty) {
   if (mode === 'algo') return ALGO_LEVELS[diff];
   if (mode === 'gears') return GEARS_LEVELS[diff];
   if (mode === 'gravity') return GRAVITY_LEVELS[diff];
+  if (mode === 'mathcross') return MATHCROSS_LEVELS[diff];
   return LAB_LEVELS[diff];
 }
 
@@ -573,6 +591,7 @@ export function showWorldMapView() {
   destroyAlgoEngine();
   destroyGearsEngine();
   destroyGravityEngine();
+  destroyMathCrossEngine();
 
   worldMapPanel?.classList.remove('hidden');
   labPuzzleArea?.classList.add('hidden');
@@ -633,6 +652,7 @@ function showDifficultyScreen() {
   destroyAlgoEngine();
   destroyGearsEngine();
   destroyGravityEngine();
+  destroyMathCrossEngine();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -652,6 +672,7 @@ function syncModeTabsUI() {
   document.getElementById('tab-mode-algo')?.classList.toggle('active', currentMode === 'algo');
   document.getElementById('tab-mode-gears')?.classList.toggle('active', currentMode === 'gears');
   document.getElementById('tab-mode-gravity')?.classList.toggle('active', currentMode === 'gravity');
+  document.getElementById('tab-mode-mathcross')?.classList.toggle('active', currentMode === 'mathcross');
   document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
 }
 
@@ -666,6 +687,7 @@ function switchLabMode(mode) {
     mode !== 'algo' &&
     mode !== 'gears' &&
     mode !== 'gravity' &&
+    mode !== 'mathcross' &&
     mode !== 'mini'
   ) {
     return;
@@ -715,7 +737,9 @@ function renderLevelsStrip() {
                         ? '⚙️ Variklis'
                         : currentMode === 'gravity'
                           ? '🧊 Ledas'
-                          : '🧩 Užduotis';
+                          : currentMode === 'mathcross'
+                            ? lvl.kind === 'crossword' ? '🔢 Kryžiažodis' : '🔺 Magiškas'
+                            : '🧩 Užduotis';
     btn.innerHTML = `
       <div class="level-tab-top">
         <span>${label}</span>
@@ -902,6 +926,10 @@ function destroyGravityEngine() {
   }
 }
 
+function destroyMathCrossEngine() {
+  mathCrossEngine = null;
+}
+
 // ==================== UŽUOMINOS LEMPUTĖ IR ĖJIMŲ SKAITIKLIS ====================
 function stopLevelTimer() {
   if (levelTimerId !== null) {
@@ -1003,6 +1031,7 @@ function applyFirstHint() {
     memoryCtrl,
     gearsEngine,
     gravityEngine,
+    mathCrossEngine,
     mirrorStates,
     switchStates
   });
@@ -1061,6 +1090,8 @@ function applyFirstHint() {
     gravityEngine?.setHint(hint.dir);
     const btn = document.querySelector(`.grav-dpad-btn[data-grav-dir="${hint.dir}"]`);
     btn?.classList.add('hint-btn-pulse');
+  } else if (hint.kind === 'mathcross-place') {
+    mathCrossEngine?.applyOneHint();
   }
 
   hintUsedInLevel = true;
@@ -1091,6 +1122,7 @@ function loadActiveLevel() {
   destroyAlgoEngine();
   destroyGearsEngine();
   destroyGravityEngine();
+  destroyMathCrossEngine();
   sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
@@ -1114,7 +1146,9 @@ function loadActiveLevel() {
                     ? `⚙️ KRUMPLIARAČIŲ VARIKLIS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
                     : currentMode === 'gravity'
                       ? `🧊 GRAVITACIJOS LABIRINTAS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-                      : level.badge;
+                      : currentMode === 'mathcross'
+                        ? `🔢 SKAIČIŲ KRYŽIAŽODŽIAI • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+                        : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -1132,6 +1166,7 @@ function loadActiveLevel() {
   document.getElementById('btn-algo-next')?.classList.add('hidden');
   document.getElementById('btn-gears-next')?.classList.add('hidden');
   document.getElementById('btn-gravity-next')?.classList.add('hidden');
+  document.getElementById('btn-mathcross-next')?.classList.add('hidden');
 
   if (currentMode === 'pinpull') {
     pinPullStage.classList.remove('hidden');
@@ -1143,6 +1178,7 @@ function loadActiveLevel() {
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startPinPullLevel(level, levels.length);
   } else if (currentMode === 'sokoban') {
@@ -1155,6 +1191,7 @@ function loadActiveLevel() {
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startSokobanLevel(level, levels.length);
   } else if (currentMode === 'laser') {
@@ -1167,6 +1204,7 @@ function loadActiveLevel() {
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startLaserLevel(level, levels.length);
   } else if (currentMode === 'circuit') {
@@ -1179,6 +1217,7 @@ function loadActiveLevel() {
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startCircuitLevel(level, levels.length);
   } else if (currentMode === 'balance') {
@@ -1191,6 +1230,7 @@ function loadActiveLevel() {
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startBalanceLevel(level, levels.length);
   } else if (currentMode === 'matrix') {
@@ -1203,6 +1243,7 @@ function loadActiveLevel() {
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startMatrixLevel(level, levels.length);
   } else if (currentMode === 'algo') {
@@ -1215,6 +1256,7 @@ function loadActiveLevel() {
     algoStage?.classList.remove('hidden');
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startAlgoLevel(level, levels.length);
   } else if (currentMode === 'gears') {
@@ -1227,6 +1269,7 @@ function loadActiveLevel() {
     algoStage?.classList.add('hidden');
     gearsStage?.classList.remove('hidden');
     gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startGearsLevel(level, levels.length);
   } else if (currentMode === 'gravity') {
@@ -1239,8 +1282,22 @@ function loadActiveLevel() {
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.remove('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startGravityLevel(level, levels.length);
+  } else if (currentMode === 'mathcross') {
+    pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.add('hidden');
+    laserStage?.classList.add('hidden');
+    circuitStage?.classList.add('hidden');
+    balanceStage?.classList.add('hidden');
+    matrixStage?.classList.add('hidden');
+    algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startMathCrossLevel(level, levels.length);
   } else {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.add('hidden');
@@ -1251,6 +1308,7 @@ function loadActiveLevel() {
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
     gravityStage?.classList.add('hidden');
+    mathCrossStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
 
@@ -2015,6 +2073,113 @@ function startGravityLevel(level, totalInMode) {
   syncCounter();
 }
 
+// ==================== 10. SKAIČIŲ KRYŽIAŽODŽIAI IR MAGIŠKIEJI TRIKAMPIAI ====================
+function getMathCrossCanvasCoords(evt) {
+  const rect = mathCrossCanvas.getBoundingClientRect();
+  return {
+    mx: ((evt.clientX - rect.left) / rect.width) * MATHCROSS_CANVAS_W,
+    my: ((evt.clientY - rect.top) / rect.height) * MATHCROSS_CANVAS_H
+  };
+}
+
+function renderMathCrossTray(level) {
+  const trayEl = document.getElementById('mathcross-tray');
+  if (!trayEl) return;
+  trayEl.innerHTML = '';
+
+  (level.cards || []).forEach((card) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'mc-card-btn';
+    btn.draggable = true;
+    btn.dataset.cid = card.cid;
+    btn.textContent = String(card.value);
+
+    btn.addEventListener('click', () => {
+      if (!mathCrossEngine) return;
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (feedbackEl) {
+        feedbackEl.className = 'puzzle-feedback hidden';
+        feedbackEl.textContent = '';
+      }
+      mathCrossEngine.selectCard(card.cid);
+    });
+
+    btn.addEventListener('dragstart', (e) => {
+      if (btn.disabled) {
+        e.preventDefault();
+        return;
+      }
+      if (e.dataTransfer) {
+        e.dataTransfer.setData('text/plain', card.cid);
+        e.dataTransfer.effectAllowed = 'move';
+      }
+    });
+
+    trayEl.appendChild(btn);
+  });
+}
+
+function startMathCrossLevel(level, totalInMode) {
+  const counterEl = document.getElementById('mathcross-counter');
+  const nextBtn = document.getElementById('btn-mathcross-next');
+  const checkBtn = document.getElementById('btn-mathcross-check');
+
+  renderMathCrossTray(level);
+
+  mathCrossEngine = new MathCrossEngine(mathCrossCanvas, level, {
+    onMove: (action) => {
+      playBalancePop(action === 'remove');
+      recordPlayerMove();
+    },
+    onStateChange: ({ filledCount, totalSlots, usedCardIds, selectedCardCid, won }) => {
+      if (counterEl) {
+        counterEl.textContent = won
+          ? `🟢 Teisingai! (${totalSlots} / ${totalSlots})`
+          : `🔢 Užpildyta: ${filledCount} / ${totalSlots}`;
+      }
+      if (checkBtn) {
+        checkBtn.disabled = !!won;
+      }
+      const usedSet = new Set(usedCardIds || []);
+      document.querySelectorAll('.mc-card-btn').forEach((btn) => {
+        const cid = btn.dataset.cid;
+        const isUsed = usedSet.has(cid);
+        btn.classList.toggle('is-used', isUsed);
+        btn.classList.toggle('is-selected', !isUsed && selectedCardCid === cid);
+        btn.disabled = isUsed || !!won;
+      });
+    },
+    onCheckResult: ({ ok }) => {
+      recordPlayerMove();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (ok) {
+        playBalanceBell();
+        if (feedbackEl) {
+          feedbackEl.className = 'puzzle-feedback hidden';
+          feedbackEl.textContent = '';
+        }
+      } else {
+        playWrongBuzz();
+        if (feedbackEl) {
+          feedbackEl.textContent =
+            level.kind === 'crossword'
+              ? '❌ Kai kurios lygtys dar nesutampa! Spausk ant skaičiaus langelyje, kad išimtum ir pakeistum.'
+              : `❌ Raudonai pažymėtos kraštinės/eilutės suma dar nėra ${level.magicSum}! Pakeisk skaičius.`;
+          feedbackEl.className = 'puzzle-feedback error';
+          feedbackEl.classList.remove('hidden');
+        }
+      }
+    },
+    onWin: () => {
+      markLevelSolved(level);
+      if (nextBtn && activeLevelIndex < totalInMode - 1) {
+        nextBtn.classList.remove('hidden');
+      }
+    }
+  });
+}
+
 // ==================== ROBO-STUMDUKAS RENDERIS IR VALDYMAS ====================
 const GATE_ICON = {
   '>': '➡️',
@@ -2306,6 +2471,7 @@ document.getElementById('tab-mode-matrix')?.addEventListener('click', () => swit
 document.getElementById('tab-mode-algo')?.addEventListener('click', () => switchLabMode('algo'));
 document.getElementById('tab-mode-gears')?.addEventListener('click', () => switchLabMode('gears'));
 document.getElementById('tab-mode-gravity')?.addEventListener('click', () => switchLabMode('gravity'));
+document.getElementById('tab-mode-mathcross')?.addEventListener('click', () => switchLabMode('mathcross'));
 document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
 
 document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
@@ -2802,12 +2968,73 @@ document.getElementById('btn-gravity-next')?.addEventListener('click', () => {
   }
 });
 
+// 10. Skaičių kryžiažodžių ir magiškųjų trikampių įvykiai
+document.getElementById('btn-mathcross-check')?.addEventListener('click', () => {
+  if (!mathCrossEngine) return;
+  const res = mathCrossEngine.checkSolution();
+  if (res?.incomplete) {
+    playWrongBuzz();
+    const feedbackEl = document.getElementById('puzzle-feedback');
+    if (feedbackEl) {
+      feedbackEl.textContent = `⚠️ Užpildyk visus tuščius langelius! Liko tuščių: ${res.emptyCount}.`;
+      feedbackEl.className = 'puzzle-feedback error';
+      feedbackEl.classList.remove('hidden');
+    }
+  }
+});
+
+document.getElementById('btn-mathcross-reset')?.addEventListener('click', () => {
+  if (!mathCrossEngine) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-mathcross-next')?.classList.add('hidden');
+  mathCrossEngine.reset();
+  resetAttemptState();
+});
+
+document.getElementById('btn-mathcross-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
+
+if (mathCrossCanvas) {
+  mathCrossCanvas.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!mathCrossEngine) return;
+      e.preventDefault();
+      const { mx, my } = getMathCrossCanvasCoords(e);
+      mathCrossEngine.handlePointerDown(mx, my);
+    },
+    { passive: false }
+  );
+
+  mathCrossCanvas.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  });
+
+  mathCrossCanvas.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (!mathCrossEngine) return;
+    const cid = e.dataTransfer?.getData('text/plain');
+    if (!cid) return;
+    const { mx, my } = getMathCrossCanvasCoords(e);
+    mathCrossEngine.handleDropCard(cid, mx, my);
+  });
+}
+
 btnSoundToggle?.addEventListener('click', () => {
   toggleSound();
   syncSoundToggleUI();
 });
 
-const MODE_SEQUENCE = ['pinpull', 'sokoban', 'laser', 'circuit', 'balance', 'matrix', 'algo', 'gears', 'gravity', 'mini'];
+const MODE_SEQUENCE = ['pinpull', 'sokoban', 'laser', 'circuit', 'balance', 'matrix', 'algo', 'gears', 'gravity', 'mathcross', 'mini'];
 
 document.getElementById('btn-victory-next')?.addEventListener('click', () => {
   hideVictoryOverlay();
