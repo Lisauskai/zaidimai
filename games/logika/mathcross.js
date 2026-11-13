@@ -87,16 +87,15 @@ export const MATHCROSS_LEVELS = {
       id: 'mc_g1_3',
       kind: 'triangle',
       title: '3. Kosminis trikampis (Suma 10)',
-      instruction: 'Kiekviena trikampio kraštinė turi duoti sumą 10! Pabaik dėlioti likusius skaičius.',
+      instruction: 'Visi kampai jau užpildyti! Įdėk likusius 3 skaičius į vidurinius langelius, kad kiekviena kraštinė duotų 10.',
       reward: 1,
       magicSum: 10,
       solution: [1, 6, 3, 2, 5, 4],
-      fixed: { 1: 6, 4: 5 },
+      fixed: { 0: 1, 2: 3, 4: 5 },
       cards: [
-        { cid: 'c1', value: 1 },
-        { cid: 'c2', value: 2 },
-        { cid: 'c3', value: 3 },
-        { cid: 'c4', value: 4 }
+        { cid: 'c1', value: 2 },
+        { cid: 'c2', value: 4 },
+        { cid: 'c3', value: 6 }
       ]
     },
     {
@@ -147,23 +146,21 @@ export const MATHCROSS_LEVELS = {
       id: 'mc_g1_5',
       kind: 'triangle',
       title: '5. Dvylikos paslaptis (Suma 12)',
-      instruction: 'Didžiųjų kampų taisyklė: sudėliok skaičius 1–6 taip, kad visos 3 kraštinės lygios 12!',
+      instruction: 'Visi 3 kampai jau duoti! Apskaičiuok, kokių skaičių trūksta viduryje, kad kraštinių sumos būtų 12.',
       reward: 2,
       magicSum: 12,
       solution: [4, 3, 5, 1, 6, 2],
-      fixed: { 0: 4 },
+      fixed: { 0: 4, 2: 5, 4: 6 },
       cards: [
         { cid: 'c1', value: 1 },
         { cid: 'c2', value: 2 },
-        { cid: 'c3', value: 3 },
-        { cid: 'c4', value: 5 },
-        { cid: 'c5', value: 6 }
+        { cid: 'c3', value: 3 }
       ]
     },
     {
       id: 'mc_g1_6',
       kind: 'crossword',
-      title: '6. Skaičių tiltas iki 20',
+      title: '6. Skaičių tiltas iki 15',
       instruction: 'Viršuje trūksta dviejų skaičių! Pradėk nuo kairiojo stulpelio ir apatinės eilutės.',
       reward: 2,
       rows: 5,
@@ -171,103 +168,101 @@ export const MATHCROSS_LEVELS = {
       cells: [
         { r: 0, c: 0, type: 'slot', id: 'A', solution: 8 },
         { r: 0, c: 1, type: 'op', text: '+' },
-        { r: 0, c: 2, type: 'slot', id: 'B', solution: 11 },
+        { r: 0, c: 2, type: 'slot', id: 'B', solution: 7 },
         { r: 0, c: 3, type: 'op', text: '=' },
-        { r: 0, c: 4, type: 'num', value: 19 },
+        { r: 0, c: 4, type: 'num', value: 15 },
 
         { r: 1, c: 0, type: 'op', text: '+' },
         { r: 1, c: 2, type: 'op', text: '−' },
 
-        { r: 2, c: 0, type: 'num', value: 6 },
-        { r: 2, c: 2, type: 'num', value: 6 },
+        { r: 2, c: 0, type: 'num', value: 5 },
+        { r: 2, c: 2, type: 'num', value: 3 },
 
         { r: 3, c: 0, type: 'op', text: '=' },
         { r: 3, c: 2, type: 'op', text: '=' },
 
-        { r: 4, c: 0, type: 'num', value: 14 },
+        { r: 4, c: 0, type: 'num', value: 13 },
         { r: 4, c: 1, type: 'op', text: '−' },
-        { r: 4, c: 2, type: 'slot', id: 'C', solution: 5 },
+        { r: 4, c: 2, type: 'slot', id: 'C', solution: 4 },
         { r: 4, c: 3, type: 'op', text: '=' },
         { r: 4, c: 4, type: 'num', value: 9 }
       ],
       equations: [
-        { a: 'A', op: '+', b: 'B', res: 19 },
-        { a: 'A', op: '+', b: 6, res: 14 },
-        { a: 'B', op: '-', b: 6, res: 'C' },
-        { a: 14, op: '-', b: 'C', res: 9 }
+        { a: 'A', op: '+', b: 'B', res: 15 },
+        { a: 'A', op: '+', b: 5, res: 13 },
+        { a: 'B', op: '-', b: 3, res: 'C' },
+        { a: 13, op: '-', b: 'C', res: 9 }
       ],
       cards: [
-        { cid: 'c1', value: 5 },
-        { cid: 'c2', value: 8 },
-        { cid: 'c3', value: 11 },
-        { cid: 'c4', value: 7 },
-        { cid: 'c5', value: 12 }
+        { cid: 'c1', value: 4 },
+        { cid: 'c2', value: 7 },
+        { cid: 'c3', value: 8 },
+        { cid: 'c4', value: 5 },
+        { cid: 'c5', value: 10 }
       ]
     },
     {
       id: 'mc_g1_7',
       kind: 'triangle',
-      title: '7. Penkiolikos žvaigždė (Suma 15)',
-      instruction: 'Tikras galvosūkis! Visos trys trikampio kraštinės privalo sudaryti po 15.',
+      title: '7. Dvylikos žvaigždė (Suma 12)',
+      instruction: 'Pabaik trikampį: visi trys kampai jau užpildyti, įdėk likusius 3 skaičius, kad kraštinės lygios 12!',
       reward: 3,
-      magicSum: 15,
-      solution: [2, 8, 5, 4, 6, 7],
-      fixed: { 0: 2 },
+      magicSum: 12,
+      solution: [1, 7, 4, 2, 6, 5],
+      fixed: { 0: 1, 2: 4, 4: 6 },
       cards: [
-        { cid: 'c1', value: 4 },
+        { cid: 'c1', value: 2 },
         { cid: 'c2', value: 5 },
-        { cid: 'c3', value: 6 },
-        { cid: 'c4', value: 7 },
-        { cid: 'c5', value: 8 }
+        { cid: 'c3', value: 7 }
       ]
     },
     {
       id: 'mc_g1_8',
       kind: 'crossword',
       title: '8. Pirmoko didysis kryžiažodis',
-      instruction: 'Net 4 susikertančios lygtys! Rask D ir C apačioje bei viduryje, tada užbaik viršų.',
+      instruction: 'Net 4 susikertančios lygtys iki 15! Rask D ir C apačioje bei viduryje, tada užbaik viršų.',
       reward: 3,
       rows: 5,
       cols: 5,
       cells: [
-        { r: 0, c: 0, type: 'slot', id: 'A', solution: 9 },
+        { r: 0, c: 0, type: 'slot', id: 'A', solution: 8 },
         { r: 0, c: 1, type: 'op', text: '+' },
         { r: 0, c: 2, type: 'slot', id: 'B', solution: 7 },
         { r: 0, c: 3, type: 'op', text: '=' },
-        { r: 0, c: 4, type: 'num', value: 16 },
+        { r: 0, c: 4, type: 'num', value: 15 },
 
         { r: 1, c: 0, type: 'op', text: '+' },
         { r: 1, c: 2, type: 'op', text: '−' },
 
         { r: 2, c: 0, type: 'slot', id: 'C', solution: 5 },
         { r: 2, c: 1, type: 'op', text: '+' },
-        { r: 2, c: 2, type: 'num', value: 1 },
+        { r: 2, c: 2, type: 'num', value: 2 },
         { r: 2, c: 3, type: 'op', text: '=' },
-        { r: 2, c: 4, type: 'num', value: 6 },
+        { r: 2, c: 4, type: 'num', value: 7 },
 
         { r: 3, c: 0, type: 'op', text: '=' },
         { r: 3, c: 2, type: 'op', text: '=' },
 
-        { r: 4, c: 0, type: 'num', value: 14 },
+        { r: 4, c: 0, type: 'num', value: 13 },
         { r: 4, c: 1, type: 'op', text: '−' },
         { r: 4, c: 2, type: 'slot', id: 'D', solution: 6 },
         { r: 4, c: 3, type: 'op', text: '=' },
-        { r: 4, c: 4, type: 'num', value: 8 }
+        { r: 4, c: 4, type: 'num', value: 7 }
       ],
       equations: [
-        { a: 'A', op: '+', b: 'B', res: 16 },
-        { a: 'A', op: '+', b: 'C', res: 14 },
+        { a: 'A', op: '+', b: 'B', res: 15 },
+        { a: 'A', op: '+', b: 'C', res: 13 },
         { a: 'B', op: '-', b: 1, res: 'D' },
-        { a: 'C', op: '+', b: 1, res: 6 },
-        { a: 14, op: '-', b: 'D', res: 8 }
+        { a: 'C', op: '+', b: 2, res: 7 },
+        { a: 13, op: '-', b: 'D', res: 7 }
       ],
       cards: [
         { cid: 'c1', value: 5 },
         { cid: 'c2', value: 6 },
         { cid: 'c3', value: 7 },
-        { cid: 'c4', value: 9 },
+        { cid: 'c4', value: 8 },
         { cid: 'c5', value: 4 },
-        { cid: 'c6', value: 8 }
+        { cid: 'c6', value: 9 }
       ]
     }
   ],

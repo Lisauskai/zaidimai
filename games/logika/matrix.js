@@ -107,7 +107,7 @@ export const MATRIX_LEVELS = {
         { shape: 'triangle', color: 'cyan' },
         { shape: 'square', color: 'yellow' }
       ],
-      correctIndex: 3
+      correctIndex: 0
     },
     {
       id: 'mat_g1_2',

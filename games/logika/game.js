@@ -1,33 +1,33 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113h';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113h';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113h';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113h';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113i';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113i';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113i';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113i';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113h';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113h';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113h';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113h';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113h';
+} from './balance.js?v=20261113i';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113i';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113i';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113i';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113i';
 import {
   MathCrossEngine,
   MATHCROSS_LEVELS,
   MATHCROSS_CANVAS_W,
   MATHCROSS_CANVAS_H
-} from './mathcross.js?v=20261113h';
+} from './mathcross.js?v=20261113i';
 import {
   BridgesEngine,
   BRIDGES_LEVELS,
   BRIDGES_CANVAS_W,
   BRIDGES_CANVAS_H
-} from './bridges.js?v=20261113h';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113h';
+} from './bridges.js?v=20261113i';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113i';
 import {
   isSoundEnabled,
   toggleSound,
@@ -51,8 +51,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113h';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113h';
+} from './sound.js?v=20261113i';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113i';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -61,7 +61,7 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113h';
+} from './robot.js?v=20261113i';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 

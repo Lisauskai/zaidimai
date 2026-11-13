@@ -16,147 +16,154 @@ export const BALANCE_LEVELS = {
   grade1: [
     {
       id: 'bal_g1_1',
-      title: '1. Kristalo paslaptis',
-      instruction: 'Pagal viršutinę užuominą sužinok, kiek sveria 💎, tada parink tinkamus svarsčius ir spausk „Patikrinti“!',
+      title: '1. Kristalo svoris',
+      instruction: 'Užuomina rodo: 1 💎 = 3. Kiek iš viso sveria kairė lėkštė (💎 + 2)? Surink svorį ir spausk „Patikrinti“!',
       reward: 1,
-      maxHearts: 3,
-      weights: { crystal: 5 },
+      maxHearts: 4,
+      weights: { crystal: 3 },
       clues: [
-        { left: [{ kind: 'crystal', count: 1 }, { weight: 2 }], right: [{ weight: 7 }] }
+        { left: [{ kind: 'crystal', count: 1 }], right: [{ weight: 3 }] }
       ],
-      leftPan: [{ kind: 'crystal', count: 1 }, { weight: 3 }],
+      leftPan: [{ kind: 'crystal', count: 1 }, { weight: 2 }],
       inventory: [
-        { uid: 'w1', value: 2, label: '2' },
-        { uid: 'w2', value: 3, label: '3' },
-        { uid: 'w3', value: 5, label: '5' },
-        { uid: 'w4', value: 9, label: '9' }
+        { uid: 'w1', value: 1, label: '1' },
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 4, label: '4' },
+        { uid: 'w5', value: 5, label: '5' }
       ]
     },
     {
       id: 'bal_g1_2',
-      title: '2. Dviguba baterija',
-      instruction: 'Dvi baterijos sveria tiek pat, kiek svarstis 12. Kiek sveria viena 🔋? Surink tikslų svorį!',
+      title: '2. Energijos baterija',
+      instruction: 'Užuomina rodo: 1 🔋 = 4. Atsverk kairę lėkštę (🔋 + 3) naudodamas svarsčius apačioje!',
       reward: 1,
-      maxHearts: 3,
-      weights: { battery: 6 },
+      maxHearts: 4,
+      weights: { battery: 4 },
       clues: [
-        { left: [{ kind: 'battery', count: 2 }], right: [{ weight: 12 }] }
+        { left: [{ kind: 'battery', count: 1 }], right: [{ weight: 4 }] }
       ],
-      leftPan: [{ kind: 'battery', count: 1 }, { weight: 4 }],
+      leftPan: [{ kind: 'battery', count: 1 }, { weight: 3 }],
       inventory: [
         { uid: 'w1', value: 1, label: '1' },
-        { uid: 'w2', value: 4, label: '4' },
-        { uid: 'w3', value: 6, label: '6' },
-        { uid: 'w4', value: 8, label: '8' }
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 4, label: '4' },
+        { uid: 'w5', value: 5, label: '5' }
       ]
     },
     {
       id: 'bal_g1_3',
-      title: '3. Kosminis varžtas',
-      instruction: 'Apskaičiuok vieno varžto 🔩 svorį, sudėk visą kairę lėkštę ir išsirink tris svarsčius apačioje!',
+      title: '3. Du varžtai',
+      instruction: 'Užuomina rodo: 1 🔩 = 3. Kiek sveria du varžtai ir 2 kartu? Turite net 4 širdeles!',
       reward: 1,
-      maxHearts: 3,
-      weights: { bolt: 4 },
+      maxHearts: 4,
+      weights: { bolt: 3 },
       clues: [
-        { left: [{ kind: 'bolt', count: 1 }, { weight: 5 }], right: [{ weight: 9 }] }
+        { left: [{ kind: 'bolt', count: 1 }], right: [{ weight: 3 }] }
       ],
-      leftPan: [{ kind: 'bolt', count: 2 }, { weight: 3 }],
+      leftPan: [{ kind: 'bolt', count: 2 }, { weight: 2 }],
       inventory: [
-        { uid: 'w1', value: 2, label: '2' },
-        { uid: 'w2', value: 4, label: '4' },
-        { uid: 'w3', value: 5, label: '5' },
-        { uid: 'w4', value: 8, label: '8' }
+        { uid: 'w1', value: 1, label: '1' },
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 4, label: '4' },
+        { uid: 'w5', value: 5, label: '5' }
       ]
     },
     {
       id: 'bal_g1_4',
-      title: '4. Magneto trauka',
-      instruction: 'Kiek sveria magnetas 🧲, jei su 6 sveria 13? Atsverk du magnetus ant dešinės lėkštės!',
+      title: '4. Magnetų pora',
+      instruction: 'Užuomina rodo: 1 🧲 = 5. Kiek sveria du magnetai 🧲🧲 ant kairės lėkštės?',
       reward: 2,
-      maxHearts: 3,
-      weights: { magnet: 7 },
+      maxHearts: 4,
+      weights: { magnet: 5 },
       clues: [
-        { left: [{ kind: 'magnet', count: 1 }, { weight: 6 }], right: [{ weight: 13 }] }
+        { left: [{ kind: 'magnet', count: 1 }], right: [{ weight: 5 }] }
       ],
       leftPan: [{ kind: 'magnet', count: 2 }],
       inventory: [
         { uid: 'w1', value: 1, label: '1' },
-        { uid: 'w2', value: 5, label: '5' },
-        { uid: 'w3', value: 9, label: '9' },
-        { uid: 'w4', value: 11, label: '11' }
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 4, label: '4' },
+        { uid: 'w5', value: 5, label: '5' }
       ]
     },
     {
       id: 'bal_g1_5',
-      title: '5. Robotuko svoris',
-      instruction: 'Išspręsk lygtį su robotuku 🤖 ir atsargiai patikrink pusiausvyrą turėdami tik 3 širdeles!',
+      title: '5. Robotukų komanda',
+      instruction: 'Užuomina rodo: 1 🤖 = 4. Apskaičiuok, kiek sveria 🤖🤖 + 1 ir pasverk!',
       reward: 2,
-      maxHearts: 3,
-      weights: { robot: 8 },
+      maxHearts: 4,
+      weights: { robot: 4 },
       clues: [
-        { left: [{ kind: 'robot', count: 1 }, { weight: 4 }], right: [{ weight: 12 }] }
+        { left: [{ kind: 'robot', count: 1 }], right: [{ weight: 4 }] }
       ],
-      leftPan: [{ kind: 'robot', count: 1 }, { weight: 7 }],
+      leftPan: [{ kind: 'robot', count: 2 }, { weight: 1 }],
       inventory: [
-        { uid: 'w1', value: 2, label: '2' },
-        { uid: 'w2', value: 5, label: '5' },
-        { uid: 'w3', value: 8, label: '8' },
-        { uid: 'w4', value: 11, label: '11' }
+        { uid: 'w1', value: 1, label: '1' },
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 4, label: '4' },
+        { uid: 'w5', value: 5, label: '5' }
       ]
     },
     {
       id: 'bal_g1_6',
-      title: '6. Raketos kuras',
-      instruction: 'Dvi raketos atstoja 18. Kiek iš viso sveria kairė lėkštė su 🚀 ir 8?',
+      title: '6. Raketos skrydis',
+      instruction: 'Užuomina rodo: 1 🚀 = 6. Sudėk 🚀 ir 5 svorį bei surink tikslią pusiausvyrą!',
       reward: 2,
-      maxHearts: 3,
-      weights: { rocket: 9 },
+      maxHearts: 4,
+      weights: { rocket: 6 },
       clues: [
-        { left: [{ kind: 'rocket', count: 2 }], right: [{ weight: 18 }] }
+        { left: [{ kind: 'rocket', count: 1 }], right: [{ weight: 6 }] }
       ],
-      leftPan: [{ kind: 'rocket', count: 1 }, { weight: 8 }],
+      leftPan: [{ kind: 'rocket', count: 1 }, { weight: 5 }],
       inventory: [
-        { uid: 'w1', value: 2, label: '2' },
-        { uid: 'w2', value: 6, label: '6' },
-        { uid: 'w3', value: 9, label: '9' },
-        { uid: 'w4', value: 12, label: '12' }
+        { uid: 'w1', value: 1, label: '1' },
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 5, label: '5' },
+        { uid: 'w5', value: 6, label: '6' }
       ]
     },
     {
       id: 'bal_g1_7',
       title: '7. Trys kristalai',
-      instruction: 'Iš užuominos rask vieno 💎 svorį, tada apskaičiuok trijų kristalų ir 4 sumą!',
+      instruction: 'Užuomina rodo: 1 💎 = 4. Kiek iš viso sveria trys kristalai 💎💎💎?',
       reward: 2,
-      maxHearts: 3,
-      weights: { crystal: 5 },
+      maxHearts: 4,
+      weights: { crystal: 4 },
       clues: [
-        { left: [{ kind: 'crystal', count: 2 }, { weight: 3 }], right: [{ weight: 13 }] }
+        { left: [{ kind: 'crystal', count: 1 }], right: [{ weight: 4 }] }
       ],
-      leftPan: [{ kind: 'crystal', count: 3 }, { weight: 4 }],
+      leftPan: [{ kind: 'crystal', count: 3 }],
       inventory: [
-        { uid: 'w1', value: 4, label: '4' },
-        { uid: 'w2', value: 7, label: '7' },
-        { uid: 'w3', value: 8, label: '8' },
-        { uid: 'w4', value: 13, label: '13' }
+        { uid: 'w1', value: 1, label: '1' },
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 4, label: '4' },
+        { uid: 'w5', value: 5, label: '5' }
       ]
     },
     {
       id: 'bal_g1_8',
-      title: '8. Didysis 20-uko testas',
-      instruction: 'Paskutinis 1 klasės iššūkis! Rask raketos 🚀 svorį ir surink lygiai 20 iš pateiktų svarsčių!',
+      title: '8. Didysis 12-uko startas',
+      instruction: 'Paskutinis 1 klasės iššūkis! 1 🚀 = 5, o kairėje yra 🚀🚀 + 2. Surink 12 iš apačios!',
       reward: 3,
-      maxHearts: 3,
-      weights: { rocket: 11 },
+      maxHearts: 4,
+      weights: { rocket: 5 },
       clues: [
-        { left: [{ kind: 'rocket', count: 1 }, { weight: 7 }], right: [{ weight: 18 }] }
+        { left: [{ kind: 'rocket', count: 1 }], right: [{ weight: 5 }] }
       ],
-      leftPan: [{ kind: 'rocket', count: 1 }, { weight: 9 }],
+      leftPan: [{ kind: 'rocket', count: 2 }, { weight: 2 }],
       inventory: [
-        { uid: 'w1', value: 3, label: '3' },
-        { uid: 'w2', value: 5, label: '5' },
-        { uid: 'w3', value: 8, label: '8' },
-        { uid: 'w4', value: 9, label: '9' },
-        { uid: 'w5', value: 13, label: '13' }
+        { uid: 'w1', value: 1, label: '1' },
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 4, label: '4' },
+        { uid: 'w5', value: 5, label: '5' }
       ]
     }
   ],
