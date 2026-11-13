@@ -2,6 +2,7 @@
 // Progreso raktas localStorage: 'proto_lab_progress'
 import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js';
 import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -149,12 +150,14 @@ export const LAB_LEVELS = {
 // ==================== BŪSENA ====================
 let progress = loadLabProgress();
 let currentDifficulty = null;
-let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'mini'
+let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'mini'
 let activeLevelIndex = 0;
 let mirrorStates = [];
 let switchStates = [];
 let pinEngine = null;
 let sokobanGame = null;
+let laserEngine = null;
+let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
 
@@ -167,6 +170,8 @@ const uiTotalCrystals = document.getElementById('ui-total-crystals');
 const pinCanvas = document.getElementById('pinpull-canvas');
 const pinPullStage = document.getElementById('pinpull-stage');
 const sokobanStage = document.getElementById('sokoban-stage');
+const laserCanvas = document.getElementById('laser-canvas');
+const laserStage = document.getElementById('laser-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
@@ -176,12 +181,13 @@ function getDifficultyLabel(diff) {
 }
 
 function getAllLevelsForDiff(diff) {
-  return [...PINPULL_LEVELS[diff], ...SOKOBAN_LEVELS[diff], ...LAB_LEVELS[diff]];
+  return [...PINPULL_LEVELS[diff], ...SOKOBAN_LEVELS[diff], ...LASER_LEVELS[diff], ...LAB_LEVELS[diff]];
 }
 
 function getCurrentModeLevels(diff = currentDifficulty) {
   if (currentMode === 'pinpull') return PINPULL_LEVELS[diff];
   if (currentMode === 'sokoban') return SOKOBAN_LEVELS[diff];
+  if (currentMode === 'laser') return LASER_LEVELS[diff];
   return LAB_LEVELS[diff];
 }
 
@@ -238,6 +244,7 @@ export function selectDifficulty(difficulty) {
 
 function showDifficultyScreen() {
   destroyPinEngine();
+  destroyLaserEngine();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -248,11 +255,12 @@ function showDifficultyScreen() {
 function syncModeTabsUI() {
   document.getElementById('tab-mode-pinpull')?.classList.toggle('active', currentMode === 'pinpull');
   document.getElementById('tab-mode-sokoban')?.classList.toggle('active', currentMode === 'sokoban');
+  document.getElementById('tab-mode-laser')?.classList.toggle('active', currentMode === 'laser');
   document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
 }
 
 function switchLabMode(mode) {
-  if (mode !== 'pinpull' && mode !== 'sokoban' && mode !== 'mini') return;
+  if (mode !== 'pinpull' && mode !== 'sokoban' && mode !== 'laser' && mode !== 'mini') return;
   currentMode = mode;
   activeLevelIndex = 0;
   syncModeTabsUI();
@@ -271,9 +279,18 @@ function renderLevelsStrip() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = `level-tab-btn${idx === activeLevelIndex ? ' active' : ''}${isSolved ? ' solved' : ''}`;
+    const label = isSolved
+      ? '✅ Atlikta'
+      : currentMode === 'pinpull'
+        ? '🔩 Kaiščiai'
+        : currentMode === 'sokoban'
+          ? '🤖 Robotas'
+          : currentMode === 'laser'
+            ? '🔦 Optika'
+            : '🧩 Užduotis';
     btn.innerHTML = `
       <div class="level-tab-top">
-        <span>${isSolved ? '✅ Atlikta' : currentMode === 'pinpull' ? '🔩 Kaiščiai' : currentMode === 'sokoban' ? '🤖 Robotas' : '🧩 Užduotis'}</span>
+        <span>${label}</span>
         <span>+${lvl.reward} 💎</span>
       </div>
       <div class="level-tab-name">${lvl.title}</div>
@@ -314,8 +331,16 @@ function destroyPinEngine() {
   }
 }
 
+function destroyLaserEngine() {
+  if (laserEngine) {
+    laserEngine.destroy();
+    laserEngine = null;
+  }
+}
+
 function loadActiveLevel() {
   destroyPinEngine();
+  destroyLaserEngine();
   sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
@@ -325,7 +350,9 @@ function loadActiveLevel() {
       ? `🔩 IŠTRAUK KAIŠTĮ • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
       : currentMode === 'sokoban'
         ? `🤖 ROBO-STUMDUKAS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-        : level.badge;
+        : currentMode === 'laser'
+          ? `🔦 LAZERIŲ VEIDRODŽIAI • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+          : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -336,20 +363,30 @@ function loadActiveLevel() {
 
   document.getElementById('btn-pin-next')?.classList.add('hidden');
   document.getElementById('btn-sok-next')?.classList.add('hidden');
+  document.getElementById('btn-laser-next')?.classList.add('hidden');
 
   if (currentMode === 'pinpull') {
     pinPullStage.classList.remove('hidden');
     sokobanStage?.classList.add('hidden');
+    laserStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startPinPullLevel(level, levels.length);
   } else if (currentMode === 'sokoban') {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.remove('hidden');
+    laserStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startSokobanLevel(level, levels.length);
+  } else if (currentMode === 'laser') {
+    pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.add('hidden');
+    laserStage?.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startLaserLevel(level, levels.length);
   } else {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.add('hidden');
+    laserStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
 
@@ -401,6 +438,54 @@ function getCanvasCoords(evt) {
     mx: ((evt.clientX - rect.left) / rect.width) * CANVAS_W,
     my: ((evt.clientY - rect.top) / rect.height) * CANVAS_H
   };
+}
+
+function getLaserCanvasCoords(evt) {
+  const rect = laserCanvas.getBoundingClientRect();
+  return {
+    mx: ((evt.clientX - rect.left) / rect.width) * LASER_CANVAS_W,
+    my: ((evt.clientY - rect.top) / rect.height) * LASER_CANVAS_H
+  };
+}
+
+function updateLaserToolBtnUI() {
+  const btn = document.getElementById('btn-laser-tool');
+  if (!btn) return;
+  btn.classList.toggle('move-active', laserMoveToolActive);
+  btn.textContent = laserMoveToolActive
+    ? '✋ Režimas: Perkelti (spausk ant veidrodžio, tada ant langelio)'
+    : '🔄 Paspaudus: Sukti 90° (Vilkti = Perkelti)';
+}
+
+function startLaserLevel(level, totalInMode) {
+  const counterEl = document.getElementById('laser-counter');
+  const nextBtn = document.getElementById('btn-laser-next');
+  const toolBtn = document.getElementById('btn-laser-tool');
+  const splitterLegend = document.getElementById('laser-legend-splitter');
+
+  laserMoveToolActive = false;
+  if (toolBtn) {
+    toolBtn.classList.toggle('hidden', !level.movable);
+    updateLaserToolBtnUI();
+  }
+  if (splitterLegend) {
+    splitterLegend.classList.toggle('hidden', !level.movable);
+  }
+
+  laserEngine = new LaserMirrorsEngine(laserCanvas, level, {
+    onStatusChange: ({ litTargets, totalTargets, won }) => {
+      if (counterEl) {
+        counterEl.textContent = `💎 Apšviesta kristalų: ${litTargets} / ${totalTargets}`;
+      }
+      if (won) {
+        markLevelSolved(level);
+        if (nextBtn && activeLevelIndex < totalInMode - 1) {
+          nextBtn.classList.remove('hidden');
+        }
+      }
+    }
+  });
+  laserEngine.startLoop();
 }
 
 // ==================== ROBO-STUMDUKAS RENDERIS IR VALDYMAS ====================
@@ -660,6 +745,7 @@ document.getElementById('btn-back-difficulty')?.addEventListener('click', showDi
 
 document.getElementById('tab-mode-pinpull')?.addEventListener('click', () => switchLabMode('pinpull'));
 document.getElementById('tab-mode-sokoban')?.addEventListener('click', () => switchLabMode('sokoban'));
+document.getElementById('tab-mode-laser')?.addEventListener('click', () => switchLabMode('laser'));
 document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
 
 document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
@@ -746,6 +832,57 @@ if (pinCanvas) {
     if (!pinEngine) return;
     const { mx, my } = getCanvasCoords(e);
     pinEngine.handlePointerMove(mx, my);
+  });
+}
+
+document.getElementById('btn-laser-tool')?.addEventListener('click', () => {
+  if (!laserEngine) return;
+  laserMoveToolActive = !laserMoveToolActive;
+  laserEngine.setInteractionMode(laserMoveToolActive ? 'move' : 'smart');
+  updateLaserToolBtnUI();
+});
+
+document.getElementById('btn-laser-reset')?.addEventListener('click', () => {
+  if (!laserEngine) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-laser-next')?.classList.add('hidden');
+  laserEngine.reset();
+});
+
+document.getElementById('btn-laser-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
+
+if (laserCanvas) {
+  laserCanvas.addEventListener('pointerdown', (e) => {
+    if (!laserEngine) return;
+    const { mx, my } = getLaserCanvasCoords(e);
+    laserEngine.handlePointerDown(mx, my);
+  });
+
+  laserCanvas.addEventListener('pointermove', (e) => {
+    if (!laserEngine) return;
+    const { mx, my } = getLaserCanvasCoords(e);
+    laserEngine.handlePointerMove(mx, my);
+  });
+
+  laserCanvas.addEventListener('pointerup', (e) => {
+    if (!laserEngine) return;
+    const { mx, my } = getLaserCanvasCoords(e);
+    laserEngine.handlePointerUp(mx, my);
+  });
+
+  laserCanvas.addEventListener('pointercancel', (e) => {
+    if (!laserEngine) return;
+    const { mx, my } = getLaserCanvasCoords(e);
+    laserEngine.handlePointerUp(mx, my);
   });
 }
 
