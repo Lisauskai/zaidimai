@@ -2156,6 +2156,59 @@ body {
   color: #020617;
 }
 
+.algo-slot.filled-cmd.cmd-dir-up,
+.algo-slot.filled-cmd.cmd-dir-down,
+.algo-slot.filled-cmd.cmd-dir-left,
+.algo-slot.filled-cmd.cmd-dir-right {
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+  padding: 5px 8px;
+}
+
+.algo-abs-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 7px;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #0ea5e9 0%, #0369a1 100%);
+  border: 3px solid #020617;
+  box-shadow: 0 4px 0 #020617;
+  transition: transform 0.12s ease, outline 0.12s ease;
+}
+
+.algo-abs-card.executing {
+  outline: 4px solid #fde047;
+  transform: scale(1.08);
+  box-shadow: 0 0 18px rgba(250, 204, 21, 0.85);
+}
+
+.algo-abs-step-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 9px;
+  border-radius: 9px;
+  border: 2px solid #020617;
+  background: rgba(15, 23, 42, 0.42);
+  color: #f8fafc;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.algo-abs-step-btn:hover {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.algo-abs-mult {
+  padding: 2px 6px;
+  border-radius: 7px;
+  background: #facc15;
+  color: #020617;
+  font-weight: 900;
+  font-size: 0.84rem;
+}
+
 .algo-slot.executing {
   outline: 4px solid #fde047;
   transform: scale(1.08);
@@ -2290,6 +2343,13 @@ body {
 .algo-cmd-btn.cmd-loop {
   background: linear-gradient(180deg, #34d399 0%, #059669 100%);
   color: #022c22;
+}
+
+.algo-cmd-btn.cmd-dir-up,
+.algo-cmd-btn.cmd-dir-down,
+.algo-cmd-btn.cmd-dir-left,
+.algo-cmd-btn.cmd-dir-right {
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
 }
 
 .algo-run-btn {

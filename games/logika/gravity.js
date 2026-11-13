@@ -1,12 +1,12 @@
-// ==================== 9. GRAVITACIJOS LABIRINTAS (TILT & SLIDE ICE MAZE) ====================
+// ==================== 9. GRAVITACIJOS LABIRINTAS (TILT & SLIDE) ====================
 export const GRAVITY_CANVAS_W = 540;
 export const GRAVITY_CANVAS_H = 440;
 
 const DIR_VEC = {
-  U: { dr: -1, dc: 0, tiltAngle: -0.025, dx: 0, dy: -6 },
-  D: { dr: 1, dc: 0, tiltAngle: 0.025, dx: 0, dy: 6 },
-  L: { dr: 0, dc: -1, tiltAngle: -0.035, dx: -6, dy: 0 },
-  R: { dr: 0, dc: 1, tiltAngle: 0.035, dx: 6, dy: 0 }
+  U: { dr: -1, dc: 0, tiltAngle: -0.025, dx: 0, dy: -5 },
+  D: { dr: 1, dc: 0, tiltAngle: 0.025, dx: 0, dy: 5 },
+  L: { dr: 0, dc: -1, tiltAngle: -0.025, dx: -5, dy: 0 },
+  R: { dr: 0, dc: 1, tiltAngle: 0.025, dx: 5, dy: 0 }
 };
 
 export const GRAVITY_LEVELS = {
@@ -17,10 +17,11 @@ export const GRAVITY_LEVELS = {
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
       instruction: 'Pakreipk lauką (rodyklėmis ar mygtukais), surink ⭐ ir sustok tiksliai ant teleportacijos platformos 🌀!',
       reward: 1,
+      masterMoves: 3,
       size: 6,
       grid: [
         '######',
-        '#B.S.#',
+        '#O.S.#',
         '#....#',
         '#....#',
         '##F..#',
@@ -31,12 +32,13 @@ export const GRAVITY_LEVELS = {
       id: 'grv_g1_2',
       title: '2. Ledinis kampas',
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
-      instruction: 'Rutulys sustoja tik atsitrenkęs į sieną! Surask 4 slydimų kelią per ⭐ iki 🌀.',
+      instruction: 'Rutulys sustoja tik atsitrenkęs į sieną! Surask optimalų kelią per ⭐ iki 🌀.',
       reward: 1,
+      masterMoves: 4,
       size: 6,
       grid: [
         '######',
-        '##B..#',
+        '##O..#',
         '#F...#',
         '#..#.#',
         '#..S.#',
@@ -49,10 +51,11 @@ export const GRAVITY_LEVELS = {
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
       instruction: 'Surink abi ⭐ pakeliui ir tiksliai sustok ant 🌀 platformos!',
       reward: 1,
+      masterMoves: 4,
       size: 6,
       grid: [
         '######',
-        '#B.S.#',
+        '#O.S.#',
         '#.#..#',
         '#.F.S#',
         '##...#',
@@ -65,13 +68,14 @@ export const GRAVITY_LEVELS = {
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
       instruction: 'Čiuožk ratu palei sienas per abi žvaigždutes iki centro platformos!',
       reward: 2,
+      masterMoves: 5,
       size: 6,
       grid: [
         '######',
         '#..S.#',
         '#.#F.#',
         '#...##',
-        '#.S.B#',
+        '#.S.O#',
         '######'
       ]
     },
@@ -81,13 +85,99 @@ export const GRAVITY_LEVELS = {
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
       instruction: 'Atkreipk dėmesį į vidines sienas – jos padės sustoti reikiamame langelyje!',
       reward: 2,
+      masterMoves: 5,
       size: 6,
       grid: [
         '######',
         '##.S.#',
         '#..#.#',
         '#S..F#',
-        '#B..##',
+        '#O..##',
+        '######'
+      ]
+    },
+    {
+      id: 'grv_g1_6',
+      title: '6. Lipnus kilimėlis 🧲',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
+      instruction: 'Nauja detalė! Užvažiavęs ant violetinio lipnaus kilimėlio 🧲, rutulys sustoja viduryje lauko!',
+      reward: 2,
+      masterMoves: 5,
+      size: 6,
+      grid: [
+        '######',
+        '#O..S#',
+        '#..X.#',
+        '##...#',
+        '#..F.#',
+        '######'
+      ]
+    },
+    {
+      id: 'grv_g1_7',
+      title: '7. Dvigubas magnetas',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
+      instruction: 'Sustok ant pirmojo 🧲, paimk ⭐ ir per antrą 🧲 nusitaikyk tiesiai į 🌀!',
+      reward: 2,
+      masterMoves: 6,
+      size: 6,
+      grid: [
+        '######',
+        '#O..##',
+        '#..XS#',
+        '##.#.#',
+        '#FX..#',
+        '######'
+      ]
+    },
+    {
+      id: 'grv_g1_8',
+      title: '8. Geltonasis jungiklis 🟡',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
+      instruction: 'Praslysk per geltoną jungiklį 🟡, kad atsidarytų geltona užtvara 🟨 prieš finišą!',
+      reward: 2,
+      masterMoves: 4,
+      size: 6,
+      grid: [
+        '######',
+        '#O..S#',
+        '#.#..#',
+        '#..#Y#',
+        '#y.#F#',
+        '######'
+      ]
+    },
+    {
+      id: 'grv_g1_9',
+      title: '9. Kilimėlis ir užtvara',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
+      instruction: 'Sujunk lipnų 🧲 kilimėlį su geltonu 🟡 jungikliu, kad paimtum abi ⭐ ir atvertum kelią į 🌀!',
+      reward: 3,
+      masterMoves: 6,
+      size: 6,
+      grid: [
+        '######',
+        '#O.S.#',
+        '#X.#y#',
+        '#.S.Y#',
+        '#.#.F#',
+        '######'
+      ]
+    },
+    {
+      id: 'grv_g1_10',
+      title: '10. Kosminis teleportas 🔵',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 1 KL.',
+      instruction: '1 klasės finalas! Įskriek į mėlyną portalą 🔵, įjunk 🟡 ir per 🧲 pasiek finišą 🌀!',
+      reward: 3,
+      masterMoves: 4,
+      size: 6,
+      grid: [
+        '######',
+        '#O.A##',
+        '##X..#',
+        '#Ay.##',
+        '#S.YF#',
         '######'
       ]
     }
@@ -99,10 +189,11 @@ export const GRAVITY_LEVELS = {
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
       instruction: 'Saugokis atviro kosmoso kraštų! Sudaužyk trapų ledą ❄️, kad vėliau pro jį praslystum iki 🌀.',
       reward: 2,
+      masterMoves: 5,
       size: 8,
       grid: [
         '        ',
-        ' B.S..# ',
+        ' O.S..# ',
         ' .....  ',
         ' .....  ',
         ' #S...# ',
@@ -117,10 +208,11 @@ export const GRAVITY_LEVELS = {
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
       instruction: 'Įskridęs į mėlyną portalą 🔵, rutulys išskrenda iš kito mėlyno išlaikydamas greitį!',
       reward: 2,
+      masterMoves: 5,
       size: 8,
       grid: [
         '        ',
-        ' B.A A.#',
+        ' O.A A.#',
         ' .#.... ',
         ' ...F#S ',
         ' ...... ',
@@ -135,6 +227,7 @@ export const GRAVITY_LEVELS = {
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
       instruction: 'Pasinaudok mėlynais 🔵 ir violetiniais 🟣 portalais bei įveik prarajas!',
       reward: 2,
+      masterMoves: 5,
       size: 8,
       grid: [
         '        ',
@@ -152,11 +245,12 @@ export const GRAVITY_LEVELS = {
       title: '4. Trapaus ledo šifras',
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
       instruction: 'Pirmas smūgis į ❄️ sustabdo rutulį, o antrą kartą kelias jau laisvas!',
-      reward: 3,
+      reward: 2,
+      masterMoves: 4,
       size: 8,
       grid: [
         '        ',
-        ' B.S..# ',
+        ' O.S..# ',
         ' #....# ',
         ' ....I  ',
         ' ....S  ',
@@ -167,10 +261,11 @@ export const GRAVITY_LEVELS = {
     },
     {
       id: 'grv_g3_5',
-      title: '5. Galaktikos gravitacijos valdovas',
+      title: '5. Portalų labirintas',
       badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
       instruction: 'Sujunk portalus 🔵🟣, trapų ledą ❄️ ir surink visas ⭐ virš atviro kosmoso!',
-      reward: 3,
+      reward: 2,
+      masterMoves: 5,
       size: 8,
       grid: [
         '        ',
@@ -181,6 +276,101 @@ export const GRAVITY_LEVELS = {
         ' ...B.. ',
         ' #FI... ',
         '      # '
+      ]
+    },
+    {
+      id: 'grv_g3_6',
+      title: '6. Lipni sala virš prarajos 🧲',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
+      instruction: 'Sustok tiksliai ant lipnių 🧲 kilimėlių, kitaip išskriesi į atvirą kosmosą!',
+      reward: 2,
+      masterMoves: 5,
+      size: 8,
+      grid: [
+        '  #     ',
+        ' ..F##. ',
+        ' O...X. ',
+        ' ...... ',
+        ' .S..S. ',
+        ' ...... ',
+        ' #...X. ',
+        '        '
+      ]
+    },
+    {
+      id: 'grv_g3_7',
+      title: '7. Geltonasis šliuzas ir ledas',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
+      instruction: 'Sudaužyk trapų ledą ❄️, aktyvuok geltoną 🟡 jungiklį ir atidaryk kelią pro 🟨 užtvarą!',
+      reward: 3,
+      masterMoves: 6,
+      size: 8,
+      grid: [
+        '   #    ',
+        ' O..I.y#',
+        ' .#.... ',
+        ' .#...Y ',
+        ' ..S..S ',
+        ' #F.... ',
+        ' ..#..# ',
+        '        '
+      ]
+    },
+    {
+      id: 'grv_g3_8',
+      title: '8. Spalvotų spynų seifas',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
+      instruction: 'Du spalvoti jungikliai 🟡 ir 🔴 saugo kelią! Surask tikslią seką per 🧲 sustojimus.',
+      reward: 3,
+      masterMoves: 5,
+      size: 8,
+      grid: [
+        '        ',
+        ' O..y.# ',
+        ' .X.RSF#',
+        ' #r..Y. ',
+        ' #S.... ',
+        ' #...X. ',
+        ' ...... ',
+        '        '
+      ]
+    },
+    {
+      id: 'grv_g3_9',
+      title: '9. Portalai, magnetai ir šliuzas',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
+      instruction: 'Peršok per 🔵 ir 🟣 portalus, įjunk 🟡 jungiklį ir sustok ant 🧲 prieš paskutinį šuolį!',
+      reward: 3,
+      masterMoves: 4,
+      size: 8,
+      grid: [
+        '  #     ',
+        ' ...YS.#',
+        ' O.A... ',
+        ' ....B. ',
+        ' .S...F ',
+        ' A.y.X# ',
+        ' .B.... ',
+        '        '
+      ]
+    },
+    {
+      id: 'grv_g3_10',
+      title: '10. Galaktikos gravitacijos valdovas',
+      badge: '🧊 GRAVITACIJOS LABIRINTAS • 3 KL.',
+      instruction: 'Didysis finalas! Trapaus ledo ❄️ lūžis, 🔵/🟣 portalai, 🟡/🔴 užtvaros ir 🧲 sustojimas.',
+      reward: 3,
+      masterMoves: 7,
+      size: 8,
+      grid: [
+        '  #     ',
+        ' O.IAB# ',
+        '#S.R.S. ',
+        ' .S..Yr ',
+        ' ...AyX ',
+        ' F....B ',
+        ' ##.... ',
+        '        '
       ]
     }
   ]
@@ -214,11 +404,11 @@ export class GravityMazeEngine {
     this.tiles = [];
     this.starsRemaining = new Set();
     this.totalStars = 0;
+    this.openedColors = new Set();
     this.portals = { P1: [], P2: [] };
     this.ball = { r: 1, c: 1 };
     this.finish = { r: 1, c: 1 };
 
-    // Jei 'O' ar 'B' starto markeris: naudojame 'O' startui arba 'B' kai tik 1 'B'
     let bPositions = [];
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -283,11 +473,12 @@ export class GravityMazeEngine {
     if (!vec) return false;
 
     const waypoints = [];
+    const simOpened = new Set(this.openedColors);
     let cr = this.ball.r;
     let cc = this.ball.c;
     let fellOut = false;
     let hitIce = null;
-    let collectedNow = [];
+    let stoppedSticky = false;
     let guard = 0;
 
     while (guard < 48) {
@@ -296,19 +487,22 @@ export class GravityMazeEngine {
       const nc = cc + vec.dc;
 
       if (nr < 0 || nr >= this.rows || nc < 0 || nc >= this.cols) {
-        waypoints.push({ r: nr, c: nc, jump: false });
+        waypoints.push({ r: nr, c: nc, jump: false, triggerColor: null });
         fellOut = true;
         break;
       }
 
       const tile = this.tiles[nr][nc];
       if (tile === ' ') {
-        waypoints.push({ r: nr, c: nc, jump: false });
+        waypoints.push({ r: nr, c: nc, jump: false, triggerColor: null });
         fellOut = true;
         break;
       }
 
-      if (tile === '#') {
+      const isBlockedBarrier =
+        (tile === 'Y' && !simOpened.has('Y')) ||
+        (tile === 'R' && !simOpened.has('R'));
+      if (tile === '#' || isBlockedBarrier) {
         break;
       }
 
@@ -319,11 +513,21 @@ export class GravityMazeEngine {
 
       cr = nr;
       cc = nc;
-      waypoints.push({ r: cr, c: cc, jump: false });
 
-      const sKey = `${cr},${cc}`;
-      if (this.starsRemaining.has(sKey)) {
-        collectedNow.push(sKey);
+      let triggerColor = null;
+      if (tile === 'y' && !simOpened.has('Y')) {
+        simOpened.add('Y');
+        triggerColor = 'Y';
+      } else if (tile === 'r' && !simOpened.has('R')) {
+        simOpened.add('R');
+        triggerColor = 'R';
+      }
+
+      waypoints.push({ r: cr, c: cc, jump: false, triggerColor });
+
+      if (tile === 'X') {
+        stoppedSticky = true;
+        break;
       }
 
       if (tile === 'A' || tile === 'B') {
@@ -331,7 +535,7 @@ export class GravityMazeEngine {
         if (twin) {
           cr = twin.r;
           cc = twin.c;
-          waypoints.push({ r: cr, c: cc, jump: true });
+          waypoints.push({ r: cr, c: cc, jump: true, triggerColor: null });
         }
       }
     }
@@ -350,7 +554,6 @@ export class GravityMazeEngine {
     let wpIdx = 0;
     const stepNextWaypoint = () => {
       if (wpIdx >= waypoints.length) {
-        // Judėjimas baigtas
         this.sliding = false;
         this.tilt = { angle: 0, dx: 0, dy: 0 };
 
@@ -364,6 +567,8 @@ export class GravityMazeEngine {
           this.tiles[hitIce.r][hitIce.c] = '.';
           this.spawnIceShards(hitIce.r, hitIce.c);
           this.callbacks.onIceBreak?.();
+        } else if (stoppedSticky) {
+          this.callbacks.onStickyStop?.();
         } else if (waypoints.length > 0) {
           this.callbacks.onWallHit?.();
         }
@@ -393,6 +598,10 @@ export class GravityMazeEngine {
       if (this.starsRemaining.has(key)) {
         this.starsRemaining.delete(key);
         this.callbacks.onStarCollect?.();
+      }
+      if (wp.triggerColor && !this.openedColors.has(wp.triggerColor)) {
+        this.openedColors.add(wp.triggerColor);
+        this.callbacks.onSwitchOpen?.(wp.triggerColor);
       }
       if (wp.jump) {
         this.callbacks.onPortal?.();
@@ -441,7 +650,6 @@ export class GravityMazeEngine {
 
     ctx.clearRect(0, 0, W, H);
 
-    // Kosminis fonas
     const bg = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * 0.7);
     bg.addColorStop(0, '#0f172a');
     bg.addColorStop(1, '#020617');
@@ -467,7 +675,6 @@ export class GravityMazeEngine {
         const y = oy + r * cellSize;
 
         if (ch === ' ') {
-          // Kosmoso praraja
           ctx.fillStyle = 'rgba(2, 6, 23, 0.55)';
           ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
           ctx.strokeStyle = 'rgba(239, 68, 68, 0.18)';
@@ -489,7 +696,6 @@ export class GravityMazeEngine {
         }
 
         if (ch === 'I') {
-          // Trapus ledas
           ctx.fillStyle = '#bae6fd';
           ctx.strokeStyle = '#38bdf8';
           ctx.lineWidth = 2.5;
@@ -518,6 +724,90 @@ export class GravityMazeEngine {
         ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6);
         ctx.fill();
         ctx.stroke();
+
+        // Lipnus / magnetinis sustojimo kilimėlis 'X'
+        if (ch === 'X') {
+          ctx.save();
+          ctx.fillStyle = 'rgba(168, 85, 247, 0.35)';
+          ctx.strokeStyle = '#c084fc';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.roundRect(x + 5, y + 5, cellSize - 10, cellSize - 10, 9);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.strokeStyle = 'rgba(233, 213, 255, 0.75)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize * 0.24, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.font = `${Math.floor(cellSize * 0.38)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🧲', x + cellSize / 2, y + cellSize / 2 + 1);
+          ctx.restore();
+        }
+
+        // Spalvoti jungikliai ('y' geltonas, 'r' raudonas)
+        if (ch === 'y' || ch === 'r') {
+          const colorKey = ch.toUpperCase();
+          const active = this.openedColors.has(colorKey);
+          const strokeCol = ch === 'y' ? '#fde047' : '#f87171';
+          const fillCol = active
+            ? ch === 'y'
+              ? 'rgba(250, 204, 21, 0.65)'
+              : 'rgba(248, 113, 113, 0.65)'
+            : ch === 'y'
+              ? 'rgba(250, 204, 21, 0.25)'
+              : 'rgba(248, 113, 113, 0.25)';
+
+          ctx.save();
+          ctx.fillStyle = fillCol;
+          ctx.strokeStyle = strokeCol;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize * 0.28, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.font = `${Math.floor(cellSize * 0.36)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(ch === 'y' ? '🟡' : '🔴', x + cellSize / 2, y + cellSize / 2 + 1);
+          ctx.restore();
+        }
+
+        // Spalvotos užtvaros ('Y' geltona, 'R' raudona)
+        if (ch === 'Y' || ch === 'R') {
+          const isOpen = this.openedColors.has(ch);
+          const col = ch === 'Y' ? '#facc15' : '#ef4444';
+          ctx.save();
+          if (!isOpen) {
+            ctx.fillStyle = ch === 'Y' ? 'rgba(234, 179, 8, 0.38)' : 'rgba(239, 68, 68, 0.38)';
+            ctx.strokeStyle = col;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(x + 4, y + 4, cellSize - 8, cellSize - 8, 7);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.strokeStyle = col;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x + 10, y + 10);
+            ctx.lineTo(x + cellSize - 10, y + cellSize - 10);
+            ctx.moveTo(x + cellSize - 10, y + 10);
+            ctx.lineTo(x + 10, y + cellSize - 10);
+            ctx.stroke();
+          } else {
+            ctx.strokeStyle = ch === 'Y' ? 'rgba(250, 204, 21, 0.45)' : 'rgba(248, 113, 113, 0.45)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+            ctx.strokeRect(x + 6, y + 6, cellSize - 12, cellSize - 12);
+            ctx.setLineDash([]);
+          }
+          ctx.restore();
+        }
 
         // Portalai A (mėlynas) ir B (violetinis)
         if (ch === 'A' || ch === 'B') {

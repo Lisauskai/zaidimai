@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261113i" />
+  <link rel="stylesheet" href="./style.css?v=20261113j" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -172,13 +172,13 @@
             🧩 Raštai ir atmintis (5)
           </button>
           <button id="tab-mode-algo" class="mode-tab-btn" type="button">
-            🧑‍💻 Algoritmų trasa (5)
+            🧑‍💻 Algoritmų trasa (10)
           </button>
           <button id="tab-mode-gears" class="mode-tab-btn" type="button">
             ⚙️ Krumpliaračiai (5)
           </button>
           <button id="tab-mode-gravity" class="mode-tab-btn" type="button">
-            🧊 Gravitacijos labirintas (5)
+            🧊 Gravitacijos labirintas (10)
           </button>
           <button id="tab-mode-mathcross" class="mode-tab-btn" type="button">
             🔢 Skaičių kryžiažodžiai (8)
@@ -422,13 +422,26 @@
 
           <div class="algo-program-panel">
             <div class="algo-queue-header">
-              <span class="algo-queue-title">PROGRAMOS EILĖ (spausk ant blokelio, kad pašalintum):</span>
+              <span id="algo-queue-title" class="algo-queue-title">PROGRAMOS EILĖ (spausk ant blokelio, kad pašalintum):</span>
               <span id="algo-loop-hint" class="algo-loop-hint hidden">👆 Spausk „🔁 2x / 3x“, kad pakeistum kartojimus</span>
             </div>
             <div id="algo-queue-slots" class="algo-queue-slots" aria-label="Programos komandų eilė"></div>
 
             <div class="algo-controls-footer">
               <div class="algo-cmd-palette" aria-label="Komandų mygtukai">
+                <button id="btn-algo-up" class="algo-cmd-btn cmd-dir-up hidden" data-algo-cmd="UP" type="button">
+                  ⬆️ Aukštyn
+                </button>
+                <button id="btn-algo-down" class="algo-cmd-btn cmd-dir-down hidden" data-algo-cmd="DOWN" type="button">
+                  ⬇️ Žemyn
+                </button>
+                <button id="btn-algo-left-dir" class="algo-cmd-btn cmd-dir-left hidden" data-algo-cmd="LEFT_DIR" type="button">
+                  ⬅️ Kairėn
+                </button>
+                <button id="btn-algo-right-dir" class="algo-cmd-btn cmd-dir-right hidden" data-algo-cmd="RIGHT_DIR" type="button">
+                  ➡️ Dešinėn
+                </button>
+
                 <button id="btn-algo-fwd" class="algo-cmd-btn cmd-fwd" data-algo-cmd="FWD" type="button">
                   ⬆️ Pirmyn
                 </button>
@@ -612,6 +625,6 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js?v=20261113i"></script>
+  <script type="module" src="./game.js?v=20261113j"></script>
 </body>
 </html>

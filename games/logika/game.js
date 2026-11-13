@@ -1,33 +1,33 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113i';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113i';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113i';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113i';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113j';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113j';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113j';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113j';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113i';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113i';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113i';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113i';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113i';
+} from './balance.js?v=20261113j';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113j';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113j';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113j';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113j';
 import {
   MathCrossEngine,
   MATHCROSS_LEVELS,
   MATHCROSS_CANVAS_W,
   MATHCROSS_CANVAS_H
-} from './mathcross.js?v=20261113i';
+} from './mathcross.js?v=20261113j';
 import {
   BridgesEngine,
   BRIDGES_LEVELS,
   BRIDGES_CANVAS_W,
   BRIDGES_CANVAS_H
-} from './bridges.js?v=20261113i';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113i';
+} from './bridges.js?v=20261113j';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113j';
 import {
   isSoundEnabled,
   toggleSound,
@@ -51,8 +51,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113i';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113i';
+} from './sound.js?v=20261113j';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113j';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -61,7 +61,7 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113i';
+} from './robot.js?v=20261113j';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -798,9 +798,14 @@ function markLevelSolved(level) {
   const feedbackEl = document.getElementById('puzzle-feedback');
   const alreadySolved = bucket.solvedLevels.includes(level.id);
 
-  // 1 klasė visada gauna 3 žvaigždutes; 3 klasė pagal optimalų ėjimų skaičių (3 arba 2)
-  const par = currentDifficulty === 'grade3' ? getParMoves(level.id) : null;
-  const earnedStars = currentDifficulty === 'grade1' || !par || currentMoves <= par ? 3 : 2;
+  // Gravitacijos labirintas abiejose klasėse vertina „Meistro tikslą“; kitur 1 kl. visada gauna 3 ⭐
+  const par =
+    level.masterMoves != null
+      ? level.masterMoves
+      : currentDifficulty === 'grade3'
+        ? getParMoves(level.id)
+        : null;
+  const earnedStars = !par || currentMoves <= par ? 3 : 2;
   const prevStars = bucket.levelStars[level.id] || 0;
   const improvedStars = earnedStars > prevStars;
   bucket.levelStars[level.id] = Math.max(prevStars, earnedStars);
@@ -815,8 +820,8 @@ function markLevelSolved(level) {
     renderLevelsStrip();
     renderWorldMap();
     feedbackEl.textContent =
-      currentDifficulty === 'grade3' && earnedStars === 2
-        ? `🎉 Lygis įveiktas! +${level.reward} 💎 • Įvertinimas: ${starsStr} (Norint ⭐⭐⭐, išspręsk per ≤ ${par} ėj.!)`
+      par && earnedStars === 2
+        ? `🎉 Lygis įveiktas! +${level.reward} 💎 • Įvertinimas: ${starsStr} (Meistro tikslui: ≤ ${par} ėj.!)`
         : `🎉 PUIKIAI! Lygis įveiktas! +${level.reward} 💎 • Įvertinimas: ${starsStr}!`;
   } else {
     saveLabProgress(progress);
@@ -824,7 +829,7 @@ function markLevelSolved(level) {
     renderWorldMap();
     if (improvedStars) {
       feedbackEl.textContent = `🌟 REKORDAS PAGERINTAS! ${starsStr} (${currentMoves} ėj.)!`;
-    } else if (currentDifficulty === 'grade3' && earnedStars === 2 && (bucket.levelStars[level.id] || 0) < 3) {
+    } else if (par && earnedStars === 2 && (bucket.levelStars[level.id] || 0) < 3) {
       feedbackEl.textContent = `✅ Lygis įveiktas! ${starsStr} (${currentMoves} ėj.) – peržaisk per ≤ ${par} ėj., kad gautum ⭐⭐⭐!`;
     } else {
       feedbackEl.textContent = `✅ Lygis įveiktas! Įvertinimas: ${starsStr}!`;
@@ -877,11 +882,11 @@ function showVictoryOverlay({ level, earnedStars, rewardEarned, improvedStars, p
   if (summaryEl) {
     const parts = [];
     if (rewardEarned > 0) parts.push(`Gavai +${rewardEarned} 💎 Proto kristalų`);
-    if (currentDifficulty === 'grade3' && par) {
+    if (par) {
       parts.push(
         earnedStars === 3
           ? `Puikus efektyvumas: ${currentMoves} / ${par} ėj.!`
-          : `Ėjimai: ${currentMoves} (norint ⭐⭐⭐ reikia ≤ ${par} ėj.)`
+          : `Ėjimai: ${currentMoves} (Meistro tikslas: ≤ ${par} ėj.)`
       );
     } else if (rewardEarned === 0) {
       parts.push('Puikiai pakartotas lygis!');
@@ -1970,9 +1975,32 @@ function startAlgoLevel(level, totalInMode) {
   const nextBtn = document.getElementById('btn-algo-next');
   const loopBtn = document.getElementById('btn-algo-loop');
   const actBtn = document.getElementById('btn-algo-act');
+  const fwdBtn = document.getElementById('btn-algo-fwd');
+  const leftBtn = document.getElementById('btn-algo-left');
+  const rightBtn = document.getElementById('btn-algo-right');
+  const upBtn = document.getElementById('btn-algo-up');
+  const downBtn = document.getElementById('btn-algo-down');
+  const leftDirBtn = document.getElementById('btn-algo-left-dir');
+  const rightDirBtn = document.getElementById('btn-algo-right-dir');
+  const queueTitleEl = document.getElementById('algo-queue-title');
 
-  if (loopBtn) loopBtn.classList.toggle('hidden', !level.allowLoop);
-  if (actBtn) actBtn.classList.remove('hidden');
+  const isAbs = level.controlMode === 'absolute';
+  if (upBtn) upBtn.classList.toggle('hidden', !isAbs);
+  if (downBtn) downBtn.classList.toggle('hidden', !isAbs);
+  if (leftDirBtn) leftDirBtn.classList.toggle('hidden', !isAbs);
+  if (rightDirBtn) rightDirBtn.classList.toggle('hidden', !isAbs);
+
+  if (fwdBtn) fwdBtn.classList.toggle('hidden', isAbs);
+  if (leftBtn) leftBtn.classList.toggle('hidden', isAbs);
+  if (rightBtn) rightBtn.classList.toggle('hidden', isAbs);
+  if (actBtn) actBtn.classList.toggle('hidden', isAbs || level.allowAct === false);
+  if (loopBtn) loopBtn.classList.toggle('hidden', isAbs || !level.allowLoop);
+
+  if (queueTitleEl) {
+    queueTitleEl.textContent = isAbs
+      ? 'PROGRAMOS EILĖ (spausk ×1..×4 ant blokelio, kad padaugintum žingsnius, arba × kad ištrintum):'
+      : 'PROGRAMOS EILĖ (spausk ant blokelio, kad pašalintum):';
+  }
 
   algoEngine = new AlgoEngine(algoCanvas, level, {
     onQueueChange: () => {
@@ -1982,7 +2010,9 @@ function startAlgoLevel(level, totalInMode) {
       syncAlgoButtonsState(isRunning);
     },
     onStepExecuted: (kind) => {
-      if (kind === 'jump' || kind === 'switch') {
+      if (kind === 'key') {
+        playBalanceBell();
+      } else if (kind === 'jump' || kind === 'switch') {
         playAlgoJump();
       } else {
         playRobotStep();
@@ -2061,17 +2091,49 @@ function renderAlgoQueue() {
 
     if (slot.type === 'cmd') {
       const meta = CMD_META[slot.cmd];
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `algo-slot filled-cmd ${meta.cls}${isSlotExecuting ? ' executing' : ''}`;
-      btn.title = `${meta.label} (spausk, kad pašalintum)`;
-      btn.innerHTML = `<span>${meta.short}</span><span>${meta.label}</span>`;
-      btn.addEventListener('click', () => {
-        if (algoEngine?.running || algoEngine?.won) return;
-        playTrackClick();
-        algoEngine.removeSlot(i);
-      });
-      slotsEl.appendChild(btn);
+      if (level.controlMode === 'absolute') {
+        const card = document.createElement('div');
+        card.className = `algo-abs-card${isSlotExecuting ? ' executing' : ''}`;
+
+        const stepBtn = document.createElement('button');
+        stepBtn.type = 'button';
+        stepBtn.className = 'algo-abs-step-btn';
+        stepBtn.title = 'Spausk, kad pasirinktum žingsnių skaičių (×1, ×2, ×3, ×4)';
+        stepBtn.innerHTML = `<span>${meta.short}</span><span class="algo-abs-mult">×${slot.count || 1}</span>`;
+        stepBtn.addEventListener('click', () => {
+          if (algoEngine?.running || algoEngine?.won) return;
+          playTrackClick();
+          recordPlayerMove();
+          algoEngine.cycleStepCount(i);
+        });
+        card.appendChild(stepBtn);
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'algo-loop-del';
+        delBtn.textContent = '×';
+        delBtn.title = 'Pašalinti blokelį';
+        delBtn.addEventListener('click', () => {
+          if (algoEngine?.running || algoEngine?.won) return;
+          playTrackClick();
+          algoEngine.removeSlot(i);
+        });
+        card.appendChild(delBtn);
+
+        slotsEl.appendChild(card);
+      } else {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `algo-slot filled-cmd ${meta.cls}${isSlotExecuting ? ' executing' : ''}`;
+        btn.title = `${meta.label} (spausk, kad pašalintum)`;
+        btn.innerHTML = `<span>${meta.short}</span><span>${meta.label}</span>`;
+        btn.addEventListener('click', () => {
+          if (algoEngine?.running || algoEngine?.won) return;
+          playTrackClick();
+          algoEngine.removeSlot(i);
+        });
+        slotsEl.appendChild(btn);
+      }
     } else if (slot.type === 'loop') {
       const card = document.createElement('div');
       card.className = `algo-loop-card${activeLoopIndex === i ? ' active-target' : ''}${isSlotExecuting ? ' executing' : ''}`;
@@ -2233,7 +2295,9 @@ function startGravityLevel(level, totalInMode) {
   const syncCounter = () => {
     if (!gravityEngine || !counterEl) return;
     const collected = gravityEngine.totalStars - gravityEngine.starsRemaining.size;
-    counterEl.textContent = `⭐ Žvaigždutės: ${collected} / ${gravityEngine.totalStars} • Slydimai: ${gravityEngine.moves}`;
+    const masterStr =
+      level.masterMoves != null ? ` • 🏆 Meistro tikslas: ≤ ${level.masterMoves}` : '';
+    counterEl.textContent = `⭐ Žvaigždutės: ${collected} / ${gravityEngine.totalStars} • Slydimai: ${gravityEngine.moves}${masterStr}`;
   };
 
   gravityEngine = new GravityMazeEngine(gravityCanvas, level, {
@@ -2250,6 +2314,13 @@ function startGravityLevel(level, totalInMode) {
     onIceBreak: () => {
       playIceBreak();
     },
+    onStickyStop: () => {
+      playTrackClick();
+    },
+    onSwitchOpen: () => {
+      playBalanceBell();
+      syncCounter();
+    },
     onPortal: () => {
       playPortalWarp();
     },
@@ -2263,6 +2334,8 @@ function startGravityLevel(level, totalInMode) {
       feedbackEl.textContent = '🌌 Rutulys išskriejo į kosmoso prarają! Pradedame iš naujo.';
       feedbackEl.className = 'puzzle-feedback error';
       feedbackEl.classList.remove('hidden');
+      currentMoves = 0;
+      updateMovesUI();
     },
     onMissingStars: (left) => {
       playWrongBuzz();
@@ -2273,6 +2346,8 @@ function startGravityLevel(level, totalInMode) {
     },
     onStateChange: syncCounter,
     onWin: () => {
+      currentMoves = gravityEngine.moves;
+      updateMovesUI();
       syncCounter();
       markLevelSolved(level);
       if (nextBtn && activeLevelIndex < totalInMode - 1) {
@@ -3119,6 +3194,10 @@ document.getElementById('btn-matrix-next')?.addEventListener('click', () => {
 
 // 7. Algoritmų trasa mygtukai
 [
+  ['btn-algo-up', 'UP'],
+  ['btn-algo-down', 'DOWN'],
+  ['btn-algo-left-dir', 'LEFT_DIR'],
+  ['btn-algo-right-dir', 'RIGHT_DIR'],
   ['btn-algo-fwd', 'FWD'],
   ['btn-algo-left', 'LEFT'],
   ['btn-algo-right', 'RIGHT'],

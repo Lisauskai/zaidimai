@@ -11,11 +11,22 @@ const DIRS = [
 
 const DIR_INDEX = { U: 0, R: 1, D: 2, L: 3 };
 
+const ABS_CMD_DIR = {
+  UP: 'U',
+  DOWN: 'D',
+  LEFT_DIR: 'L',
+  RIGHT_DIR: 'R'
+};
+
 export const CMD_META = {
   FWD: { label: 'Pirmyn', icon: '⬆️', short: '⬆️', cls: 'cmd-fwd' },
   LEFT: { label: 'Kairėn', icon: '↰', short: '↰', cls: 'cmd-left' },
   RIGHT: { label: 'Dešinėn', icon: '↱', short: '↱', cls: 'cmd-right' },
-  ACT: { label: 'Aktyvuoti / Šuolis', icon: '⚡', short: '⚡', cls: 'cmd-act' }
+  ACT: { label: 'Aktyvuoti / Šuolis', icon: '⚡', short: '⚡', cls: 'cmd-act' },
+  UP: { label: 'Aukštyn', icon: '⬆️', short: '⬆️', cls: 'cmd-dir-up' },
+  DOWN: { label: 'Žemyn', icon: '⬇️', short: '⬇️', cls: 'cmd-dir-down' },
+  LEFT_DIR: { label: 'Kairėn', icon: '⬅️', short: '⬅️', cls: 'cmd-dir-left' },
+  RIGHT_DIR: { label: 'Dešinėn', icon: '➡️', short: '➡️', cls: 'cmd-dir-right' }
 };
 
 function makeGrid(size, fill = 0) {
@@ -34,95 +45,229 @@ export const ALGO_LEVELS = {
   grade1: [
     {
       id: 'alg_g1_1',
-      title: '1. Raktas nuo durelių',
+      title: '1. Pirmieji žingsniai (×2, ×3)',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Užvažiuok ant ⚡ jungiklio, paspausk ⚡ Aktyvuoti ir tik tada eik pro atsidariusias 🔒 dureles iki 🔋 (7 komandos)!',
+      instruction: 'Sudėk kryptis! Paspausk ant pridėto blokelio eilėje, kad pasirinktum žingsnių skaičių (×1, ×2, ×3, ×4).',
       reward: 1,
       size: 5,
-      maxSlots: 8,
+      maxSlots: 3,
+      controlMode: 'absolute',
       allowLoop: false,
-      allowAct: true,
+      allowAct: false,
       start: { r: 3, c: 0, dir: 'R' },
-      finish: { r: 0, c: 2 },
-      switches: [{ r: 3, c: 2 }],
-      gates: [{ r: 2, c: 2 }],
+      finish: { r: 1, c: 3 },
+      keys: [],
+      switches: [],
+      gates: [],
+      bridges: [],
       grid: withTiles(5, 0, [
-        [2, 0, '#'], [2, 1, '#'], [2, 3, '#'], [2, 4, '#'],
-        [0, 0, '#'], [1, 0, '#'], [4, 4, '#']
+        [0, 0, '#'], [0, 1, '#'], [1, 0, '#'], [1, 1, '#'],
+        [2, 1, '#'], [2, 2, '#'], [4, 3, '#'], [4, 4, '#']
       ])
     },
     {
       id: 'alg_g1_2',
-      title: '2. Posūkis pro šliuzą',
+      title: '2. Pirmasis raktas',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Pravažiuok aukštyn iki ⚡, paspausk ⚡ Aktyvuoti, pasisuk dešinėn (↱) ir keliauk pro atidarytas dureles iki 🔋!',
-      reward: 2,
+      instruction: 'Robotas automatiškai paima 🔑 raktą užvažiavęs ant jo! Paimk raktą ir keliauk pro atidarytas dureles į 🔋.',
+      reward: 1,
       size: 5,
-      maxSlots: 8,
+      maxSlots: 3,
+      controlMode: 'absolute',
       allowLoop: false,
-      allowAct: true,
-      start: { r: 4, c: 1, dir: 'U' },
-      finish: { r: 2, c: 4 },
-      switches: [{ r: 2, c: 1 }],
-      gates: [{ r: 2, c: 2 }],
+      allowAct: false,
+      start: { r: 4, c: 1, dir: 'R' },
+      finish: { r: 1, c: 3 },
+      keys: [{ r: 4, c: 3 }],
+      switches: [],
+      gates: [{ r: 2, c: 3 }],
+      bridges: [],
       grid: withTiles(5, 0, [
-        [0, 2, '#'], [1, 2, '#'], [3, 2, '#'], [4, 2, '#'],
-        [0, 0, '#'], [4, 4, '#']
+        [0, 2, '#'], [0, 3, '#'], [0, 4, '#'],
+        [1, 2, '#'], [1, 4, '#'],
+        [2, 0, '#'], [2, 1, '#'], [2, 2, '#'], [2, 4, '#']
       ])
     },
     {
       id: 'alg_g1_3',
-      title: '3. Lazerių vartai',
+      title: '3. Šliuzas už sienos',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Pirma nuvažiuok įjungti ⚡ jungiklio, tada pasuk aukštyn per atsidariusias 🔒 dureles link baterijos!',
-      reward: 2,
+      instruction: 'Pirma pakilk į viršų paimti 🔑 rakto, tada keliauk per atsidariusias dureles link baterijos 🔋!',
+      reward: 1,
       size: 5,
-      maxSlots: 9,
+      maxSlots: 4,
+      controlMode: 'absolute',
       allowLoop: false,
-      allowAct: true,
-      start: { r: 4, c: 0, dir: 'R' },
-      finish: { r: 2, c: 3 },
-      switches: [{ r: 4, c: 2 }],
-      gates: [{ r: 2, c: 2 }],
+      allowAct: false,
+      start: { r: 4, c: 0, dir: 'U' },
+      finish: { r: 4, c: 3 },
+      keys: [{ r: 1, c: 0 }],
+      switches: [],
+      gates: [{ r: 2, c: 3 }],
+      bridges: [],
       grid: withTiles(5, 0, [
-        [3, 0, '#'], [3, 1, '#'], [1, 1, '#'], [1, 2, '#'], [1, 3, '#'], [3, 4, '#']
+        [2, 1, '#'], [2, 2, '#'], [2, 4, '#'],
+        [3, 1, '#'], [3, 2, '#'], [4, 2, '#'], [4, 4, '#']
       ])
     },
     {
       id: 'alg_g1_4',
-      title: '4. Koridorius aplink sienas',
+      title: '4. Ilgas koridorius (×4)',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Suplanuok 9 komandų programą: įjunk ⚡ kairėje, atverk šliuzą centre ir pasuk žemyn prie 🔋!',
+      instruction: 'Išnaudok ×4 kartojimą! Paimk 🔑 dešiniajame kampe ir grįžk pro centrinius vartus prie 🔋.',
       reward: 2,
       size: 5,
-      maxSlots: 9,
+      maxSlots: 4,
+      controlMode: 'absolute',
       allowLoop: false,
-      allowAct: true,
-      start: { r: 0, c: 0, dir: 'D' },
-      finish: { r: 3, c: 3 },
-      switches: [{ r: 2, c: 0 }],
+      allowAct: false,
+      start: { r: 0, c: 0, dir: 'R' },
+      finish: { r: 4, c: 2 },
+      keys: [{ r: 0, c: 4 }],
+      switches: [],
       gates: [{ r: 2, c: 2 }],
+      bridges: [],
       grid: withTiles(5, 0, [
-        [0, 1, '#'], [1, 1, '#'], [1, 2, '#'], [1, 3, '#'], [3, 1, '#'], [4, 2, '#']
+        [1, 0, '#'], [1, 1, '#'], [1, 2, '#'], [1, 3, '#'],
+        [2, 0, '#'], [2, 1, '#'],
+        [3, 0, '#'], [3, 1, '#'], [3, 3, '#'], [3, 4, '#']
       ])
     },
     {
       id: 'alg_g1_5',
-      title: '5. Slaptasis reaktorius',
+      title: '5. Slaptas požemis',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Robotas žiūri į kairę! Aktyvuok ⚡, eik tiesiai pro atsidariusias dureles ir paskutiniame žingsnyje pasuk į 🔋!',
-      reward: 3,
+      instruction: 'Turi tik 3 blokelius! Pakilk prie 🔑, tada ilgu šuoliu žemyn (×4) atidaryk dureles ir užbaik 🔋!',
+      reward: 2,
       size: 5,
-      maxSlots: 9,
+      maxSlots: 3,
+      controlMode: 'absolute',
       allowLoop: false,
-      allowAct: true,
-      start: { r: 4, c: 4, dir: 'L' },
-      finish: { r: 1, c: 1 },
-      switches: [{ r: 4, c: 2 }],
-      gates: [{ r: 1, c: 2 }],
+      allowAct: false,
+      start: { r: 2, c: 2, dir: 'U' },
+      finish: { r: 4, c: 4 },
+      keys: [{ r: 0, c: 2 }],
+      switches: [],
+      gates: [{ r: 3, c: 2 }],
+      bridges: [],
       grid: withTiles(5, 0, [
-        [0, 2, '#'], [1, 3, '#'], [2, 3, '#'], [3, 3, '#'],
-        [2, 1, '#'], [3, 1, '#'], [0, 0, '#']
+        [1, 1, '#'], [1, 3, '#'],
+        [2, 0, '#'], [2, 1, '#'], [2, 3, '#'], [2, 4, '#'],
+        [3, 1, '#'], [3, 3, '#']
+      ])
+    },
+    {
+      id: 'alg_g1_6',
+      title: '6. Du raktai į stotį',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
+      instruction: 'Durelės 🔒 atsidarys tik surinkus ABUDU raktus 🔑! Suplanuok kelią per 5 blokelius.',
+      reward: 2,
+      size: 6,
+      maxSlots: 5,
+      controlMode: 'absolute',
+      allowLoop: false,
+      allowAct: false,
+      start: { r: 5, c: 0, dir: 'U' },
+      finish: { r: 5, c: 5 },
+      keys: [{ r: 2, c: 0 }, { r: 2, c: 4 }],
+      switches: [],
+      gates: [{ r: 4, c: 4 }],
+      bridges: [],
+      grid: withTiles(6, 0, [
+        [3, 1, '#'], [3, 2, '#'], [3, 3, '#'],
+        [4, 1, '#'], [4, 2, '#'], [4, 3, '#'], [4, 5, '#'],
+        [5, 1, '#'], [0, 5, '#'], [1, 5, '#']
+      ])
+    },
+    {
+      id: 'alg_g1_7',
+      title: '7. Sūkurys aplink sieną',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
+      instruction: 'Apkeliauk visą kambarį ratu, surink 2 raktus 🔑 ir grįžk į vidinę salę prie baterijos!',
+      reward: 2,
+      size: 6,
+      maxSlots: 5,
+      controlMode: 'absolute',
+      allowLoop: false,
+      allowAct: false,
+      start: { r: 0, c: 1, dir: 'R' },
+      finish: { r: 2, c: 1 },
+      keys: [{ r: 0, c: 4 }, { r: 4, c: 4 }],
+      switches: [],
+      gates: [{ r: 3, c: 1 }],
+      bridges: [],
+      grid: withTiles(6, 0, [
+        [1, 0, '#'], [1, 1, '#'], [1, 2, '#'],
+        [2, 2, '#'], [3, 2, '#'], [3, 0, '#'],
+        [5, 0, '#'], [5, 5, '#'], [2, 5, '#']
+      ])
+    },
+    {
+      id: 'alg_g1_8',
+      title: '8. Raktų zigzagas',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
+      instruction: 'Surink pirmą 🔑, kilk laipteliais iki antro 🔑 ir leiskis per šliuzą žemyn!',
+      reward: 2,
+      size: 6,
+      maxSlots: 6,
+      controlMode: 'absolute',
+      allowLoop: false,
+      allowAct: false,
+      start: { r: 5, c: 0, dir: 'U' },
+      finish: { r: 5, c: 4 },
+      keys: [{ r: 3, c: 0 }, { r: 1, c: 5 }],
+      switches: [],
+      gates: [{ r: 3, c: 5 }],
+      bridges: [],
+      grid: withTiles(6, 0, [
+        [2, 0, '#'], [2, 1, '#'], [2, 2, '#'],
+        [3, 4, '#'], [4, 2, '#'], [4, 3, '#'], [4, 4, '#'],
+        [0, 0, '#'], [0, 1, '#'], [5, 1, '#']
+      ])
+    },
+    {
+      id: 'alg_g1_9',
+      title: '9. Trys kosminiai raktai',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
+      instruction: 'Trys raktai 🔑 užrakino kelią į finišą! Sudėliok 5 kryptis su teisingais skaičiais (×2, ×3, ×4).',
+      reward: 3,
+      size: 6,
+      maxSlots: 5,
+      controlMode: 'absolute',
+      allowLoop: false,
+      allowAct: false,
+      start: { r: 0, c: 5, dir: 'L' },
+      finish: { r: 5, c: 1 },
+      keys: [{ r: 0, c: 1 }, { r: 3, c: 1 }, { r: 3, c: 4 }],
+      switches: [],
+      gates: [{ r: 4, c: 4 }],
+      bridges: [],
+      grid: withTiles(6, 0, [
+        [1, 2, '#'], [1, 3, '#'], [1, 4, '#'], [1, 5, '#'],
+        [2, 2, '#'], [4, 0, '#'], [4, 1, '#'], [4, 2, '#'], [4, 3, '#'], [4, 5, '#']
+      ])
+    },
+    {
+      id: 'alg_g1_10',
+      title: '10. Didysis 1 klasės robotų labirintas',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
+      instruction: 'Surink visus 3 raktus 🔑 aplink laboratoriją ir pro šliuzą 🔒 pasiek bateriją viršuje!',
+      reward: 3,
+      size: 6,
+      maxSlots: 6,
+      controlMode: 'absolute',
+      allowLoop: false,
+      allowAct: false,
+      start: { r: 5, c: 2, dir: 'R' },
+      finish: { r: 0, c: 4 },
+      keys: [{ r: 5, c: 5 }, { r: 2, c: 5 }, { r: 2, c: 1 }],
+      switches: [],
+      gates: [{ r: 1, c: 2 }],
+      bridges: [],
+      grid: withTiles(6, 0, [
+        [1, 0, '#'], [1, 1, '#'], [1, 3, '#'], [1, 4, '#'], [1, 5, '#'],
+        [3, 1, '#'], [3, 2, '#'], [3, 3, '#'], [3, 4, '#'],
+        [4, 2, '#'], [4, 3, '#'], [0, 0, '#']
       ])
     }
   ],
@@ -135,11 +280,15 @@ export const ALGO_LEVELS = {
       reward: 2,
       size: 7,
       maxSlots: 4,
+      controlMode: 'relative',
       allowLoop: true,
       allowAct: true,
       start: { r: 5, c: 0, dir: 'R' },
       finish: { r: 1, c: 6 },
+      keys: [],
       switches: [],
+      gates: [],
+      bridges: [],
       grid: withTiles(7, '#', [
         [5, 0, 0], [5, 1, 1], [5, 2, 1], [5, 3, 2], [5, 4, 2], [5, 5, 3], [5, 6, 3],
         [4, 6, 3], [3, 6, 3], [2, 6, 3], [1, 6, 3]
@@ -153,15 +302,19 @@ export const ALGO_LEVELS = {
       reward: 2,
       size: 7,
       maxSlots: 4,
+      controlMode: 'relative',
       allowLoop: true,
       allowAct: true,
       start: { r: 5, c: 1, dir: 'U' },
       finish: { r: 2, c: 5 },
+      keys: [],
       switches: [
         { r: 4, c: 1 },
         { r: 3, c: 1 },
         { r: 2, c: 1 }
       ],
+      gates: [],
+      bridges: [],
       grid: withTiles(7, '#', [
         [5, 1, 0], [4, 1, 0], [3, 1, 0], [2, 1, 0],
         [2, 2, 1], [2, 3, 1], [2, 4, 2], [2, 5, 2]
@@ -175,11 +328,15 @@ export const ALGO_LEVELS = {
       reward: 2,
       size: 7,
       maxSlots: 5,
+      controlMode: 'relative',
       allowLoop: true,
       allowAct: true,
       start: { r: 5, c: 2, dir: 'R' },
       finish: { r: 1, c: 2 },
+      keys: [],
       switches: [],
+      gates: [],
+      bridges: [],
       grid: withTiles(7, '#', [
         [5, 2, 0], [5, 3, 0], [5, 4, 0], [5, 5, 0], [5, 6, 0],
         [4, 6, 1], [3, 6, 1], [2, 6, 2], [1, 6, 2],
@@ -191,18 +348,22 @@ export const ALGO_LEVELS = {
       title: '4. Šviesoforo bokštai',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 3 KL.',
       instruction: 'Įjunk 3 aukštai esančius ⚡ jungiklius, o tada drąsiai nušok žemyn link 🔋!',
-      reward: 3,
+      reward: 2,
       size: 7,
       maxSlots: 5,
+      controlMode: 'relative',
       allowLoop: true,
       allowAct: true,
       start: { r: 1, c: 1, dir: 'R' },
       finish: { r: 5, c: 3 },
+      keys: [],
       switches: [
         { r: 1, c: 2 },
         { r: 1, c: 3 },
         { r: 1, c: 4 }
       ],
+      gates: [],
+      bridges: [],
       grid: withTiles(7, '#', [
         [1, 1, 2], [1, 2, 2], [1, 3, 2], [1, 4, 2],
         [2, 4, 1], [3, 4, 1], [4, 4, 0], [5, 4, 0], [5, 3, 0]
@@ -210,24 +371,151 @@ export const ALGO_LEVELS = {
     },
     {
       id: 'alg_g3_5',
-      title: '5. Didysis algoritmo iššūkis',
+      title: '5. Kosminė pakyla',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 3 KL.',
       instruction: 'Tik 5 vietos 14 žingsnių programai: lipk aukštyn, įjunk ⚡ jungiklius ir nulipk prie 🔋!',
-      reward: 3,
+      reward: 2,
       size: 7,
       maxSlots: 5,
+      controlMode: 'relative',
       allowLoop: true,
       allowAct: true,
       start: { r: 5, c: 5, dir: 'L' },
       finish: { r: 3, c: 5 },
+      keys: [],
       switches: [
         { r: 4, c: 1 },
         { r: 3, c: 1 }
       ],
+      gates: [],
+      bridges: [],
       grid: withTiles(7, '#', [
         [5, 5, 0], [5, 4, 1], [5, 3, 1], [5, 2, 2], [5, 1, 2],
         [4, 1, 2], [3, 1, 2],
         [3, 2, 3], [3, 3, 3], [3, 4, 2], [3, 5, 2]
+      ])
+    },
+    {
+      id: 'alg_g3_6',
+      title: '6. Pirmasis energijos tiltas',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 3 KL.',
+      instruction: 'Priekyje praraja su išjungtu 🌉 tiltu! Paspausk ⚡ ant jungiklio, kad tiltas išsitiestų.',
+      reward: 2,
+      size: 6,
+      maxSlots: 5,
+      controlMode: 'relative',
+      allowLoop: true,
+      allowAct: true,
+      start: { r: 4, c: 1, dir: 'U' },
+      finish: { r: 2, c: 4 },
+      keys: [],
+      switches: [{ r: 2, c: 1 }],
+      gates: [],
+      bridges: [
+        { r: 2, c: 2, elev: 0 },
+        { r: 2, c: 3, elev: 0 }
+      ],
+      grid: withTiles(6, '#', [
+        [4, 1, 0], [3, 1, 0], [2, 1, 0],
+        [2, 4, 0]
+      ])
+    },
+    {
+      id: 'alg_g3_7',
+      title: '7. Pakylėtas tiltas',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 3 KL.',
+      instruction: 'Ištiestas 🌉 tiltas bus +1 aukštesnis! Įjunk ⚡ jungiklį, pasisuk ir užšok (⚡) ant tilto.',
+      reward: 2,
+      size: 7,
+      maxSlots: 5,
+      controlMode: 'relative',
+      allowLoop: true,
+      allowAct: true,
+      start: { r: 5, c: 1, dir: 'R' },
+      finish: { r: 2, c: 3 },
+      keys: [],
+      switches: [{ r: 5, c: 3 }],
+      gates: [],
+      bridges: [
+        { r: 4, c: 3, elev: 1 },
+        { r: 3, c: 3, elev: 1 }
+      ],
+      grid: withTiles(7, '#', [
+        [5, 1, 0], [5, 2, 0], [5, 3, 0],
+        [2, 3, 1]
+      ])
+    },
+    {
+      id: 'alg_g3_8',
+      title: '8. Dvigubo jungiklio tiltas',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 3 KL.',
+      instruction: 'Tiltas 🌉 pasirodys tik įjungus ABUDU ⚡ jungiklius! Pabaigoje užšok ant +1 pakylos prie 🔋.',
+      reward: 3,
+      size: 7,
+      maxSlots: 5,
+      controlMode: 'relative',
+      allowLoop: true,
+      allowAct: true,
+      start: { r: 5, c: 1, dir: 'U' },
+      finish: { r: 3, c: 5 },
+      keys: [],
+      switches: [{ r: 4, c: 1 }, { r: 3, c: 1 }],
+      gates: [],
+      bridges: [
+        { r: 3, c: 2, elev: 0 },
+        { r: 3, c: 3, elev: 0 },
+        { r: 3, c: 4, elev: 0 }
+      ],
+      grid: withTiles(7, '#', [
+        [5, 1, 0], [4, 1, 0], [3, 1, 0],
+        [3, 5, 1]
+      ])
+    },
+    {
+      id: 'alg_g3_9',
+      title: '9. Šuoliai, vartai ir tiltas',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 3 KL.',
+      instruction: 'Viena ⚡ komanda tiek šoka ant +1 pakylos, tiek įjungia jungiklį! Atverk 🔒 ir išskleisk 🌉.',
+      reward: 3,
+      size: 7,
+      maxSlots: 5,
+      controlMode: 'relative',
+      allowLoop: true,
+      allowAct: true,
+      start: { r: 1, c: 1, dir: 'R' },
+      finish: { r: 5, c: 5 },
+      keys: [],
+      switches: [{ r: 1, c: 3 }],
+      gates: [{ r: 3, c: 5 }],
+      bridges: [{ r: 4, c: 5, elev: 2 }],
+      grid: withTiles(7, '#', [
+        [1, 1, 0], [1, 2, 1], [1, 3, 2], [1, 4, 2], [1, 5, 2],
+        [2, 5, 2], [3, 5, 2], [5, 5, 2]
+      ])
+    },
+    {
+      id: 'alg_g3_10',
+      title: '10. Kosminės stoties finalas',
+      badge: '🧑‍💻 ALGORITMŲ TRASA • 3 KL.',
+      instruction: 'Tik 5 programos vietos! Užšok ir įjunk du ⚡ jungiklius, pervažiuok 🌉 tiltą bei 🔒 vartus ir nušok prie 🔋!',
+      reward: 3,
+      size: 7,
+      maxSlots: 5,
+      controlMode: 'relative',
+      allowLoop: true,
+      allowAct: true,
+      start: { r: 5, c: 1, dir: 'U' },
+      finish: { r: 4, c: 5 },
+      keys: [],
+      switches: [{ r: 4, c: 1 }, { r: 3, c: 1 }],
+      gates: [{ r: 3, c: 5 }],
+      bridges: [
+        { r: 3, c: 3, elev: 2 },
+        { r: 3, c: 4, elev: 2 }
+      ],
+      grid: withTiles(7, '#', [
+        [5, 1, 0], [4, 1, 1], [3, 1, 2],
+        [3, 2, 2], [3, 5, 2], [4, 5, 0]
       ])
     }
   ]
@@ -256,6 +544,7 @@ export class AlgoEngine {
       dir: level.start.dir
     };
     this.litSwitches = new Set();
+    this.collectedKeys = new Set();
 
     this.pulsePhase = 0;
     this.startAnimLoop();
@@ -288,6 +577,7 @@ export class AlgoEngine {
       dir: this.level.start.dir
     };
     this.litSwitches = new Set();
+    this.collectedKeys = new Set();
     this.execPointer = null;
     this.crashTile = null;
     this.running = false;
@@ -315,8 +605,9 @@ export class AlgoEngine {
     if (this.running || this.won) return false;
     if (!CMD_META[cmd]) return false;
 
-    // Jei šiuo metu pažymėtas nepilnas ciklas, dedame komandą į jo vidų (max 2)
-    if (this.activeLoopIndex !== null) {
+    const isAbsMode = this.level.controlMode === 'absolute';
+
+    if (!isAbsMode && this.activeLoopIndex !== null) {
       const loopSlot = this.slots[this.activeLoopIndex];
       if (loopSlot && loopSlot.type === 'loop' && loopSlot.body.length < 2) {
         loopSlot.body.push(cmd);
@@ -330,11 +621,25 @@ export class AlgoEngine {
     }
 
     if (this.slots.length >= this.level.maxSlots) {
-      this.callbacks.onError?.('Programos juosta pilna! Pašalink blokelį arba naudok 🔁 ciklą.');
+      this.callbacks.onError?.(
+        isAbsMode
+          ? 'Programos juosta pilna! Spausk ant blokelio eilėje, kad pakeistum ×1..×4 arba pašalintum.'
+          : 'Programos juosta pilna! Pašalink blokelį arba naudok 🔁 ciklą.'
+      );
       return false;
     }
 
-    this.slots.push({ type: 'cmd', cmd });
+    this.slots.push(isAbsMode ? { type: 'cmd', cmd, count: 1 } : { type: 'cmd', cmd });
+    this.callbacks.onQueueChange?.();
+    return true;
+  }
+
+  cycleStepCount(slotIdx) {
+    if (this.running || this.won) return false;
+    const s = this.slots[slotIdx];
+    if (!s || s.type !== 'cmd' || this.level.controlMode !== 'absolute') return false;
+    const cur = s.count || 1;
+    s.count = cur >= 4 ? 1 : cur + 1;
     this.callbacks.onQueueChange?.();
     return true;
   }
@@ -400,7 +705,10 @@ export class AlgoEngine {
     const steps = [];
     this.slots.forEach((slot, slotIdx) => {
       if (slot.type === 'cmd') {
-        steps.push({ cmd: slot.cmd, slotIdx, subIdx: -1 });
+        const reps = this.level.controlMode === 'absolute' ? Math.max(1, Math.min(4, slot.count || 1)) : 1;
+        for (let r = 0; r < reps; r++) {
+          steps.push({ cmd: slot.cmd, slotIdx, subIdx: -1 });
+        }
       } else if (slot.type === 'loop') {
         const reps = slot.count === 3 ? 3 : 2;
         for (let r = 0; r < reps; r++) {
@@ -413,26 +721,84 @@ export class AlgoEngine {
     return steps;
   }
 
+  areAllTriggersComplete() {
+    const reqSwitches = (this.level.switches || []).length;
+    const reqKeys = (this.level.keys || []).length;
+    return this.litSwitches.size >= reqSwitches && this.collectedKeys.size >= reqKeys;
+  }
+
+  getBridgeAt(r, c) {
+    return (this.level.bridges || []).find((b) => b.r === r && b.c === c) || null;
+  }
+
   getTileElevation(r, c) {
     if (r < 0 || r >= this.level.size || c < 0 || c >= this.level.size) return '#';
+    const bridge = this.getBridgeAt(r, c);
+    if (bridge) {
+      return this.areAllTriggersComplete() ? bridge.elev ?? 0 : '#BRIDGE_OFF#';
+    }
     return this.level.grid[r][c];
   }
 
   isGateClosedAt(r, c) {
     const hasGate = (this.level.gates || []).some((g) => g.r === r && g.c === c);
     if (!hasGate) return false;
-    return this.litSwitches.size < this.level.switches.length;
+    return !this.areAllTriggersComplete();
   }
 
-  isFinishReachedAndSwitchesLit() {
-    const atFinish =
-      this.robot.r === this.level.finish.r && this.robot.c === this.level.finish.c;
+  collectKeyIfPresent(r, c) {
+    const hasKey = (this.level.keys || []).some((k) => k.r === r && k.c === c);
+    if (!hasKey) return false;
+    const keyStr = `${r},${c}`;
+    if (!this.collectedKeys.has(keyStr)) {
+      this.collectedKeys.add(keyStr);
+      return true;
+    }
+    return false;
+  }
+
+  isFinishReachedAndAllLit() {
+    const atFinish = this.robot.r === this.level.finish.r && this.robot.c === this.level.finish.c;
     if (!atFinish) return false;
-    return this.litSwitches.size >= this.level.switches.length;
+    return this.areAllTriggersComplete();
   }
 
   executeSingleCommand(cmd) {
     const curElev = this.getTileElevation(this.robot.r, this.robot.c);
+
+    // 1 klasė: absoliučios kryptys (Aukštyn, Žemyn, Kairėn, Dešinėn)
+    if (ABS_CMD_DIR[cmd]) {
+      const targetDir = ABS_CMD_DIR[cmd];
+      this.robot.dir = targetDir;
+      const dirObj = DIRS[DIR_INDEX[targetDir]];
+      const nr = this.robot.r + dirObj.dr;
+      const nc = this.robot.c + dirObj.dc;
+      const targetElev = this.getTileElevation(nr, nc);
+
+      if (targetElev === '#BRIDGE_OFF#') {
+        this.crashTile = { r: nr, c: nc };
+        return {
+          ok: false,
+          reason: '🌉 Tiltas dar neišskleistas! Pirma paimk visus 🔑 raktus arba įjunk ⚡.'
+        };
+      }
+      if (targetElev === '#') {
+        this.crashTile = { r: nr, c: nc };
+        return { ok: false, reason: '💥 Robotas atsitrenkė į sieną! Grįžtame į startą.' };
+      }
+      if (this.isGateClosedAt(nr, nc)) {
+        this.crashTile = { r: nr, c: nc };
+        return {
+          ok: false,
+          reason: '🔒 Durelės užrakintos! Pirma surink visus 🔑 raktus.'
+        };
+      }
+      this.robot.r = nr;
+      this.robot.c = nc;
+      const pickedKey = this.collectKeyIfPresent(nr, nc);
+      return { ok: true, kind: pickedKey ? 'key' : 'move' };
+    }
+
     const dirObj = DIRS[DIR_INDEX[this.robot.dir]];
 
     if (cmd === 'LEFT') {
@@ -449,6 +815,13 @@ export class AlgoEngine {
       const nr = this.robot.r + dirObj.dr;
       const nc = this.robot.c + dirObj.dc;
       const targetElev = this.getTileElevation(nr, nc);
+      if (targetElev === '#BRIDGE_OFF#') {
+        this.crashTile = { r: nr, c: nc };
+        return {
+          ok: false,
+          reason: '🌉 Tiltas išjungtas! Pirma užvažiuok ant ⚡ jungiklio ir paspausk ⚡ Aktyvuoti.'
+        };
+      }
       if (targetElev === '#') {
         this.crashTile = { r: nr, c: nc };
         return { ok: false, reason: '💥 Robotas atsitrenkė į sieną arba nukrito! Grįžtame į startą.' };
@@ -457,7 +830,7 @@ export class AlgoEngine {
         this.crashTile = { r: nr, c: nc };
         return {
           ok: false,
-          reason: '🔒 Durelės uždarytos! Pirma užvažiuok ant ⚡ jungiklio ir paspausk ⚡ Aktyvuoti.'
+          reason: '🔒 Durelės uždarytos! Pirma įjunk ⚡ jungiklį.'
         };
       }
       if (targetElev !== curElev) {
@@ -472,12 +845,13 @@ export class AlgoEngine {
       }
       this.robot.r = nr;
       this.robot.c = nc;
-      return { ok: true, kind: 'move' };
+      const pickedKey = this.collectKeyIfPresent(nr, nc);
+      return { ok: true, kind: pickedKey ? 'key' : 'move' };
     }
 
     if (cmd === 'ACT') {
       const swKey = `${this.robot.r},${this.robot.c}`;
-      const isSwitchTile = this.level.switches.some(
+      const isSwitchTile = (this.level.switches || []).some(
         (sw) => sw.r === this.robot.r && sw.c === this.robot.c
       );
       if (isSwitchTile && !this.litSwitches.has(swKey)) {
@@ -488,6 +862,13 @@ export class AlgoEngine {
       const nr = this.robot.r + dirObj.dr;
       const nc = this.robot.c + dirObj.dc;
       const targetElev = this.getTileElevation(nr, nc);
+      if (targetElev === '#BRIDGE_OFF#') {
+        this.crashTile = { r: nr, c: nc };
+        return {
+          ok: false,
+          reason: '🌉 Tiltas išjungtas! Pirma aktyvuok visus ⚡ jungiklius.'
+        };
+      }
       if (targetElev === '#') {
         this.crashTile = { r: nr, c: nc };
         return { ok: false, reason: '💥 Šuolis į tuštumą! Robotas grįžta į startą.' };
@@ -502,7 +883,8 @@ export class AlgoEngine {
       if (targetElev === curElev + 1 || targetElev < curElev) {
         this.robot.r = nr;
         this.robot.c = nc;
-        return { ok: true, kind: 'jump' };
+        const pickedKey = this.collectKeyIfPresent(nr, nc);
+        return { ok: true, kind: pickedKey ? 'key' : 'jump' };
       }
 
       this.crashTile = { r: this.robot.r, c: this.robot.c };
@@ -538,11 +920,14 @@ export class AlgoEngine {
         this.callbacks.onRunStateChange?.(false);
         this.callbacks.onQueueChange?.();
 
-        const missingSwitches = this.level.switches.length - this.litSwitches.size;
+        const missingSwitches = (this.level.switches || []).length - this.litSwitches.size;
+        const missingKeys = (this.level.keys || []).length - this.collectedKeys.size;
         const msg =
-          missingSwitches > 0
-            ? `⚡ Liko neįjungtų jungiklių (${missingSwitches})! Grąžiname robotą į startą.`
-            : '🔋 Programa baigėsi nepasiekus baterijos! Pakeisk komandas ir bandyk dar kartą.';
+          missingKeys > 0
+            ? `🔑 Liko nesurinktų raktų (${missingKeys})! Grąžiname robotą į startą.`
+            : missingSwitches > 0
+              ? `⚡ Liko neįjungtų jungiklių (${missingSwitches})! Grąžiname robotą į startą.`
+              : '🔋 Programa baigėsi nepasiekus baterijos! Pakeisk komandas ir bandyk dar kartą.';
         this.callbacks.onFailRun?.(msg);
         this.resetTimer = setTimeout(() => {
           this.resetRobotToStart();
@@ -570,7 +955,7 @@ export class AlgoEngine {
 
       this.callbacks.onStepExecuted?.(res.kind);
 
-      if (this.isFinishReachedAndSwitchesLit()) {
+      if (this.isFinishReachedAndAllLit()) {
         this.won = true;
         this.running = false;
         this.execPointer = null;
@@ -582,10 +967,10 @@ export class AlgoEngine {
       }
 
       stepIdx += 1;
-      this.stepTimer = setTimeout(runNext, 500);
+      this.stepTimer = setTimeout(runNext, 440);
     };
 
-    this.stepTimer = setTimeout(runNext, 240);
+    this.stepTimer = setTimeout(runNext, 220);
   }
 
   startAnimLoop() {
@@ -622,21 +1007,46 @@ export class AlgoEngine {
     const startX = Math.floor((W - boardW) / 2);
     const startY = Math.floor((H - boardH) / 2) + 8;
 
+    const bridgesUnlocked = this.areAllTriggersComplete();
+
     for (let r = 0; r < n; r++) {
       for (let c = 0; c < n; c++) {
+        const bridge = this.getBridgeAt(r, c);
         const val = this.level.grid[r][c];
         const x = startX + c * cellSize;
         const y = startY + r * cellSize;
 
-        if (val === '#') {
-          // Tuštuma / blokinė siena
+        // Neišskleistas energijos tiltas virš prarajos
+        if (bridge && !bridgesUnlocked) {
+          const glow = 0.45 + 0.25 * Math.sin(this.pulsePhase * 1.5);
+          ctx.fillStyle = '#091326';
+          ctx.fillRect(x + 3, y + 3, cellSize - 6, cellSize - 6);
+          ctx.save();
+          ctx.strokeStyle = `rgba(34, 211, 238, ${glow})`;
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          ctx.roundRect(x + 5, y + 5, cellSize - 10, cellSize - 10, 7);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(103, 232, 249, 0.72)';
+          ctx.font = `${Math.floor(cellSize * 0.34)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🌉', x + cellSize / 2, y + cellSize / 2 - 4);
+          ctx.font = `900 ${Math.max(9, Math.floor(cellSize * 0.16))}px Nunito, sans-serif`;
+          ctx.fillText(bridge.elev ? `TILTAS +${bridge.elev}` : 'TILTAS', x + cellSize / 2, y + cellSize - 10);
+          ctx.restore();
+          continue;
+        }
+
+        if (!bridge && val === '#') {
           ctx.fillStyle = '#0f172a';
           ctx.fillRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
           ctx.strokeStyle = '#1e293b';
           ctx.lineWidth = 2;
           ctx.strokeRect(x + 2, y + 2, cellSize - 4, cellSize - 4);
 
-          // Subtilus pavojaus kryžius / siena
           ctx.strokeStyle = 'rgba(71, 85, 105, 0.4)';
           ctx.lineWidth = 2;
           ctx.beginPath();
@@ -648,30 +1058,39 @@ export class AlgoEngine {
           continue;
         }
 
-        const elev = Number(val) || 0;
+        const elev = bridge ? Number(bridge.elev) || 0 : Number(val) || 0;
         const lift = elev * 7;
         const tileTopY = y - lift;
 
-        // Šoninis pakylos šonas (2.5D efektas)
         if (lift > 0) {
-          ctx.fillStyle = elev === 1 ? '#1d4ed8' : elev === 2 ? '#6d28d9' : '#be185d';
+          ctx.fillStyle = bridge ? '#0e7490' : elev === 1 ? '#1d4ed8' : elev === 2 ? '#6d28d9' : '#be185d';
           ctx.fillRect(x + 3, tileTopY + cellSize - 6, cellSize - 6, lift + 4);
         }
 
-        // Viršutinė langelio plokštė pagal aukštį
         const elevColors = ['#334155', '#3b82f6', '#8b5cf6', '#ec4899'];
-        ctx.fillStyle = elevColors[Math.min(elev, elevColors.length - 1)];
+        ctx.fillStyle = bridge ? '#0284c7' : elevColors[Math.min(elev, elevColors.length - 1)];
         ctx.beginPath();
         ctx.roundRect(x + 3, tileTopY + 3, cellSize - 6, cellSize - 6, 8);
         ctx.fill();
 
-        ctx.strokeStyle = 'rgba(248, 250, 252, 0.28)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        if (bridge) {
+          ctx.save();
+          ctx.strokeStyle = '#5eead4';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+          // Šviečiančios tilto juostos
+          ctx.fillStyle = 'rgba(153, 246, 228, 0.35)';
+          ctx.fillRect(x + 8, tileTopY + cellSize * 0.36, cellSize - 16, 4);
+          ctx.fillRect(x + 8, tileTopY + cellSize * 0.58, cellSize - 16, 4);
+          ctx.restore();
+        } else {
+          ctx.strokeStyle = 'rgba(248, 250, 252, 0.28)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
 
-        // Aukščio skaičiukas kampelyje, kai yra pakylos (>0 arba lygis turi elev > 0)
         if (elev > 0) {
-          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.fillStyle = 'rgba(255,255,255,0.88)';
           ctx.font = `900 ${Math.max(10, Math.floor(cellSize * 0.22))}px Nunito, sans-serif`;
           ctx.textAlign = 'left';
           ctx.textBaseline = 'top';
@@ -685,10 +1104,29 @@ export class AlgoEngine {
           ctx.strokeRect(x + 7, tileTopY + 7, cellSize - 14, cellSize - 14);
         }
 
+        // Raktas 🔑 (1 klasės trasose)
+        const isKey = (this.level.keys || []).some((k) => k.r === r && k.c === c);
+        if (isKey && !this.collectedKeys.has(`${r},${c}`)) {
+          const glow = 0.75 + 0.25 * Math.sin(this.pulsePhase * 1.6);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(x + cellSize / 2, tileTopY + cellSize / 2, cellSize * 0.3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(250, 204, 21, ${0.26 * glow})`;
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = '#fde047';
+          ctx.stroke();
+          ctx.font = `${Math.floor(cellSize * 0.42)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('🔑', x + cellSize / 2, tileTopY + cellSize / 2 + 1);
+          ctx.restore();
+        }
+
         // Uždarytos / atidarytos durelės 🔒
         const isGate = (this.level.gates || []).some((g) => g.r === r && g.c === c);
         if (isGate) {
-          const isClosed = this.litSwitches.size < this.level.switches.length;
+          const isClosed = !bridgesUnlocked;
           ctx.save();
           if (isClosed) {
             ctx.fillStyle = 'rgba(220, 38, 38, 0.28)';
@@ -699,7 +1137,6 @@ export class AlgoEngine {
             ctx.lineWidth = 3;
             ctx.stroke();
 
-            // Apsauginiai virbai
             ctx.strokeStyle = 'rgba(251, 146, 60, 0.85)';
             ctx.lineWidth = 3;
             for (let b = 1; b <= 3; b++) {
@@ -731,7 +1168,7 @@ export class AlgoEngine {
         }
 
         // Šviečiantis jungiklis ⚡
-        const isSwitch = this.level.switches.some((sw) => sw.r === r && sw.c === c);
+        const isSwitch = (this.level.switches || []).some((sw) => sw.r === r && sw.c === c);
         if (isSwitch) {
           const isLit = this.litSwitches.has(`${r},${c}`);
           const glow = 0.7 + 0.3 * Math.sin(this.pulsePhase * 1.4);
@@ -754,7 +1191,7 @@ export class AlgoEngine {
 
         // Finišo energijos baterija 🔋
         if (r === this.level.finish.r && c === this.level.finish.c) {
-          const ready = this.litSwitches.size >= this.level.switches.length;
+          const ready = bridgesUnlocked;
           const pulse = 1 + 0.08 * Math.sin(this.pulsePhase * 2);
           ctx.save();
           ctx.translate(x + cellSize / 2, tileTopY + cellSize / 2);
@@ -781,7 +1218,6 @@ export class AlgoEngine {
       }
     }
 
-    // Avarijos blyksnis jei atsitrenkė
     if (this.crashTile) {
       const cx = startX + this.crashTile.c * cellSize + cellSize / 2;
       const cy = startY + this.crashTile.r * cellSize + cellSize / 2;
@@ -793,9 +1229,8 @@ export class AlgoEngine {
       ctx.restore();
     }
 
-    // ROBOTAS SU AIŠKIU PRIEKIU IR AKIMIS
     const rElevRaw = this.getTileElevation(this.robot.r, this.robot.c);
-    const rElev = rElevRaw === '#' ? 0 : Number(rElevRaw) || 0;
+    const rElev = typeof rElevRaw === 'string' ? 0 : Number(rElevRaw) || 0;
     const rx = startX + this.robot.c * cellSize + cellSize / 2;
     const ry = startY + this.robot.r * cellSize + cellSize / 2 - rElev * 7;
 
@@ -810,7 +1245,6 @@ export class AlgoEngine {
     ctx.save();
     ctx.translate(cx, cy);
 
-    // Šešėlis po robotu
     ctx.fillStyle = 'rgba(2, 6, 23, 0.55)';
     ctx.beginPath();
     ctx.ellipse(0, bodyR * 0.65, bodyR * 0.9, bodyR * 0.45, 0, 0, Math.PI * 2);
@@ -818,7 +1252,6 @@ export class AlgoEngine {
 
     ctx.rotate(angle);
 
-    // Kūnas (žiūri į +X po transformacijos)
     ctx.fillStyle = this.won ? '#4ade80' : '#38bdf8';
     ctx.strokeStyle = '#020617';
     ctx.lineWidth = 3;
@@ -827,7 +1260,6 @@ export class AlgoEngine {
     ctx.fill();
     ctx.stroke();
 
-    // Priekio krypties rodyklė / antena priekyje (+X)
     ctx.fillStyle = '#facc15';
     ctx.beginPath();
     ctx.moveTo(bodyR * 1.18, 0);
@@ -839,7 +1271,6 @@ export class AlgoEngine {
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Tamsus ekranas + dvi ryškios akys priekyje
     ctx.fillStyle = '#0f172a';
     ctx.beginPath();
     ctx.roundRect(0, -bodyR * 0.62, bodyR * 0.72, bodyR * 1.24, 5);
@@ -851,7 +1282,6 @@ export class AlgoEngine {
     ctx.arc(bodyR * 0.38, bodyR * 0.28, bodyR * 0.16, 0, Math.PI * 2);
     ctx.fill();
 
-    // Vyzdžiai
     ctx.fillStyle = '#020617';
     ctx.beginPath();
     ctx.arc(bodyR * 0.44, -bodyR * 0.28, bodyR * 0.06, 0, Math.PI * 2);

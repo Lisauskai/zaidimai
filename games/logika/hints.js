@@ -52,6 +52,11 @@ export const OPTIMAL_PAR_MOVES = {
   alg_g3_3: 14,
   alg_g3_4: 13,
   alg_g3_5: 14,
+  alg_g3_6: 12,
+  alg_g3_7: 12,
+  alg_g3_8: 12,
+  alg_g3_9: 13,
+  alg_g3_10: 14,
 
   // 8. Krumpliaračių variklis
   gea_g3_1: 4,
@@ -66,6 +71,11 @@ export const OPTIMAL_PAR_MOVES = {
   grv_g3_3: 5,
   grv_g3_4: 4,
   grv_g3_5: 5,
+  grv_g3_6: 5,
+  grv_g3_7: 6,
+  grv_g3_8: 5,
+  grv_g3_9: 4,
+  grv_g3_10: 7,
 
   // 10. Skaičių kryžiažodžiai ir magiškieji kvadratai
   mc_g3_1: 5,
@@ -544,22 +554,40 @@ export function computeFirstHint(mode, level, context = {}) {
 
   if (mode === 'algo') {
     const firstCmdMap = {
-      alg_g1_1: 'FWD',
-      alg_g1_2: 'FWD',
-      alg_g1_3: 'FWD',
-      alg_g1_4: 'FWD',
-      alg_g1_5: 'FWD',
+      alg_g1_1: 'RIGHT_DIR',
+      alg_g1_2: 'RIGHT_DIR',
+      alg_g1_3: 'UP',
+      alg_g1_4: 'RIGHT_DIR',
+      alg_g1_5: 'UP',
+      alg_g1_6: 'UP',
+      alg_g1_7: 'RIGHT_DIR',
+      alg_g1_8: 'UP',
+      alg_g1_9: 'LEFT_DIR',
+      alg_g1_10: 'RIGHT_DIR',
       alg_g3_1: 'LOOP',
       alg_g3_2: 'LOOP',
       alg_g3_3: 'LOOP',
       alg_g3_4: 'LOOP',
-      alg_g3_5: 'LOOP'
+      alg_g3_5: 'LOOP',
+      alg_g3_6: 'LOOP',
+      alg_g3_7: 'LOOP',
+      alg_g3_8: 'LOOP',
+      alg_g3_9: 'LOOP',
+      alg_g3_10: 'LOOP'
     };
-    const firstCmd = firstCmdMap[level.id] || 'FWD';
+    const firstCmd = firstCmdMap[level.id] || (level.controlMode === 'absolute' ? 'RIGHT_DIR' : 'FWD');
+    const cmdNames = {
+      UP: '⬆️ Aukštyn',
+      DOWN: '⬇️ Žemyn',
+      LEFT_DIR: '⬅️ Kairėn',
+      RIGHT_DIR: '➡️ Dešinėn',
+      FWD: '⬆️ Pirmyn',
+      LOOP: '🔁 Kartoti'
+    };
     const desc =
       firstCmd === 'LOOP'
         ? '💡 Pirmas žingsnis: pridėk ciklo blokelį „🔁 Kartoti“, kad sutalpintum kelią!'
-        : '💡 Pirmas žingsnis: paspausk paryškintą pirmąją komandą „⬆️ Pirmyn“!';
+        : `💡 Pirmas žingsnis: paspausk paryškintą kryptį „${cmdNames[firstCmd] || firstCmd}“ (ir spausk ant blokelio eilėje, jei reikia ×2..×4)!`;
     return {
       mode,
       kind: 'algo-cmd',
@@ -604,11 +632,21 @@ export function computeFirstHint(mode, level, context = {}) {
       grv_g1_3: 'R',
       grv_g1_4: 'L',
       grv_g1_5: 'U',
+      grv_g1_6: 'R',
+      grv_g1_7: 'R',
+      grv_g1_8: 'D',
+      grv_g1_9: 'D',
+      grv_g1_10: 'R',
       grv_g3_1: 'R',
       grv_g3_2: 'R',
       grv_g3_3: 'D',
       grv_g3_4: 'R',
-      grv_g3_5: 'R'
+      grv_g3_5: 'R',
+      grv_g3_6: 'R',
+      grv_g3_7: 'R',
+      grv_g3_8: 'R',
+      grv_g3_9: 'R',
+      grv_g3_10: 'R'
     };
     const dirNames = { U: '▲ AUKŠTYN', D: '▼ ŽEMYN', L: '◄ KAIRĖN', R: '► DEŠINĖN' };
     const dir = firstDirs[level.id] || 'R';
