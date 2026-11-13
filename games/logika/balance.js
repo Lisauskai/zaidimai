@@ -165,6 +165,48 @@ export const BALANCE_LEVELS = {
         { uid: 'w4', value: 4, label: '4' },
         { uid: 'w5', value: 5, label: '5' }
       ]
+    },
+    {
+      id: 'bal_g1_9',
+      title: '9. Varžtas ir robotukas',
+      instruction: 'Naudok dvi užuominas: rask 🔩, tada 🤖, ir surink lygiai 13!',
+      reward: 3,
+      maxHearts: 4,
+      weights: { bolt: 4, robot: 6 },
+      clues: [
+        { left: [{ kind: 'bolt', count: 1 }], right: [{ weight: 4 }] },
+        { left: [{ kind: 'robot', count: 1 }], right: [{ kind: 'bolt', count: 1 }, { weight: 2 }] }
+      ],
+      leftPan: [{ kind: 'robot', count: 1 }, { kind: 'bolt', count: 1 }, { weight: 3 }],
+      inventory: [
+        { uid: 'w1', value: 1, label: '1' },
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 4, label: '4' },
+        { uid: 'w5', value: 5, label: '5' },
+        { uid: 'w6', value: 6, label: '6' }
+      ]
+    },
+    {
+      id: 'bal_g1_10',
+      title: '10. Didysis raketų startas',
+      instruction: '1 klasės finalas! Iš užuominų sužinok 💎 ir 🚀 svorius ir atsverk 16!',
+      reward: 3,
+      maxHearts: 4,
+      weights: { crystal: 5, rocket: 7 },
+      clues: [
+        { left: [{ kind: 'crystal', count: 1 }], right: [{ weight: 5 }] },
+        { left: [{ kind: 'rocket', count: 1 }], right: [{ kind: 'crystal', count: 1 }, { weight: 2 }] }
+      ],
+      leftPan: [{ kind: 'rocket', count: 2 }, { weight: 2 }],
+      inventory: [
+        { uid: 'w1', value: 1, label: '1' },
+        { uid: 'w2', value: 2, label: '2' },
+        { uid: 'w3', value: 3, label: '3' },
+        { uid: 'w4', value: 4, label: '4' },
+        { uid: 'w5', value: 5, label: '5' },
+        { uid: 'w6', value: 6, label: '6' }
+      ]
     }
   ],
 
@@ -324,6 +366,46 @@ export const BALANCE_LEVELS = {
         { uid: 'w3', value: 13, label: '13' },
         { uid: 'w4', value: 18, label: '18' },
         { uid: 'w5', value: 21, label: '21' }
+      ]
+    },
+    {
+      id: 'bal_g3_9',
+      title: '9. Trijų robotukų lygtis',
+      instruction: 'Iš 3×🔩 apskaičiuok varžtą, tada surask 🤖 ir atsverk visas tris figūras!',
+      reward: 3,
+      maxHearts: 3,
+      weights: { bolt: 9, robot: 17 },
+      clues: [
+        { left: [{ kind: 'bolt', mult: 3 }], right: [{ weight: 27 }] },
+        { left: [{ kind: 'robot', count: 1 }, { weight: 5 }], right: [{ kind: 'bolt', mult: 2 }, { weight: 4 }] }
+      ],
+      leftPan: [{ kind: 'robot', mult: 3 }, { kind: 'bolt', count: 1 }, { weight: 4 }],
+      inventory: [
+        { uid: 'w1', value: 32, mult: 4, unit: 8, label: '4 × 8' },
+        { uid: 'w2', value: 18, mult: 3, unit: 6, label: '3 × 6' },
+        { uid: 'w3', value: 14, label: '14' },
+        { uid: 'w4', value: 11, label: '11' },
+        { uid: 'w5', value: 9, label: '9' }
+      ]
+    },
+    {
+      id: 'bal_g3_10',
+      title: '10. Kosminės stoties finalas',
+      instruction: '3 klasės finalas! Iš 4×💎 ir bendros sumos 47 rask 🚀 bei atsverk 130!',
+      reward: 3,
+      maxHearts: 3,
+      weights: { crystal: 15, rocket: 32 },
+      clues: [
+        { left: [{ kind: 'crystal', mult: 4 }], right: [{ weight: 60 }] },
+        { left: [{ kind: 'rocket', count: 1 }, { kind: 'crystal', count: 1 }], right: [{ weight: 47 }] }
+      ],
+      leftPan: [{ kind: 'rocket', mult: 3 }, { kind: 'crystal', mult: 2 }, { weight: 4 }],
+      inventory: [
+        { uid: 'w1', value: 70, mult: 7, unit: 10, label: '7 × 10' },
+        { uid: 'w2', value: 36, mult: 4, unit: 9, label: '4 × 9' },
+        { uid: 'w3', value: 24, label: '24' },
+        { uid: 'w4', value: 19, label: '19' },
+        { uid: 'w5', value: 15, label: '15' }
       ]
     }
   ]

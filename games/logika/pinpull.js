@@ -107,7 +107,7 @@ export const PINPULL_LEVELS = {
         { x1: 315, y1: 25, x2: 315, y2: 88 },
         // Latakas nuo žaliųjų link lavos tilto
         { x1: 76, y1: 120, x2: 186, y2: 222 },
-        { x1: 186, y1: 205, x2: 186, y2: 254 },
+        { x1: 186, y1: 222, x2: 186, y2: 254 },
         // Piltuvėlis į tikslo kolbą (su išpylimo lūpa dešinėje jei #3 uždarytas)
         { x1: 346, y1: 280, x2: 372, y2: 310 },
         { x1: 495, y1: 286, x2: 495, y2: 308 },
@@ -176,8 +176,8 @@ export const PINPULL_LEVELS = {
         { x1: 218, y1: 24, x2: 218, y2: 80 },
         { x1: 312, y1: 24, x2: 312, y2: 80 },
         // Latakas nuo #3 ant lavos tilto
-        { x1: 68, y1: 186, x2: 192, y2: 232 },
-        { x1: 186, y1: 205, x2: 186, y2: 254 },
+        { x1: 68, y1: 186, x2: 186, y2: 232 },
+        { x1: 186, y1: 232, x2: 186, y2: 254 },
         // Piltuvėlis į kolbą (išpylimas dešinėje jei #4 uždarytas)
         { x1: 350, y1: 280, x2: 376, y2: 308 },
         { x1: 500, y1: 286, x2: 500, y2: 308 },
@@ -195,6 +195,161 @@ export const PINPULL_LEVELS = {
       makeBalls: () => [
         ...spawnBalls(265, 42, 2, 4, 'water', COLORS.water),
         ...spawnBalls(125, 40, 3, 6, 'colored', COLORS.purple)
+      ]
+    },
+    {
+      id: 'pp_g1_6',
+      title: '6. Spalvotas dažymas',
+      instruction: 'Kaiščiai: 3. Pirma sumaišyk žydrus (#1) ir pilkus (#2) maišytuve, tik tada atidaryk kolbą (#3)!',
+      reward: 2,
+      requiredGoal: 6,
+      walls: [
+        { x1: 195, y1: 28, x2: 195, y2: 105 },
+        { x1: 295, y1: 28, x2: 295, y2: 105 },
+        { x1: 345, y1: 28, x2: 345, y2: 105 },
+        { x1: 445, y1: 28, x2: 445, y2: 105 },
+        { x1: 195, y1: 122, x2: 266, y2: 222 },
+        { x1: 445, y1: 122, x2: 374, y2: 222 },
+        { x1: 266, y1: 235, x2: 266, y2: 345 },
+        { x1: 374, y1: 235, x2: 374, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Žydri)', x1: 190, y1: 109, x2: 300, y2: 109, dirX: -1, dirY: 0 },
+        { id: 'p2', label: '#2 (Pilki)', x1: 340, y1: 109, x2: 450, y2: 109, dirX: 1, dirY: 0 },
+        { id: 'p3', label: '#3 (Kolba)', x1: 262, y1: 226, x2: 378, y2: 226, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 260, y: 345, w: 120, h: 92 },
+      trap: null,
+      makeBalls: () => [
+        ...spawnBalls(245, 48, 2, 3, 'colored', COLORS.cyan),
+        ...spawnBalls(395, 48, 2, 3, 'gray', COLORS.gray)
+      ]
+    },
+    {
+      id: 'pp_g1_7',
+      title: '7. Vandens kelias per lavą',
+      instruction: 'Kaiščiai: 3. Atšaldyk lavą (#1), atidaryk kolbą (#3) ir tik tada paleisk geltonus rutuliukus (#2)!',
+      reward: 2,
+      requiredGoal: 5,
+      walls: [
+        { x1: 76, y1: 26, x2: 76, y2: 92 },
+        { x1: 180, y1: 26, x2: 180, y2: 92 },
+        { x1: 215, y1: 26, x2: 215, y2: 92 },
+        { x1: 312, y1: 26, x2: 312, y2: 92 },
+        { x1: 72, y1: 118, x2: 184, y2: 224 },
+        { x1: 184, y1: 224, x2: 184, y2: 254 },
+        { x1: 346, y1: 280, x2: 372, y2: 310 },
+        { x1: 496, y1: 286, x2: 496, y2: 308 },
+        { x1: 368, y1: 320, x2: 368, y2: 345 },
+        { x1: 492, y1: 320, x2: 492, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Vanduo)', x1: 210, y1: 96, x2: 316, y2: 96, dirX: 1, dirY: 0 },
+        { id: 'p2', label: '#2 (Geltoni)', x1: 72, y1: 96, x2: 184, y2: 96, dirX: -1, dirY: 0 },
+        { id: 'p3', label: '#3 (Kolba)', x1: 366, y1: 314, x2: 496, y2: 314, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 368, y: 345, w: 124, h: 92 },
+      trap: { x: 188, y: 248, w: 154, h: 78, lava: true, bridgeSlope: 34 },
+      makeBalls: () => [
+        ...spawnBalls(264, 46, 2, 4, 'water', COLORS.water),
+        ...spawnBalls(128, 44, 3, 5, 'colored', COLORS.yellow)
+      ]
+    },
+    {
+      id: 'pp_g1_8',
+      title: '8. Saugus tiltas virš lavos',
+      instruction: 'Kaiščiai: 4. NEIŠTRAUK tilto (#3)! Pirma atverk kolbą (#4), o tada leisk abu žaliųjų srautus (#1 ir #2).',
+      reward: 2,
+      requiredGoal: 6,
+      walls: [
+        { x1: 95, y1: 28, x2: 95, y2: 105 },
+        { x1: 195, y1: 28, x2: 195, y2: 105 },
+        { x1: 375, y1: 28, x2: 375, y2: 105 },
+        { x1: 475, y1: 28, x2: 475, y2: 105 },
+        { x1: 322, y1: 266, x2: 355, y2: 278 },
+        { x1: 292, y1: 284, x2: 198, y2: 345 },
+        { x1: 486, y1: 195, x2: 476, y2: 345 },
+        { x1: 352, y1: 288, x2: 355, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Žali)', x1: 90, y1: 109, x2: 200, y2: 109, dirX: -1, dirY: 0 },
+        { id: 'p2', label: '#2 (Žali)', x1: 370, y1: 109, x2: 480, y2: 109, dirX: 1, dirY: 0 },
+        { id: 'p3', label: '#3 (Tiltas)', x1: 88, y1: 185, x2: 332, y2: 246, dirX: -1, dirY: -0.25 },
+        { id: 'p4', label: '#4 (Kolba)', x1: 350, y1: 280, x2: 482, y2: 280, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 355, y: 345, w: 122, h: 92 },
+      trap: { x: 80, y: 345, w: 145, h: 92, lava: true },
+      makeBalls: () => [
+        ...spawnBalls(145, 50, 2, 3, 'colored', COLORS.green),
+        ...spawnBalls(425, 50, 2, 3, 'colored', COLORS.green)
+      ]
+    },
+    {
+      id: 'pp_g1_9',
+      title: '9. Dažymo kaskada ir lava',
+      instruction: 'Kaiščiai: 4. Užgesink lavą (#1), nudažyk pilkus (#2), atidaryk kolbą (#4) ir paleisk visus (#3)!',
+      reward: 3,
+      requiredGoal: 6,
+      walls: [
+        { x1: 72, y1: 22, x2: 72, y2: 80 },
+        { x1: 178, y1: 22, x2: 178, y2: 80 },
+        { x1: 72, y1: 94, x2: 72, y2: 158 },
+        { x1: 182, y1: 94, x2: 182, y2: 158 },
+        { x1: 220, y1: 22, x2: 220, y2: 80 },
+        { x1: 314, y1: 22, x2: 314, y2: 80 },
+        { x1: 68, y1: 186, x2: 186, y2: 232 },
+        { x1: 186, y1: 232, x2: 186, y2: 254 },
+        { x1: 348, y1: 280, x2: 374, y2: 310 },
+        { x1: 498, y1: 286, x2: 498, y2: 308 },
+        { x1: 372, y1: 320, x2: 372, y2: 345 },
+        { x1: 494, y1: 320, x2: 494, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Vanduo)', x1: 215, y1: 84, x2: 318, y2: 84, dirX: 1, dirY: 0 },
+        { id: 'p2', label: '#2 (Violetiniai)', x1: 68, y1: 84, x2: 182, y2: 84, dirX: -1, dirY: 0 },
+        { id: 'p3', label: '#3 (Sklendė)', x1: 68, y1: 162, x2: 186, y2: 162, dirX: -1, dirY: 0 },
+        { id: 'p4', label: '#4 (Kolba)', x1: 370, y1: 314, x2: 498, y2: 314, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 372, y: 345, w: 122, h: 92 },
+      trap: { x: 190, y: 248, w: 154, h: 78, lava: true, bridgeSlope: 34 },
+      makeBalls: () => [
+        ...spawnBalls(267, 42, 2, 4, 'water', COLORS.water),
+        ...spawnBalls(125, 38, 2, 3, 'colored', COLORS.purple),
+        ...spawnBalls(125, 114, 2, 3, 'gray', COLORS.gray)
+      ]
+    },
+    {
+      id: 'pp_g1_10',
+      title: '10. Didysis 1 kl. vandenynas',
+      instruction: 'Finalas! Atšaldyk lavą (#1), sumaišyk pilkus su žaliais (#2), atverk kolbą (#4) ir paleisk visus 8 (#3)!',
+      reward: 3,
+      requiredGoal: 8,
+      walls: [
+        { x1: 70, y1: 20, x2: 70, y2: 78 },
+        { x1: 180, y1: 20, x2: 180, y2: 78 },
+        { x1: 70, y1: 92, x2: 70, y2: 162 },
+        { x1: 184, y1: 92, x2: 184, y2: 162 },
+        { x1: 222, y1: 20, x2: 222, y2: 78 },
+        { x1: 316, y1: 20, x2: 316, y2: 78 },
+        { x1: 68, y1: 188, x2: 186, y2: 234 },
+        { x1: 186, y1: 234, x2: 186, y2: 254 },
+        { x1: 348, y1: 280, x2: 374, y2: 310 },
+        { x1: 502, y1: 286, x2: 502, y2: 308 },
+        { x1: 372, y1: 320, x2: 372, y2: 345 },
+        { x1: 498, y1: 320, x2: 498, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Vanduo)', x1: 218, y1: 82, x2: 320, y2: 82, dirX: 1, dirY: 0 },
+        { id: 'p2', label: '#2 (Žali)', x1: 66, y1: 82, x2: 184, y2: 82, dirX: -1, dirY: 0 },
+        { id: 'p3', label: '#3 (Sklendė)', x1: 66, y1: 166, x2: 188, y2: 166, dirX: -1, dirY: 0 },
+        { id: 'p4', label: '#4 (Kolba)', x1: 370, y1: 314, x2: 500, y2: 314, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 372, y: 345, w: 126, h: 92 },
+      trap: { x: 190, y: 248, w: 154, h: 78, lava: true, bridgeSlope: 34 },
+      makeBalls: () => [
+        ...spawnBalls(269, 40, 2, 4, 'water', COLORS.water),
+        ...spawnBalls(125, 36, 2, 4, 'colored', COLORS.green),
+        ...spawnBalls(125, 114, 2, 4, 'gray', COLORS.gray)
       ]
     }
   ],
@@ -380,6 +535,210 @@ export const PINPULL_LEVELS = {
         ...spawnBalls(320, 50, 2, 4, 'colored', COLORS.orange),
         ...spawnBalls(497, 52, 2, 3, 'gray', COLORS.gray)
       ]
+    },
+    {
+      id: 'pp_g3_6',
+      title: '6. Vandens tiltas ir pilki spąstai',
+      instruction: 'Kaiščiai: 5. Išmesk kairius pilkus į duobę (#2 → #1), atšaldyk lavą (#3), atverk kolbą (#5) ir paleisk žydrus (#4)!',
+      reward: 2,
+      requiredGoal: 5,
+      walls: [
+        // Kairė pilkųjų šachta į akliną duobę (kairė!)
+        { x1: 50, y1: 28, x2: 50, y2: 100 },
+        { x1: 145, y1: 28, x2: 145, y2: 100 },
+        { x1: 48, y1: 118, x2: 48, y2: 345 },
+        { x1: 148, y1: 118, x2: 148, y2: 345 },
+        // Žydrieji viršuje centre-kairėje
+        { x1: 175, y1: 24, x2: 175, y2: 92 },
+        { x1: 270, y1: 24, x2: 270, y2: 92 },
+        { x1: 172, y1: 120, x2: 275, y2: 222 },
+        { x1: 275, y1: 222, x2: 275, y2: 254 },
+        // Vanduo virš lavos tilto
+        { x1: 300, y1: 24, x2: 300, y2: 92 },
+        { x1: 392, y1: 24, x2: 392, y2: 92 },
+        // Piltuvas į kolbą dešinėje
+        { x1: 422, y1: 280, x2: 446, y2: 310 },
+        { x1: 572, y1: 286, x2: 572, y2: 308 },
+        { x1: 444, y1: 320, x2: 444, y2: 345 },
+        { x1: 568, y1: 320, x2: 568, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Pilki)', x1: 46, y1: 104, x2: 148, y2: 104, dirX: -1, dirY: 0 },
+        { id: 'p2', label: '#2 (Duobė)', x1: 46, y1: 228, x2: 150, y2: 228, dirX: -1, dirY: 0 },
+        { id: 'p3', label: '#3 (Vanduo)', x1: 296, y1: 96, x2: 396, y2: 96, dirX: 1, dirY: 0 },
+        { id: 'p4', label: '#4 (Žydri)', x1: 171, y1: 96, x2: 274, y2: 96, dirX: -1, dirY: 0 },
+        { id: 'p5', label: '#5 (Kolba)', x1: 442, y1: 314, x2: 570, y2: 314, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 444, y: 345, w: 124, h: 92 },
+      trap: { x: 278, y: 248, w: 144, h: 78, lava: true, bridgeSlope: 34 },
+      makeBalls: () => [
+        ...spawnBalls(97, 46, 2, 4, 'gray', COLORS.gray),
+        ...spawnBalls(222, 44, 3, 5, 'colored', COLORS.cyan),
+        ...spawnBalls(346, 44, 2, 4, 'water', COLORS.water)
+      ]
+    },
+    {
+      id: 'pp_g3_7',
+      title: '7. Dvigubas maišymo bokštas',
+      instruction: 'Kaiščiai: 5. Sumaišyk geltonus (#3) su centriniais pilkais (#4 atidaroma vėliau!), kolbos sklendei (#5) atsidarius!',
+      reward: 2,
+      requiredGoal: 8,
+      walls: [
+        // Viršutinė geltona kamera
+        { x1: 245, y1: 22, x2: 245, y2: 86 },
+        { x1: 355, y1: 22, x2: 355, y2: 86 },
+        // Vidurinė maišymo kamera (pilki jau joje!)
+        { x1: 235, y1: 102, x2: 235, y2: 192 },
+        { x1: 365, y1: 102, x2: 365, y2: 192 },
+        // Kairė duobė + šachta
+        { x1: 78, y1: 28, x2: 78, y2: 96 },
+        { x1: 175, y1: 28, x2: 175, y2: 96 },
+        { x1: 75, y1: 116, x2: 75, y2: 348 },
+        { x1: 178, y1: 116, x2: 178, y2: 348 },
+        // Vamzdis į kolbą
+        { x1: 235, y1: 212, x2: 245, y2: 345 },
+        { x1: 365, y1: 212, x2: 355, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Duobė)', x1: 72, y1: 220, x2: 180, y2: 220, dirX: -1, dirY: 0 },
+        { id: 'p2', label: '#2 (Pilki)', x1: 74, y1: 100, x2: 178, y2: 100, dirX: -1, dirY: 0 },
+        { id: 'p3', label: '#3 (Geltoni)', x1: 240, y1: 90, x2: 360, y2: 90, dirX: 1, dirY: 0 },
+        { id: 'p4', label: '#4 (Maišytuvas)', x1: 232, y1: 198, x2: 368, y2: 198, dirX: 1, dirY: 0 },
+        { id: 'p5', label: '#5 (Kolba)', x1: 240, y1: 286, x2: 360, y2: 286, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 240, y: 345, w: 122, h: 92 },
+      trap: { x: 64, y: 355, w: 126, h: 82 },
+      makeBalls: () => [
+        ...spawnBalls(126, 48, 2, 3, 'gray', COLORS.gray),
+        ...spawnBalls(300, 38, 2, 4, 'colored', COLORS.yellow),
+        ...spawnBalls(300, 126, 2, 4, 'gray', COLORS.gray)
+      ]
+    },
+    {
+      id: 'pp_g3_8',
+      title: '8. Ugniagesių dažymo grandinė',
+      instruction: 'Kaiščiai: 5. Atšaldyk lavą (#1), atverk kolbą (#5), nudažyk pilkus (#2 + #3) ir paleisk pro #4!',
+      reward: 3,
+      requiredGoal: 7,
+      walls: [
+        // Kairė maišymo pora (violetiniai #2 viršuje, pilki #3 šalia)
+        { x1: 68, y1: 22, x2: 68, y2: 84 },
+        { x1: 158, y1: 22, x2: 158, y2: 84 },
+        { x1: 185, y1: 22, x2: 185, y2: 84 },
+        { x1: 270, y1: 22, x2: 270, y2: 84 },
+        // Maišymo dubuo (#4)
+        { x1: 66, y1: 98, x2: 112, y2: 175 },
+        { x1: 272, y1: 98, x2: 215, y2: 175 },
+        // Latakas ant lavos tilto
+        { x1: 110, y1: 194, x2: 228, y2: 240 },
+        { x1: 228, y1: 240, x2: 228, y2: 256 },
+        // Vanduo virš lavos
+        { x1: 295, y1: 22, x2: 295, y2: 88 },
+        { x1: 388, y1: 22, x2: 388, y2: 88 },
+        // Kolba dešinėje
+        { x1: 388, y1: 280, x2: 414, y2: 310 },
+        { x1: 538, y1: 286, x2: 538, y2: 308 },
+        { x1: 410, y1: 320, x2: 410, y2: 345 },
+        { x1: 534, y1: 320, x2: 534, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Vanduo)', x1: 292, y1: 92, x2: 392, y2: 92, dirX: 1, dirY: 0 },
+        { id: 'p2', label: '#2 (Violetiniai)', x1: 64, y1: 88, x2: 162, y2: 88, dirX: -1, dirY: 0 },
+        { id: 'p3', label: '#3 (Pilki)', x1: 182, y1: 88, x2: 274, y2: 88, dirX: 1, dirY: 0 },
+        { id: 'p4', label: '#4 (Sklendė)', x1: 108, y1: 180, x2: 220, y2: 180, dirX: -1, dirY: 0 },
+        { id: 'p5', label: '#5 (Kolba)', x1: 408, y1: 314, x2: 536, y2: 314, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 410, y: 345, w: 124, h: 92 },
+      trap: { x: 232, y: 248, w: 152, h: 78, lava: true, bridgeSlope: 34 },
+      makeBalls: () => [
+        ...spawnBalls(341, 44, 2, 4, 'water', COLORS.water),
+        ...spawnBalls(113, 42, 2, 4, 'colored', COLORS.purple),
+        ...spawnBalls(227, 42, 2, 3, 'gray', COLORS.gray)
+      ]
+    },
+    {
+      id: 'pp_g3_9',
+      title: '9. Dviguba spalvų laboratorija',
+      instruction: 'Kaiščiai: 6. Sumaišyk centrinius pilkus su žaliais (#3 + #4), užgesink lavą (#1), atverk abu sklendes (#2 → #6) ir paleisk (#5)!',
+      reward: 3,
+      requiredGoal: 8,
+      walls: [
+        { x1: 66, y1: 20, x2: 66, y2: 78 },
+        { x1: 154, y1: 20, x2: 154, y2: 78 },
+        { x1: 176, y1: 20, x2: 176, y2: 78 },
+        { x1: 266, y1: 20, x2: 266, y2: 78 },
+        { x1: 66, y1: 92, x2: 108, y2: 170 },
+        { x1: 266, y1: 92, x2: 214, y2: 170 },
+        { x1: 106, y1: 192, x2: 228, y2: 238 },
+        { x1: 228, y1: 238, x2: 228, y2: 256 },
+        { x1: 294, y1: 20, x2: 294, y2: 84 },
+        { x1: 386, y1: 20, x2: 386, y2: 84 },
+        // Dešinė šoninė kolbos dviguba šachta (#2 virš #6)
+        { x1: 388, y1: 280, x2: 412, y2: 310 },
+        { x1: 544, y1: 282, x2: 544, y2: 308 },
+        { x1: 412, y1: 320, x2: 412, y2: 345 },
+        { x1: 540, y1: 320, x2: 540, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Vanduo)', x1: 290, y1: 88, x2: 390, y2: 88, dirX: 1, dirY: 0 },
+        { id: 'p2', label: '#2 (Viršutinis)', x1: 394, y1: 292, x2: 546, y2: 292, dirX: 1, dirY: 0 },
+        { id: 'p3', label: '#3 (Žali)', x1: 62, y1: 82, x2: 158, y2: 82, dirX: -1, dirY: 0 },
+        { id: 'p4', label: '#4 (Pilki)', x1: 172, y1: 82, x2: 270, y2: 82, dirX: 1, dirY: 0 },
+        { id: 'p5', label: '#5 (Sklendė)', x1: 104, y1: 175, x2: 218, y2: 175, dirX: -1, dirY: 0 },
+        { id: 'p6', label: '#6 (Kolba)', x1: 410, y1: 316, x2: 542, y2: 316, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 412, y: 345, w: 128, h: 92 },
+      trap: { x: 232, y: 248, w: 152, h: 78, lava: true, bridgeSlope: 34 },
+      makeBalls: () => [
+        ...spawnBalls(340, 42, 2, 4, 'water', COLORS.water),
+        ...spawnBalls(110, 40, 2, 4, 'colored', COLORS.green),
+        ...spawnBalls(221, 40, 2, 4, 'gray', COLORS.gray)
+      ]
+    },
+    {
+      id: 'pp_g3_10',
+      title: '10. Didysis hidraulikos reaktorius',
+      instruction: 'Finalas! Atšaldyk lavą (#1), sumaišyk 10 rutuliukų kameroje (#2 + #3), atverk kolbą (#6) ir išleisk per #4 → #5!',
+      reward: 3,
+      requiredGoal: 10,
+      walls: [
+        { x1: 60, y1: 18, x2: 60, y2: 74 },
+        { x1: 156, y1: 18, x2: 156, y2: 74 },
+        { x1: 176, y1: 18, x2: 176, y2: 74 },
+        { x1: 270, y1: 18, x2: 270, y2: 74 },
+        // Pirmoji tarpinė kamera (#4)
+        { x1: 60, y1: 88, x2: 88, y2: 146 },
+        { x1: 270, y1: 88, x2: 226, y2: 146 },
+        // Antroji kamera (#5)
+        { x1: 88, y1: 162, x2: 110, y2: 204 },
+        { x1: 226, y1: 162, x2: 220, y2: 204 },
+        // Latakas ant lavos tilto
+        { x1: 110, y1: 212, x2: 230, y2: 248 },
+        { x1: 230, y1: 248, x2: 230, y2: 256 },
+        // Vanduo
+        { x1: 294, y1: 18, x2: 294, y2: 82 },
+        { x1: 386, y1: 18, x2: 386, y2: 82 },
+        // Kolba
+        { x1: 390, y1: 280, x2: 416, y2: 310 },
+        { x1: 550, y1: 286, x2: 550, y2: 308 },
+        { x1: 414, y1: 320, x2: 414, y2: 345 },
+        { x1: 546, y1: 320, x2: 546, y2: 345 }
+      ],
+      pins: [
+        { id: 'p1', label: '#1 (Vanduo)', x1: 290, y1: 86, x2: 390, y2: 86, dirX: 1, dirY: 0 },
+        { id: 'p2', label: '#2 (Oranžiniai)', x1: 56, y1: 78, x2: 160, y2: 78, dirX: -1, dirY: 0 },
+        { id: 'p3', label: '#3 (Pilki)', x1: 172, y1: 78, x2: 274, y2: 78, dirX: 1, dirY: 0 },
+        { id: 'p4', label: '#4 (Viršus)', x1: 84, y1: 150, x2: 230, y2: 150, dirX: -1, dirY: 0 },
+        { id: 'p5', label: '#5 (Apačia)', x1: 106, y1: 208, x2: 224, y2: 208, dirX: -1, dirY: 0 },
+        { id: 'p6', label: '#6 (Kolba)', x1: 412, y1: 314, x2: 548, y2: 314, dirX: 1, dirY: 0 }
+      ],
+      goal: { x: 414, y: 345, w: 132, h: 92 },
+      trap: { x: 234, y: 248, w: 152, h: 78, lava: true, bridgeSlope: 34 },
+      makeBalls: () => [
+        ...spawnBalls(340, 40, 2, 4, 'water', COLORS.water),
+        ...spawnBalls(108, 36, 3, 6, 'colored', COLORS.orange),
+        ...spawnBalls(223, 38, 2, 4, 'gray', COLORS.gray)
+      ]
     }
   ]
 };
@@ -557,10 +916,11 @@ export class PinPullEngine {
           const t = this.level.trap;
           if (t.lava && this.trapCooled && t.bridgeSlope) {
             this.resolveCircleSegment(b, t.x - 4, t.y + 4, t.x + t.w + 4, t.y + t.bridgeSlope, 5, 0.15);
+          } else {
+            this.resolveCircleSegment(b, t.x, t.y, t.x, t.y + t.h, 4, 0.2);
+            this.resolveCircleSegment(b, t.x + t.w, t.y, t.x + t.w, t.y + t.h, 4, 0.2);
+            this.resolveCircleSegment(b, t.x, t.y + t.h, t.x + t.w, t.y + t.h, 5, 0.1);
           }
-          this.resolveCircleSegment(b, t.x, t.y, t.x, t.y + t.h, 4, 0.2);
-          this.resolveCircleSegment(b, t.x + t.w, t.y, t.x + t.w, t.y + t.h, 4, 0.2);
-          this.resolveCircleSegment(b, t.x, t.y + t.h, t.x + t.w, t.y + t.h, 5, 0.1);
         }
       }
 

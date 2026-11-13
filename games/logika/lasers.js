@@ -114,6 +114,138 @@ export const LASER_LEVELS = {
         { id: 'm5', kind: 'mirror', r: 2, c: 1, type: '/' },
         { id: 'm6', kind: 'mirror', r: 3, c: 1, type: '/' }
       ]
+    },
+    {
+      id: 'las_g1_6',
+      title: '6. Didysis perimetro ratas',
+      instruction: 'Pravesk spindulį aplink kliūtis pro visus 5 veidrodžius į dešinįjį kampą (maks. 6 pasukimai)!',
+      reward: 2,
+      cols: 5,
+      rows: 5,
+      maxMoves: 6,
+      movable: false,
+      emitter: { r: 0, c: 2, dir: 'D' },
+      targets: [{ r: 4, c: 1 }],
+      walls: [
+        [2, 2],
+        [1, 4],
+        [3, 0]
+      ],
+      pieces: [
+        { id: 'm1', kind: 'mirror', r: 1, c: 2, type: '\\' },
+        { id: 'm2', kind: 'mirror', r: 1, c: 0, type: '/' },
+        { id: 'm3', kind: 'mirror', r: 0, c: 0, type: '\\' },
+        { id: 'm4', kind: 'mirror', r: 0, c: 3, type: '\\' },
+        { id: 'm5', kind: 'mirror', r: 4, c: 3, type: '\\' }
+      ]
+    },
+    {
+      id: 'las_g1_7',
+      title: '7. Zigzagų koridorius',
+      instruction: 'Atsek ilgą atspindžių kelią tarp keturių sienų ir pasiek 💎 kristalą (maks. 7 pasukimai)!',
+      reward: 2,
+      cols: 5,
+      rows: 5,
+      maxMoves: 7,
+      movable: false,
+      emitter: { r: 4, c: 0, dir: 'U' },
+      targets: [{ r: 4, c: 4 }],
+      walls: [
+        [1, 0],
+        [2, 2],
+        [3, 3]
+      ],
+      pieces: [
+        { id: 'm1', kind: 'mirror', r: 2, c: 0, type: '\\' },
+        { id: 'm2', kind: 'mirror', r: 2, c: 1, type: '\\' },
+        { id: 'm3', kind: 'mirror', r: 0, c: 1, type: '\\' },
+        { id: 'm4', kind: 'mirror', r: 0, c: 3, type: '/' },
+        { id: 'm5', kind: 'mirror', r: 1, c: 3, type: '/' },
+        { id: 'm6', kind: 'mirror', r: 1, c: 4, type: '/' }
+      ]
+    },
+    {
+      id: 'las_g1_8',
+      title: '8. Kosminė spiralė 6×6',
+      instruction: 'Naujas didesnis 6×6 tinklelis! Pasuk veidrodžius, kad spindulys pasiektų tolimą kampą (maks. 7).',
+      reward: 2,
+      cols: 6,
+      rows: 6,
+      maxMoves: 7,
+      movable: false,
+      emitter: { r: 0, c: 0, dir: 'D' },
+      targets: [{ r: 5, c: 5 }],
+      walls: [
+        [2, 0],
+        [2, 3],
+        [4, 2],
+        [1, 4]
+      ],
+      pieces: [
+        { id: 'm1', kind: 'mirror', r: 1, c: 0, type: '/' },
+        { id: 'm2', kind: 'mirror', r: 1, c: 2, type: '/' },
+        { id: 'm3', kind: 'mirror', r: 3, c: 2, type: '\\' },
+        { id: 'm4', kind: 'mirror', r: 3, c: 0, type: '\\' },
+        { id: 'm5', kind: 'mirror', r: 5, c: 0, type: '/' }
+      ]
+    },
+    {
+      id: 'las_g1_9',
+      title: '9. Šviesos šakotuvas',
+      instruction: 'Pasuk 🔷 daliklį ir veidrodžius 6×6 lauke, kad vienu metu įžiebtum ABUDU 💎 kristalus (maks. 8)!',
+      reward: 3,
+      cols: 6,
+      rows: 6,
+      maxMoves: 8,
+      movable: false,
+      emitter: { r: 3, c: 0, dir: 'R' },
+      targets: [
+        { r: 0, c: 5 },
+        { r: 4, c: 5 }
+      ],
+      walls: [
+        [3, 4],
+        [5, 4],
+        [2, 4],
+        [1, 2]
+      ],
+      pieces: [
+        { id: 's1', kind: 'splitter', r: 3, c: 2, type: '/' },
+        { id: 'm1', kind: 'mirror', r: 3, c: 3, type: '\\' },
+        { id: 'm2', kind: 'mirror', r: 0, c: 3, type: '\\' },
+        { id: 'm3', kind: 'mirror', r: 5, c: 2, type: '/' },
+        { id: 'm4', kind: 'mirror', r: 5, c: 3, type: '\\' },
+        { id: 'm5', kind: 'mirror', r: 4, c: 3, type: '\\' }
+      ]
+    },
+    {
+      id: 'las_g1_10',
+      title: '10. Didysis 1 kl. optikos finalas',
+      instruction: 'Finalas! Padalink spindulį pusiau ir nuvesk į priešingus 6×6 lauko kampus (maks. 7 pasukimai)!',
+      reward: 3,
+      cols: 6,
+      rows: 6,
+      maxMoves: 7,
+      movable: false,
+      emitter: { r: 0, c: 3, dir: 'D' },
+      targets: [
+        { r: 0, c: 0 },
+        { r: 5, c: 5 }
+      ],
+      walls: [
+        [2, 2],
+        [3, 3],
+        [1, 5],
+        [4, 1]
+      ],
+      pieces: [
+        { id: 's1', kind: 'splitter', r: 1, c: 3, type: '\\' },
+        { id: 'm1', kind: 'mirror', r: 2, c: 3, type: '/' },
+        { id: 'm2', kind: 'mirror', r: 2, c: 4, type: '/' },
+        { id: 'm3', kind: 'mirror', r: 1, c: 1, type: '/' },
+        { id: 'm4', kind: 'mirror', r: 0, c: 1, type: '/' },
+        { id: 'm5', kind: 'mirror', r: 5, c: 4, type: '/' }
+      ]
     }
   ],
   grade3: [
@@ -253,6 +385,156 @@ export const LASER_LEVELS = {
         { id: 'm1', kind: 'mirror', r: 5, c: 0, type: '\\' },
         { id: 'm2', kind: 'mirror', r: 0, c: 5, type: '/' },
         { id: 'm3', kind: 'mirror', r: 3, c: 6, type: '/' }
+      ]
+    },
+    {
+      id: 'las_g3_6',
+      title: '6. Atspindžių šakutė',
+      instruction: 'Perkelk veidrodžius ir daliklį pro keturias sienas, kad uždegtum abu kristalus (maks. 12 ėjimų)!',
+      reward: 2,
+      cols: 8,
+      rows: 6,
+      maxMoves: 12,
+      movable: true,
+      emitter: { r: 1, c: 0, dir: 'R' },
+      targets: [
+        { r: 0, c: 7 },
+        { r: 5, c: 7 }
+      ],
+      walls: [
+        [1, 3],
+        [3, 3],
+        [2, 6],
+        [4, 5]
+      ],
+      pieces: [
+        { id: 'm1', kind: 'mirror', r: 0, c: 1, type: '/' },
+        { id: 's1', kind: 'splitter', r: 5, c: 1, type: '/' },
+        { id: 'm2', kind: 'mirror', r: 5, c: 4, type: '/' },
+        { id: 'm3', kind: 'mirror', r: 3, c: 5, type: '\\' },
+        { id: 'm4', kind: 'mirror', r: 1, c: 5, type: '\\' }
+      ]
+    },
+    {
+      id: 'las_g3_7',
+      title: '7. Trys taikiniai – du dalikliai',
+      instruction: 'Panaudok NET DU 🔷 daliklius! Išskirstyk spindulį į tris 💎 kristalus tarp sienų (maks. 12 ėjimų).',
+      reward: 2,
+      cols: 8,
+      rows: 6,
+      maxMoves: 12,
+      movable: true,
+      emitter: { r: 0, c: 0, dir: 'R' },
+      targets: [
+        { r: 0, c: 7 },
+        { r: 5, c: 0 },
+        { r: 5, c: 7 }
+      ],
+      walls: [
+        [1, 4],
+        [2, 4],
+        [4, 4],
+        [3, 0]
+      ],
+      pieces: [
+        { id: 's1', kind: 'splitter', r: 2, c: 1, type: '/' },
+        { id: 's2', kind: 'splitter', r: 4, c: 1, type: '/' },
+        { id: 'm1', kind: 'mirror', r: 5, c: 4, type: '\\' },
+        { id: 'm2', kind: 'mirror', r: 2, c: 6, type: '/' },
+        { id: 'm3', kind: 'mirror', r: 4, c: 6, type: '/' }
+      ]
+    },
+    {
+      id: 'las_g3_8',
+      title: '8. Triguba kryžkelė',
+      instruction: 'Sudėliok 2 daliklius ir 5 veidrodžius taip, kad spinduliai apimtų visus tris taikinius (maks. 14 ėjimų)!',
+      reward: 3,
+      cols: 8,
+      rows: 6,
+      maxMoves: 14,
+      movable: true,
+      emitter: { r: 5, c: 0, dir: 'U' },
+      targets: [
+        { r: 0, c: 0 },
+        { r: 0, c: 7 },
+        { r: 5, c: 6 }
+      ],
+      walls: [
+        [2, 0],
+        [2, 5],
+        [4, 3],
+        [2, 3]
+      ],
+      pieces: [
+        { id: 'm1', kind: 'mirror', r: 4, c: 1, type: '\\' },
+        { id: 's1', kind: 'splitter', r: 4, c: 5, type: '\\' },
+        { id: 's2', kind: 'splitter', r: 1, c: 1, type: '\\' },
+        { id: 'm2', kind: 'mirror', r: 0, c: 4, type: '/' },
+        { id: 'm3', kind: 'mirror', r: 2, c: 6, type: '/' },
+        { id: 'm4', kind: 'mirror', r: 4, c: 6, type: '/' },
+        { id: 'm5', kind: 'mirror', r: 1, c: 6, type: '/' }
+      ]
+    },
+    {
+      id: 'las_g3_9',
+      title: '9. Kosminis atvirkštinis spindulys',
+      instruction: 'Šviesa šauna iš dešinės į kairę! Suprojektuok 3 atšakų tinklą su 2 dalikliais (maks. 12 ėjimų).',
+      reward: 3,
+      cols: 8,
+      rows: 6,
+      maxMoves: 12,
+      movable: true,
+      emitter: { r: 2, c: 7, dir: 'L' },
+      targets: [
+        { r: 0, c: 0 },
+        { r: 5, c: 1 },
+        { r: 4, c: 7 }
+      ],
+      walls: [
+        [2, 2],
+        [1, 5],
+        [3, 4],
+        [5, 5]
+      ],
+      pieces: [
+        { id: 'm1', kind: 'mirror', r: 4, c: 6, type: '/' },
+        { id: 'm2', kind: 'mirror', r: 1, c: 6, type: '/' },
+        { id: 's1', kind: 'splitter', r: 1, c: 2, type: '\\' },
+        { id: 's2', kind: 'splitter', r: 4, c: 1, type: '/' },
+        { id: 'm3', kind: 'mirror', r: 5, c: 4, type: '\\' }
+      ]
+    },
+    {
+      id: 'las_g3_10',
+      title: '10. Keturkampė šviesos žvaigždė',
+      instruction: '3 klasės finalas! Net 3 dalikliai ir 5 veidrodžiai turi vienu metu įžiebti VISUS 4 💎 kristalus (maks. 18)!',
+      reward: 3,
+      cols: 8,
+      rows: 6,
+      maxMoves: 18,
+      movable: true,
+      emitter: { r: 0, c: 0, dir: 'D' },
+      targets: [
+        { r: 0, c: 7 },
+        { r: 5, c: 0 },
+        { r: 5, c: 7 },
+        { r: 2, c: 7 }
+      ],
+      walls: [
+        [3, 0],
+        [1, 4],
+        [3, 3],
+        [4, 6]
+      ],
+      pieces: [
+        { id: 'm1', kind: 'mirror', r: 1, c: 0, type: '/' },
+        { id: 's1', kind: 'splitter', r: 1, c: 2, type: '/' },
+        { id: 's2', kind: 'splitter', r: 3, c: 2, type: '\\' },
+        { id: 's3', kind: 'splitter', r: 1, c: 5, type: '/' },
+        { id: 'm2', kind: 'mirror', r: 4, c: 2, type: '\\' },
+        { id: 'm3', kind: 'mirror', r: 3, c: 1, type: '/' },
+        { id: 'm4', kind: 'mirror', r: 0, c: 3, type: '\\' },
+        { id: 'm5', kind: 'mirror', r: 4, c: 5, type: '/' }
       ]
     }
   ]

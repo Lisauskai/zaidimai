@@ -184,6 +184,107 @@ export const MATRIX_LEVELS = {
         { shape: 'triangle', color: 'cyan', innerDots: 2 }
       ],
       correctIndex: 2
+    },
+    {
+      id: 'mat_g1_6',
+      kind: 'memory',
+      title: '6. Atminties kodas (4 žingsniai)',
+      instruction: 'Įsimink 4 švytinčius langelius iš eilės ir tiksliai juos pakartok!',
+      reward: 2,
+      gridSize: 3,
+      durationMs: 3000,
+      sequence: [0, 3, 4, 7]
+    },
+    {
+      id: 'mat_g1_7',
+      kind: 'matrix',
+      title: '7. Kiekis ir spalva',
+      instruction: 'Eilutėje keičiasi spalva bei kiekis (1, 2, 3). Kokia figūra užbaigs žvaigždučių eilutę?',
+      reward: 2,
+      grid: [
+        { shape: 'circle', color: 'cyan', count: 1 },
+        { shape: 'circle', color: 'yellow', count: 2 },
+        { shape: 'circle', color: 'green', count: 3 },
+
+        { shape: 'square', color: 'cyan', count: 1 },
+        { shape: 'square', color: 'yellow', count: 2 },
+        { shape: 'square', color: 'green', count: 3 },
+
+        { shape: 'star', color: 'cyan', count: 1 },
+        { shape: 'star', color: 'yellow', count: 2 },
+        null
+      ],
+      choices: [
+        { shape: 'star', color: 'green', count: 2 },
+        { shape: 'star', color: 'green', count: 3 },
+        { shape: 'star', color: 'cyan', count: 3 },
+        { shape: 'circle', color: 'green', count: 3 }
+      ],
+      correctIndex: 1
+    },
+    {
+      id: 'mat_g1_8',
+      kind: 'memory',
+      title: '8. Žaibo kodas (4 žingsniai)',
+      instruction: 'Stebėk įstrižainės šviesų seką ir pakartok ją iš atminties!',
+      reward: 2,
+      gridSize: 3,
+      durationMs: 2800,
+      sequence: [2, 4, 6, 8]
+    },
+    {
+      id: 'mat_g1_9',
+      kind: 'matrix',
+      title: '9. Rodyklės posūkis ir spalva',
+      instruction: 'Kiekviename žingsnyje rodyklė pasisuka 90° ir pasikeičia jos spalva. Kurį pasirinksi?',
+      reward: 2,
+      grid: [
+        { shape: 'arrow', color: 'cyan', rot: 0 },
+        { shape: 'arrow', color: 'yellow', rot: 90 },
+        { shape: 'arrow', color: 'green', rot: 180 },
+
+        { shape: 'arrow', color: 'yellow', rot: 90 },
+        { shape: 'arrow', color: 'green', rot: 180 },
+        { shape: 'arrow', color: 'cyan', rot: 270 },
+
+        { shape: 'arrow', color: 'green', rot: 180 },
+        { shape: 'arrow', color: 'cyan', rot: 270 },
+        null
+      ],
+      choices: [
+        { shape: 'arrow', color: 'yellow', rot: 0 },
+        { shape: 'arrow', color: 'green', rot: 0 },
+        { shape: 'arrow', color: 'yellow', rot: 90 },
+        { shape: 'arrow', color: 'cyan', rot: 0 }
+      ],
+      correctIndex: 0
+    },
+    {
+      id: 'mat_g1_10',
+      kind: 'matrix',
+      title: '10. Pirmoko raštų finalas',
+      instruction: '1 klasės finalas! Stebėk formą, dydį ir spalvą kiekviename stulpelyje!',
+      reward: 3,
+      grid: [
+        { shape: 'circle', color: 'cyan', size: 'sm' },
+        { shape: 'circle', color: 'orange', size: 'md' },
+        { shape: 'circle', color: 'green', size: 'lg' },
+
+        { shape: 'square', color: 'cyan', size: 'sm' },
+        { shape: 'square', color: 'orange', size: 'md' },
+        { shape: 'square', color: 'green', size: 'lg' },
+
+        { shape: 'star', color: 'cyan', size: 'sm' },
+        { shape: 'star', color: 'orange', size: 'md' },
+        null
+      ],
+      choices: [
+        { shape: 'star', color: 'green', size: 'md' },
+        { shape: 'star', color: 'orange', size: 'lg' },
+        { shape: 'star', color: 'green', size: 'lg' },
+        { shape: 'square', color: 'green', size: 'lg' }
+      ],
+      correctIndex: 2
     }
   ],
   grade3: [
@@ -287,6 +388,107 @@ export const MATRIX_LEVELS = {
         { shape: 'triangle', color: 'magenta', rot: 0 }
       ],
       correctIndex: 0
+    },
+    {
+      id: 'mat_g3_6',
+      kind: 'memory',
+      title: '6. Atminties kodas #3 (5 žingsniai)',
+      instruction: 'Įsimink greitą 5 žingsnių šviesų seką (per 2,6 sek.) ir tiksliai pakartok!',
+      reward: 2,
+      gridSize: 3,
+      durationMs: 2600,
+      sequence: [1, 5, 7, 3, 4]
+    },
+    {
+      id: 'mat_g3_7',
+      kind: 'matrix',
+      title: '7. Rodyklė + taškų kodas',
+      instruction: 'Rask trečiąją kombinaciją: kiekvienoje eilutėje turi būti 3 spalvos, 3 posūkiai ir 1–3 taškai!',
+      reward: 2,
+      grid: [
+        { shape: 'arrow', color: 'cyan', rot: 0, innerDots: 1 },
+        { shape: 'arrow', color: 'orange', rot: 90, innerDots: 2 },
+        { shape: 'arrow', color: 'green', rot: 180, innerDots: 3 },
+
+        { shape: 'arrow', color: 'orange', rot: 90, innerDots: 2 },
+        { shape: 'arrow', color: 'green', rot: 180, innerDots: 3 },
+        { shape: 'arrow', color: 'cyan', rot: 270, innerDots: 1 },
+
+        { shape: 'arrow', color: 'green', rot: 180, innerDots: 3 },
+        { shape: 'arrow', color: 'cyan', rot: 270, innerDots: 1 },
+        null
+      ],
+      choices: [
+        { shape: 'arrow', color: 'orange', rot: 0, innerDots: 1 },
+        { shape: 'arrow', color: 'green', rot: 0, innerDots: 2 },
+        { shape: 'arrow', color: 'orange', rot: 0, innerDots: 2 },
+        { shape: 'arrow', color: 'orange', rot: 90, innerDots: 2 }
+      ],
+      correctIndex: 2
+    },
+    {
+      id: 'mat_g3_8',
+      kind: 'memory',
+      title: '8. Kosminis šifras (6 žingsniai)',
+      instruction: 'Net 6 langelių atminties kombinacija! Susikaupk ir atkartok visus žingsnius.',
+      reward: 3,
+      gridSize: 3,
+      durationMs: 3200,
+      sequence: [0, 2, 8, 6, 4, 1]
+    },
+    {
+      id: 'mat_g3_9',
+      kind: 'matrix',
+      title: '9. Trys nepriklausomi požymiai',
+      instruction: 'Keičiasi figūra, išorės spalva IR vidinis taškas! Išskirk kiekvieną taisyklę atskirai.',
+      reward: 3,
+      grid: [
+        { shape: 'diamond', color: 'cyan', dotColor: 'yellow' },
+        { shape: 'diamond', color: 'magenta', dotColor: 'white' },
+        { shape: 'diamond', color: 'green', dotColor: 'orange' },
+
+        { shape: 'triangle', color: 'magenta', dotColor: 'white' },
+        { shape: 'triangle', color: 'green', dotColor: 'orange' },
+        { shape: 'triangle', color: 'cyan', dotColor: 'yellow' },
+
+        { shape: 'star', color: 'green', dotColor: 'orange' },
+        { shape: 'star', color: 'cyan', dotColor: 'yellow' },
+        null
+      ],
+      choices: [
+        { shape: 'star', color: 'magenta', dotColor: 'orange' },
+        { shape: 'star', color: 'magenta', dotColor: 'white' },
+        { shape: 'star', color: 'green', dotColor: 'white' },
+        { shape: 'triangle', color: 'magenta', dotColor: 'white' }
+      ],
+      correctIndex: 1
+    },
+    {
+      id: 'mat_g3_10',
+      kind: 'matrix',
+      title: '10. Vyriausiojo šifruotojo finalas',
+      instruction: '3 klasės finalas! Kiekvienoje eilutėje susiderina forma, dydis, spalva ir taškai (1–3).',
+      reward: 3,
+      grid: [
+        { shape: 'square', color: 'cyan', size: 'sm', innerDots: 1 },
+        { shape: 'diamond', color: 'yellow', size: 'md', innerDots: 2 },
+        { shape: 'star', color: 'magenta', size: 'lg', innerDots: 3 },
+
+        { shape: 'diamond', color: 'yellow', size: 'md', innerDots: 2 },
+        { shape: 'star', color: 'magenta', size: 'lg', innerDots: 3 },
+        { shape: 'square', color: 'cyan', size: 'sm', innerDots: 1 },
+
+        { shape: 'star', color: 'magenta', size: 'lg', innerDots: 3 },
+        { shape: 'square', color: 'cyan', size: 'sm', innerDots: 1 },
+        null
+      ],
+      choices: [
+        { shape: 'diamond', color: 'yellow', size: 'md', innerDots: 3 },
+        { shape: 'diamond', color: 'magenta', size: 'md', innerDots: 2 },
+        { shape: 'diamond', color: 'yellow', size: 'lg', innerDots: 2 },
+        { shape: 'diamond', color: 'yellow', size: 'md', innerDots: 2 }
+      ],
+      correctIndex: 3
     }
   ]
 };

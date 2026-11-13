@@ -264,6 +264,71 @@ export const MATHCROSS_LEVELS = {
         { cid: 'c5', value: 4 },
         { cid: 'c6', value: 9 }
       ]
+    },
+    {
+      id: 'mc_g1_9',
+      kind: 'triangle',
+      title: '9. Slaptasis trikampis (Suma 12)',
+      instruction: 'Sudėk skaičius į tuščius apskritimus taip, kad kiekvienos kraštinės suma būtų 12!',
+      reward: 3,
+      magicSum: 12,
+      solution: [4, 3, 5, 1, 6, 2],
+      fixed: { 0: 4, 3: 1 },
+      cards: [
+        { cid: 'c1', value: 2 },
+        { cid: 'c2', value: 3 },
+        { cid: 'c3', value: 5 },
+        { cid: 'c4', value: 6 }
+      ]
+    },
+    {
+      id: 'mc_g1_10',
+      kind: 'crossword',
+      title: '10. Pirmoko lygčių finalas',
+      instruction: '1 klasės finalas! Net 5 susikertančios lygtys viename tinklelyje – atrask A, B, C ir D.',
+      reward: 3,
+      rows: 5,
+      cols: 5,
+      cells: [
+        { r: 0, c: 0, type: 'slot', id: 'A', solution: 9 },
+        { r: 0, c: 1, type: 'op', text: '+' },
+        { r: 0, c: 2, type: 'slot', id: 'B', solution: 6 },
+        { r: 0, c: 3, type: 'op', text: '=' },
+        { r: 0, c: 4, type: 'num', value: 15 },
+
+        { r: 1, c: 0, type: 'op', text: '−' },
+        { r: 1, c: 2, type: 'op', text: '+' },
+
+        { r: 2, c: 0, type: 'slot', id: 'C', solution: 5 },
+        { r: 2, c: 1, type: 'op', text: '+' },
+        { r: 2, c: 2, type: 'num', value: 2 },
+        { r: 2, c: 3, type: 'op', text: '=' },
+        { r: 2, c: 4, type: 'num', value: 7 },
+
+        { r: 3, c: 0, type: 'op', text: '=' },
+        { r: 3, c: 2, type: 'op', text: '=' },
+
+        { r: 4, c: 0, type: 'num', value: 4 },
+        { r: 4, c: 1, type: 'op', text: '+' },
+        { r: 4, c: 2, type: 'slot', id: 'D', solution: 8 },
+        { r: 4, c: 3, type: 'op', text: '=' },
+        { r: 4, c: 4, type: 'num', value: 12 }
+      ],
+      equations: [
+        { a: 'A', op: '+', b: 'B', res: 15 },
+        { a: 'A', op: '-', b: 'C', res: 4 },
+        { a: 'B', op: '+', b: 2, res: 'D' },
+        { a: 'C', op: '+', b: 2, res: 7 },
+        { a: 4, op: '+', b: 'D', res: 12 }
+      ],
+      cards: [
+        { cid: 'c1', value: 5 },
+        { cid: 'c2', value: 6 },
+        { cid: 'c3', value: 8 },
+        { cid: 'c4', value: 9 },
+        { cid: 'c5', value: 4 },
+        { cid: 'c6', value: 7 }
+      ]
     }
   ],
 
@@ -527,6 +592,72 @@ export const MATHCROSS_LEVELS = {
         { cid: 'c4', value: 84 },
         { cid: 'c5', value: 14 },
         { cid: 'c6', value: 42 }
+      ]
+    },
+    {
+      id: 'mc_g3_9',
+      kind: 'square',
+      title: '9. Magiškasis kvadratas (Suma 45)',
+      instruction: 'Užpildyk trūkstamus skaičius taip, kad visos eilutės, stulpeliai ir įstrižainės duotų 45!',
+      reward: 3,
+      magicSum: 45,
+      solution: [24, 3, 18, 9, 15, 21, 12, 27, 6],
+      fixed: { 0: 24, 2: 18, 4: 15, 7: 27 },
+      cards: [
+        { cid: 'c1', value: 3 },
+        { cid: 'c2', value: 6 },
+        { cid: 'c3', value: 9 },
+        { cid: 'c4', value: 12 },
+        { cid: 'c5', value: 21 }
+      ]
+    },
+    {
+      id: 'mc_g3_10',
+      kind: 'crossword',
+      title: '10. Daugybos ir dalybos finalas',
+      instruction: '3 klasės finalas! Suderink visas penkias daugybos, dalybos ir sudėties lygtis iki 100!',
+      reward: 3,
+      rows: 5,
+      cols: 5,
+      cells: [
+        { r: 0, c: 0, type: 'slot', id: 'A', solution: 72 },
+        { r: 0, c: 1, type: 'op', text: '÷' },
+        { r: 0, c: 2, type: 'slot', id: 'B', solution: 9 },
+        { r: 0, c: 3, type: 'op', text: '=' },
+        { r: 0, c: 4, type: 'num', value: 8 },
+
+        { r: 1, c: 0, type: 'op', text: '+' },
+        { r: 1, c: 2, type: 'op', text: '×' },
+        { r: 1, c: 4, type: 'op', text: '×' },
+
+        { r: 2, c: 0, type: 'num', value: 28 },
+        { r: 2, c: 2, type: 'num', value: 4 },
+        { r: 2, c: 4, type: 'slot', id: 'D', solution: 8 },
+
+        { r: 3, c: 0, type: 'op', text: '=' },
+        { r: 3, c: 2, type: 'op', text: '=' },
+        { r: 3, c: 4, type: 'op', text: '=' },
+
+        { r: 4, c: 0, type: 'num', value: 100 },
+        { r: 4, c: 1, type: 'op', text: '−' },
+        { r: 4, c: 2, type: 'slot', id: 'C', solution: 36 },
+        { r: 4, c: 3, type: 'op', text: '=' },
+        { r: 4, c: 4, type: 'num', value: 64 }
+      ],
+      equations: [
+        { a: 'A', op: '÷', b: 'B', res: 8 },
+        { a: 'A', op: '+', b: 28, res: 100 },
+        { a: 'B', op: '×', b: 4, res: 'C' },
+        { a: 8, op: '×', b: 'D', res: 64 },
+        { a: 100, op: '-', b: 'C', res: 64 }
+      ],
+      cards: [
+        { cid: 'c1', value: 8 },
+        { cid: 'c2', value: 9 },
+        { cid: 'c3', value: 36 },
+        { cid: 'c4', value: 72 },
+        { cid: 'c5', value: 18 },
+        { cid: 'c6', value: 24 }
       ]
     }
   ]

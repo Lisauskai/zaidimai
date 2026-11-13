@@ -158,6 +158,124 @@ export const CIRCUIT_LEVELS = {
         '1,0': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
         '0,0': { kind: 'F', dir: 2, locked: true }
       })
+    },
+    {
+      id: 'cir_g1_6',
+      title: '6. Užrakinti bėgiai',
+      instruction: 'Apeik 🔒 užrakintą detalę taip, kad traukinys surinktų abidvi ⭐ žvaigždutes ir pasiektų 🏁 (maks. 14)!',
+      reward: 2,
+      rows: 4,
+      cols: 4,
+      maxMoves: 14,
+      requireAllStars: true,
+      tiles: makeGrid(4, 4, {
+        '0,0': { kind: 'S', dir: 1, locked: true },
+        '0,1': { kind: 'I', rot: 0 }, // reikia 1 (R-L)
+        '0,2': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '1,2': { kind: 'I', rot: 0, locked: true, star: true }, // U-D
+        '2,2': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '2,3': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '3,3': { kind: 'L', rot: 1, star: true }, // reikia 3 (L-U)
+        '3,2': { kind: 'F', dir: 1, locked: true }
+      })
+    },
+    {
+      id: 'cir_g1_7',
+      title: '7. Penkiakampė trasa 5×5',
+      instruction: 'Pirmasis 5×5 bėgių laukas! Suplanuok kelią į viršų, per ⭐ ir į apatinį kampą 🏁 (maks. 22 pasukimai).',
+      reward: 2,
+      rows: 5,
+      cols: 5,
+      maxMoves: 22,
+      requireAllStars: true,
+      tiles: makeGrid(5, 5, {
+        '4,0': { kind: 'S', dir: 0, locked: true },
+        '3,0': { kind: 'I', rot: 1 }, // reikia 0 (U-D)
+        '2,0': { kind: 'L', rot: 3, star: true }, // reikia 1 (R-D)
+        '2,1': { kind: 'I', rot: 0 }, // reikia 1 (R-L)
+        '2,2': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '1,2': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '1,3': { kind: 'I', rot: 0 }, // reikia 1 (R-L)
+        '1,4': { kind: 'L', rot: 0, star: true }, // reikia 2 (D-L)
+        '2,4': { kind: 'I', rot: 1 }, // reikia 0 (U-D)
+        '3,4': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '3,3': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '4,3': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '4,4': { kind: 'F', dir: 3, locked: true }
+      })
+    },
+    {
+      id: 'cir_g1_8',
+      title: '8. Pirmasis tiltas per bėgius',
+      instruction: 'Pravažiuok 🌉 tiltą du kartus (tiesiai ir iš viršaus žemyn!), kad surinktum 2 ⭐ (maks. 18)!',
+      reward: 2,
+      rows: 5,
+      cols: 5,
+      maxMoves: 18,
+      requireAllStars: true,
+      tiles: makeGrid(5, 5, {
+        '2,0': { kind: 'S', dir: 1, locked: true },
+        '2,1': { kind: 'I', rot: 0 }, // reikia 1 (R-L)
+        '2,2': { kind: 'B', rot: 0, locked: true },
+        '2,3': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '1,3': { kind: 'L', rot: 0, star: true }, // reikia 2 (D-L)
+        '1,2': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '3,2': { kind: 'L', rot: 2, star: true }, // reikia 0 (U-R)
+        '3,3': { kind: 'I', rot: 0 }, // reikia 1 (R-L)
+        '3,4': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '2,4': { kind: 'F', dir: 2, locked: true }
+      })
+    },
+    {
+      id: 'cir_g1_9',
+      title: '9. Kalnų kilpa 5×5',
+      instruction: 'Surink VISAS 3 ⭐ pasinaudodamas 🔒 užrakintais bėgiais 5×5 lauke (maks. 20 pasukimų)!',
+      reward: 3,
+      rows: 5,
+      cols: 5,
+      maxMoves: 20,
+      requireAllStars: true,
+      tiles: makeGrid(5, 5, {
+        '0,2': { kind: 'S', dir: 2, locked: true },
+        '1,2': { kind: 'I', rot: 1 }, // reikia 0 (U-D)
+        '2,2': { kind: 'I', rot: 1 }, // reikia 0 (U-D)
+        '3,2': { kind: 'L', rot: 3 }, // reikia 0 (U-R)
+        '3,3': { kind: 'I', rot: 1, locked: true, star: true }, // R-L
+        '3,4': { kind: 'L', rot: 1, star: true }, // reikia 3 (L-U)
+        '2,4': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '2,3': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '1,3': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '1,4': { kind: 'L', rot: 1, star: true }, // reikia 3 (L-U)
+        '0,4': { kind: 'F', dir: 2, locked: true }
+      })
+    },
+    {
+      id: 'cir_g1_10',
+      title: '10. Didysis 1 kl. geležinkelis',
+      instruction: 'Finalas! Pravažiuok 🌉 tiltą abiem kryptimis, apeik 🔒 detales ir surink 3 ⭐ (maks. 24)!',
+      reward: 3,
+      rows: 5,
+      cols: 5,
+      maxMoves: 24,
+      requireAllStars: true,
+      tiles: makeGrid(5, 5, {
+        '4,0': { kind: 'S', dir: 1, locked: true },
+        '4,1': { kind: 'I', rot: 0, star: true }, // reikia 1 (R-L)
+        '4,2': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '3,2': { kind: 'B', rot: 0, locked: true },
+        '2,2': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '2,3': { kind: 'L', rot: 0, star: true }, // reikia 2 (D-L)
+        '3,3': { kind: 'L', rot: 1 }, // reikia 3 (L-U) -> kerta tiltą per R-L!
+        '3,1': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '2,1': { kind: 'I', rot: 1, star: true }, // reikia 0 (U-D)
+        '1,1': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '1,2': { kind: 'I', rot: 1, locked: true }, // R-L
+        '1,3': { kind: 'I', rot: 0 }, // reikia 1 (R-L)
+        '1,4': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '2,4': { kind: 'I', rot: 1 }, // reikia 0 (U-D)
+        '3,4': { kind: 'I', rot: 1 }, // reikia 0 (U-D)
+        '4,4': { kind: 'F', dir: 0, locked: true }
+      })
     }
   ],
   grade3: [
@@ -305,6 +423,172 @@ export const CIRCUIT_LEVELS = {
         '4,1': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
         '4,0': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
         '5,0': { kind: 'F', dir: 0, locked: true }
+      })
+    },
+    {
+      id: 'cir_g3_6',
+      title: '6. Abipusis tiltų žiedas',
+      instruction: 'Pravažiuok per ABUDU 🌉 tiltus, apeik 🔒 posūkį ir surink visas 3 ⭐ (maks. 28 pasukimai)!',
+      reward: 2,
+      rows: 6,
+      cols: 6,
+      maxMoves: 28,
+      requireAllStars: true,
+      tiles: makeGrid(6, 6, {
+        '0,1': { kind: 'S', dir: 2, locked: true },
+        '1,1': { kind: 'I', rot: 1 }, // reikia 0
+        '2,1': { kind: 'B', rot: 0, locked: true },
+        '3,1': { kind: 'L', rot: 2, star: true }, // reikia 0 (U-R)
+        '3,2': { kind: 'I', rot: 0 }, // reikia 1
+        '3,3': { kind: 'B', rot: 0, locked: true },
+        '3,4': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '2,4': { kind: 'I', rot: 1 }, // reikia 0
+        '1,4': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '1,3': { kind: 'L', rot: 1, locked: true }, // R-D
+        '2,3': { kind: 'I', rot: 1, star: true }, // reikia 0
+        '4,3': { kind: 'I', rot: 1 }, // reikia 0
+        '5,3': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '5,2': { kind: 'I', rot: 0 }, // reikia 1
+        '5,1': { kind: 'I', rot: 0 }, // reikia 1
+        '5,0': { kind: 'L', rot: 2, star: true }, // reikia 0 (U-R)
+        '4,0': { kind: 'I', rot: 1 }, // reikia 0
+        '3,0': { kind: 'I', rot: 1 }, // reikia 0
+        '2,0': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '2,2': { kind: 'F', dir: 3, locked: true }
+      })
+    },
+    {
+      id: 'cir_g3_7',
+      title: '7. Trišakis prie tilto',
+      instruction: 'Atsargiai su 🔀 šakotuvu – pasirink teisingą atšaką, pravažiuok abu tiltus ir surink 3 ⭐ (maks. 24)!',
+      reward: 2,
+      rows: 6,
+      cols: 6,
+      maxMoves: 24,
+      requireAllStars: true,
+      tiles: makeGrid(6, 6, {
+        '2,0': { kind: 'S', dir: 1, locked: true },
+        '2,1': { kind: 'B', rot: 0, locked: true },
+        '2,2': { kind: 'T', rot: 0 }, // reikia 1 (R-D-L) arba 2
+        '3,2': { kind: 'B', rot: 0, locked: true },
+        '4,2': { kind: 'L', rot: 2, star: true }, // reikia 0 (U-R)
+        '4,3': { kind: 'I', rot: 0 }, // reikia 1
+        '4,4': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '3,4': { kind: 'I', rot: 1, star: true }, // reikia 0
+        '2,4': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '2,3': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '3,3': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '3,1': { kind: 'L', rot: 2, star: true }, // reikia 0 (U-R)
+        '1,1': { kind: 'I', rot: 1 }, // reikia 0
+        '0,1': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '0,2': { kind: 'F', dir: 3, locked: true }
+      })
+    },
+    {
+      id: 'cir_g3_8',
+      title: '8. Keturios žvaigždutės',
+      instruction: 'Surink VISAS 4 ⭐ žvaigždutes! Tiltą kirsk du kartus ir pralenk 🔒 užraktus (maks. 34 pasukimų).',
+      reward: 3,
+      rows: 6,
+      cols: 6,
+      maxMoves: 34,
+      requireAllStars: true,
+      tiles: makeGrid(6, 6, {
+        '5,5': { kind: 'S', dir: 0, locked: true },
+        '4,5': { kind: 'I', rot: 1, star: true }, // reikia 0
+        '3,5': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '3,4': { kind: 'B', rot: 0, locked: true },
+        '3,3': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '4,3': { kind: 'L', rot: 1, star: true }, // reikia 3 (L-U)
+        '4,2': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '3,2': { kind: 'I', rot: 1 }, // reikia 0
+        '2,2': { kind: 'L', rot: 3, star: true }, // reikia 1 (R-D)
+        '2,3': { kind: 'I', rot: 1, locked: true }, // R-L
+        '2,4': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '4,4': { kind: 'I', rot: 1 }, // reikia 0
+        '5,4': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '5,3': { kind: 'I', rot: 0 }, // reikia 1
+        '5,2': { kind: 'I', rot: 0 }, // reikia 1
+        '5,1': { kind: 'L', rot: 2, star: true }, // reikia 0 (U-R)
+        '4,1': { kind: 'I', rot: 1 }, // reikia 0
+        '3,1': { kind: 'I', rot: 1 }, // reikia 0
+        '2,1': { kind: 'I', rot: 1 }, // reikia 0
+        '1,1': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '1,2': { kind: 'I', rot: 0 }, // reikia 1
+        '1,3': { kind: 'I', rot: 0 }, // reikia 1
+        '1,4': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '0,4': { kind: 'F', dir: 2, locked: true }
+      })
+    },
+    {
+      id: 'cir_g3_9',
+      title: '9. Dvigubas mazgas',
+      instruction: 'Pravažiuok ABUDU 🌉 tiltus po du kartus ir surink 4 ⭐ žvaigždutes! Tikras iššūkis (maks. 32).',
+      reward: 3,
+      rows: 6,
+      cols: 6,
+      maxMoves: 32,
+      requireAllStars: true,
+      tiles: makeGrid(6, 6, {
+        '1,0': { kind: 'S', dir: 1, locked: true },
+        '1,1': { kind: 'I', rot: 0 }, // reikia 1
+        '1,2': { kind: 'B', rot: 0, locked: true },
+        '1,3': { kind: 'I', rot: 0, star: true }, // reikia 1
+        '1,4': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '2,4': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '2,5': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '3,5': { kind: 'I', rot: 1, star: true }, // reikia 0
+        '4,5': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '4,4': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '3,4': { kind: 'L', rot: 1 }, // reikia 3 (L-U) -> į kairę ant tilto! NE: D->L yra L[2], bet iš apačios (4,4) U į kairę L yra L[3] NE: 3=L-U, 2=D-L! Taigi iš apačios į L reikia L[2] (D-L)!
+        '3,3': { kind: 'B', rot: 0, locked: true },
+        '3,2': { kind: 'L', rot: 3, star: true }, // reikia 1 (R-D)
+        '4,2': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '4,3': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '2,3': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '2,2': { kind: 'L', rot: 2, star: true }, // reikia 0 (U-R)
+        '0,2': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '0,1': { kind: 'F', dir: 1, locked: true }
+      })
+    },
+    {
+      id: 'cir_g3_10',
+      title: '10. Kosminės stoties trasa',
+      instruction: '3 klasės finalas! Visi 4 ⭐ taškai, 2 tiltai po 2 kartus ir 3 užrakintos 🔒 detalės (maks. 40)!',
+      reward: 3,
+      rows: 6,
+      cols: 6,
+      maxMoves: 40,
+      requireAllStars: true,
+      tiles: makeGrid(6, 6, {
+        '0,0': { kind: 'S', dir: 2, locked: true },
+        '1,0': { kind: 'I', rot: 1 }, // reikia 0
+        '2,0': { kind: 'L', rot: 2, star: true }, // reikia 0 (U-R)
+        '2,1': { kind: 'B', rot: 0, locked: true },
+        '2,2': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '3,2': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '3,3': { kind: 'B', rot: 0, locked: true },
+        '3,4': { kind: 'I', rot: 0, star: true }, // reikia 1
+        '3,5': { kind: 'L', rot: 1 }, // reikia 3 (L-U)
+        '2,5': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '2,4': { kind: 'L', rot: 0, locked: true }, // U-R
+        '1,4': { kind: 'I', rot: 1 }, // reikia 0
+        '0,4': { kind: 'L', rot: 0, star: true }, // reikia 2 (D-L)
+        '0,3': { kind: 'I', rot: 0 }, // reikia 1
+        '0,2': { kind: 'L', rot: 3 }, // reikia 1 (R-D)
+        '1,2': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '1,3': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '2,3': { kind: 'I', rot: 1 }, // reikia 0
+        '4,3': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '4,4': { kind: 'L', rot: 0 }, // reikia 2 (D-L)
+        '5,4': { kind: 'L', rot: 1, star: true }, // reikia 3 (L-U)
+        '5,3': { kind: 'I', rot: 0 }, // reikia 1
+        '5,2': { kind: 'I', rot: 1, locked: true }, // R-L
+        '5,1': { kind: 'L', rot: 2 }, // reikia 0 (U-R)
+        '4,1': { kind: 'I', rot: 1 }, // reikia 0
+        '3,1': { kind: 'I', rot: 1 }, // reikia 0
+        '1,1': { kind: 'I', rot: 1 }, // reikia 0
+        '0,1': { kind: 'F', dir: 2, locked: true }
       })
     }
   ]

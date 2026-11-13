@@ -141,6 +141,45 @@ export const BRIDGES_LEVELS = {
         { id: 6, r: 4, c: 0, need: 2 }
       ],
       solution: [[0, 1, 2], [0, 3, 1], [1, 2, 1], [1, 4, 2], [2, 5, 1], [3, 4, 1], [3, 6, 2], [4, 5, 2]]
+    },
+    {
+      id: 'br_g1_9',
+      title: '9. Aštuonių salų žiedas',
+      instruction: 'Sujunk visas 8 salas be jokių susikirtimų! Pirma sujunk kampines ir kraštines salas.',
+      reward: 3,
+      rows: 5,
+      cols: 5,
+      islands: [
+        { id: 0, r: 0, c: 0, need: 4 },
+        { id: 1, r: 0, c: 2, need: 3 },
+        { id: 2, r: 0, c: 4, need: 2 },
+        { id: 3, r: 2, c: 0, need: 5 },
+        { id: 4, r: 2, c: 2, need: 5 },
+        { id: 5, r: 2, c: 4, need: 3 },
+        { id: 6, r: 4, c: 0, need: 3 },
+        { id: 7, r: 4, c: 2, need: 3 }
+      ],
+      solution: [[0, 1, 2], [0, 3, 2], [1, 2, 1], [2, 5, 1], [3, 4, 2], [3, 6, 1], [4, 5, 2], [4, 7, 1], [6, 7, 2]]
+    },
+    {
+      id: 'br_g1_10',
+      title: '10. Pirmoko didysis tinklas',
+      instruction: '1 klasės finalas! Visos 9 salos turi susijungti į vieną bendrą kosminę sistemą.',
+      reward: 3,
+      rows: 5,
+      cols: 5,
+      islands: [
+        { id: 0, r: 0, c: 0, need: 3 },
+        { id: 1, r: 0, c: 2, need: 3 },
+        { id: 2, r: 0, c: 4, need: 3 },
+        { id: 3, r: 2, c: 0, need: 5 },
+        { id: 4, r: 2, c: 2, need: 4 },
+        { id: 5, r: 2, c: 4, need: 4 },
+        { id: 6, r: 4, c: 0, need: 2 },
+        { id: 7, r: 4, c: 2, need: 3 },
+        { id: 8, r: 4, c: 4, need: 3 }
+      ],
+      solution: [[0, 1, 2], [0, 3, 1], [1, 2, 1], [2, 5, 2], [3, 4, 2], [3, 6, 2], [4, 5, 1], [4, 7, 1], [5, 8, 1], [7, 8, 2]]
     }
   ],
 
@@ -323,6 +362,75 @@ export const BRIDGES_LEVELS = {
         { id: 13, r: 5, c: 6, need: 4 }
       ],
       solution: [[0, 1, 2], [0, 4, 2], [2, 3, 2], [2, 7, 2], [3, 8, 2], [4, 5, 2], [4, 12, 1], [5, 6, 1], [5, 9, 2], [7, 8, 2], [8, 11, 2], [9, 10, 2], [11, 13, 2], [12, 13, 2]]
+    },
+    {
+      id: 'br_g3_9',
+      title: '9. Penkiolikos salų sistema',
+      instruction: 'Net 15 salų ir šešetukai kraštuose! Sujunk visą tinklą be nė vienos atsiskyrusios salos.',
+      reward: 3,
+      rows: 6,
+      cols: 7,
+      islands: [
+        { id: 0, r: 0, c: 0, need: 4 },
+        { id: 1, r: 0, c: 2, need: 5 },
+        { id: 2, r: 0, c: 4, need: 4 },
+        { id: 3, r: 0, c: 6, need: 3 },
+        { id: 4, r: 2, c: 0, need: 6 },
+        { id: 5, r: 2, c: 2, need: 6 },
+        { id: 6, r: 2, c: 4, need: 6 },
+        { id: 7, r: 2, c: 6, need: 6 },
+        { id: 8, r: 4, c: 0, need: 4 },
+        { id: 9, r: 4, c: 2, need: 5 },
+        { id: 10, r: 4, c: 4, need: 5 },
+        { id: 11, r: 4, c: 6, need: 4 },
+        { id: 12, r: 5, c: 0, need: 3 },
+        { id: 13, r: 5, c: 3, need: 3 },
+        { id: 14, r: 5, c: 6, need: 2 }
+      ],
+      solution: [
+        [0, 1, 2], [1, 2, 2], [2, 3, 1],
+        [0, 4, 2], [1, 5, 1], [2, 6, 1], [3, 7, 2],
+        [4, 5, 2], [5, 6, 1], [6, 7, 2],
+        [4, 8, 2], [5, 9, 2], [6, 10, 2], [7, 11, 2],
+        [8, 9, 1], [9, 10, 2], [10, 11, 1],
+        [8, 12, 1], [11, 14, 1],
+        [12, 13, 2], [13, 14, 1]
+      ]
+    },
+    {
+      id: 'br_g3_10',
+      title: '10. Galaktikos tiltų finalas',
+      instruction: '3 klasės finalas! 16 salų kosminė architektūra — sujunk jas visas vienu nenutrūkstamu tinklu.',
+      reward: 3,
+      rows: 6,
+      cols: 7,
+      islands: [
+        { id: 0, r: 0, c: 0, need: 4 },
+        { id: 1, r: 0, c: 2, need: 5 },
+        { id: 2, r: 0, c: 4, need: 4 },
+        { id: 3, r: 0, c: 6, need: 3 },
+        { id: 4, r: 2, c: 0, need: 5 },
+        { id: 5, r: 2, c: 2, need: 6 },
+        { id: 6, r: 2, c: 4, need: 6 },
+        { id: 7, r: 2, c: 6, need: 4 },
+        { id: 8, r: 4, c: 0, need: 5 },
+        { id: 9, r: 4, c: 2, need: 5 },
+        { id: 10, r: 4, c: 4, need: 5 },
+        { id: 11, r: 4, c: 6, need: 6 },
+        { id: 12, r: 5, c: 0, need: 3 },
+        { id: 13, r: 5, c: 2, need: 5 },
+        { id: 14, r: 5, c: 4, need: 3 },
+        { id: 15, r: 5, c: 6, need: 3 }
+      ],
+      solution: [
+        [0, 1, 2], [1, 2, 1], [2, 3, 2],
+        [0, 4, 2], [1, 5, 2], [2, 6, 1], [3, 7, 1],
+        [4, 5, 1], [5, 6, 2], [6, 7, 1],
+        [4, 8, 2], [5, 9, 1], [6, 10, 2], [7, 11, 2],
+        [8, 9, 2], [9, 10, 1], [10, 11, 2],
+        [8, 12, 1], [9, 13, 1], [11, 15, 2],
+        [12, 13, 2], [13, 14, 2], [14, 15, 1]
+      ]
     }
   ]
 };

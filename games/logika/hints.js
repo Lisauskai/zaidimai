@@ -1,5 +1,5 @@
 // ==================== SMART HINT (UŽUOMINOS LEMPUTĖ) IR 3 KLASĖS PAR ĖJIMAI ====================
-import { solveJugFirstMoveBfs, solvePipeFirstValveBfs } from './flasks.js?v=20261113k';
+import { solveJugFirstMoveBfs, solvePipeFirstValveBfs } from './flasks.js?v=20261113l';
 
 export const OPTIMAL_PAR_MOVES = {
   // 1. Ištrauk kaištį (Pin-Pull)
@@ -8,6 +8,11 @@ export const OPTIMAL_PAR_MOVES = {
   pp_g3_3: 4,
   pp_g3_4: 4,
   pp_g3_5: 6,
+  pp_g3_6: 5,
+  pp_g3_7: 5,
+  pp_g3_8: 5,
+  pp_g3_9: 6,
+  pp_g3_10: 6,
 
   // 2. Robo-Stumdukas (Sokoban)
   sok_g3_1: 16,
@@ -15,6 +20,11 @@ export const OPTIMAL_PAR_MOVES = {
   sok_g3_3: 18,
   sok_g3_4: 40,
   sok_g3_5: 26,
+  sok_g3_6: 21,
+  sok_g3_7: 23,
+  sok_g3_8: 26,
+  sok_g3_9: 30,
+  sok_g3_10: 32,
 
   // 3. Lazerių veidrodžiai
   las_g3_1: 6,
@@ -22,6 +32,11 @@ export const OPTIMAL_PAR_MOVES = {
   las_g3_3: 10,
   las_g3_4: 12,
   las_g3_5: 10,
+  las_g3_6: 11,
+  las_g3_7: 11,
+  las_g3_8: 13,
+  las_g3_9: 11,
+  las_g3_10: 17,
 
   // 4. Sujunk grandinę
   cir_g3_1: 20,
@@ -29,6 +44,11 @@ export const OPTIMAL_PAR_MOVES = {
   cir_g3_3: 22,
   cir_g3_4: 25,
   cir_g3_5: 26,
+  cir_g3_6: 26,
+  cir_g3_7: 22,
+  cir_g3_8: 31,
+  cir_g3_9: 28,
+  cir_g3_10: 36,
 
   // 5. Kosminės svarstyklės (svarsčių uždėjimai + Patikrinti)
   bal_g3_1: 3,
@@ -39,6 +59,8 @@ export const OPTIMAL_PAR_MOVES = {
   bal_g3_6: 4,
   bal_g3_7: 4,
   bal_g3_8: 4,
+  bal_g3_9: 5,
+  bal_g3_10: 5,
 
   // 6. Raštų ir atminties šifras
   mat_g3_1: 1,
@@ -46,6 +68,11 @@ export const OPTIMAL_PAR_MOVES = {
   mat_g3_3: 1,
   mat_g3_4: 5,
   mat_g3_5: 1,
+  mat_g3_6: 5,
+  mat_g3_7: 1,
+  mat_g3_8: 6,
+  mat_g3_9: 1,
+  mat_g3_10: 6,
 
   // 7. Algoritmų trasa
   alg_g3_1: 11,
@@ -92,6 +119,8 @@ export const OPTIMAL_PAR_MOVES = {
   mc_g3_6: 5,
   mc_g3_7: 7,
   mc_g3_8: 5,
+  mc_g3_9: 9,
+  mc_g3_10: 9,
 
   // 11. Energijos tiltai (Hashi)
   br_g3_1: 15,
@@ -102,6 +131,8 @@ export const OPTIMAL_PAR_MOVES = {
   br_g3_6: 28,
   br_g3_7: 25,
   br_g3_8: 30,
+  br_g3_9: 32,
+  br_g3_10: 36,
 
   // 12. Kolbų laboratorija
   flk_g3_1: 6,
@@ -126,11 +157,21 @@ const PIN_PULL_ORDERS = {
   pp_g1_3: ['p1', 'p3', 'p2'],
   pp_g1_4: ['p4', 'p1', 'p2'],
   pp_g1_5: ['p1', 'p4', 'p3', 'p2'],
+  pp_g1_6: ['p1', 'p2', 'p3'],
+  pp_g1_7: ['p1', 'p3', 'p2'],
+  pp_g1_8: ['p4', 'p1', 'p2'],
+  pp_g1_9: ['p1', 'p2', 'p4', 'p3'],
+  pp_g1_10: ['p1', 'p2', 'p4', 'p3'],
   pp_g3_1: ['p3', 'p2', 'p1', 'p4'],
   pp_g3_2: ['p1', 'p2', 'p3'],
   pp_g3_3: ['p2', 'p1', 'p4', 'p5'],
   pp_g3_4: ['p1', 'p2', 'p4', 'p5'],
-  pp_g3_5: ['p4', 'p1', 'p2', 'p3', 'p6', 'p5']
+  pp_g3_5: ['p4', 'p1', 'p2', 'p3', 'p6', 'p5'],
+  pp_g3_6: ['p2', 'p1', 'p3', 'p5', 'p4'],
+  pp_g3_7: ['p1', 'p2', 'p3', 'p5', 'p4'],
+  pp_g3_8: ['p1', 'p2', 'p3', 'p5', 'p4'],
+  pp_g3_9: ['p1', 'p3', 'p4', 'p2', 'p6', 'p5'],
+  pp_g3_10: ['p1', 'p2', 'p3', 'p6', 'p4', 'p5']
 };
 
 const LASER_SOLUTIONS = {
@@ -164,6 +205,44 @@ const LASER_SOLUTIONS = {
     { id: 'm5', r: 2, c: 1, type: '\\' },
     { id: 'm6', r: 3, c: 1, type: '\\' }
   ],
+  las_g1_6: [
+    { id: 'm1', r: 1, c: 2, type: '/' },
+    { id: 'm2', r: 1, c: 0, type: '\\' },
+    { id: 'm3', r: 0, c: 0, type: '/' },
+    { id: 'm4', r: 0, c: 3, type: '\\' },
+    { id: 'm5', r: 4, c: 3, type: '/' }
+  ],
+  las_g1_7: [
+    { id: 'm1', r: 2, c: 0, type: '/' },
+    { id: 'm2', r: 2, c: 1, type: '/' },
+    { id: 'm3', r: 0, c: 1, type: '/' },
+    { id: 'm4', r: 0, c: 3, type: '\\' },
+    { id: 'm5', r: 1, c: 3, type: '\\' },
+    { id: 'm6', r: 1, c: 4, type: '\\' }
+  ],
+  las_g1_8: [
+    { id: 'm1', r: 1, c: 0, type: '\\' },
+    { id: 'm2', r: 1, c: 2, type: '\\' },
+    { id: 'm3', r: 3, c: 2, type: '/' },
+    { id: 'm4', r: 3, c: 0, type: '/' },
+    { id: 'm5', r: 5, c: 0, type: '\\' }
+  ],
+  las_g1_9: [
+    { id: 's1', r: 3, c: 2, type: '\\' },
+    { id: 'm1', r: 3, c: 3, type: '/' },
+    { id: 'm2', r: 0, c: 3, type: '/' },
+    { id: 'm3', r: 5, c: 2, type: '\\' },
+    { id: 'm4', r: 5, c: 3, type: '/' },
+    { id: 'm5', r: 4, c: 3, type: '/' }
+  ],
+  las_g1_10: [
+    { id: 's1', r: 1, c: 3, type: '/' },
+    { id: 'm1', r: 2, c: 3, type: '\\' },
+    { id: 'm2', r: 2, c: 4, type: '\\' },
+    { id: 'm3', r: 1, c: 1, type: '\\' },
+    { id: 'm4', r: 0, c: 1, type: '\\' },
+    { id: 'm5', r: 5, c: 4, type: '\\' }
+  ],
   las_g3_1: [
     { id: 's1', r: 3, c: 2, type: '/' },
     { id: 'm1', r: 0, c: 2, type: '/' }
@@ -190,6 +269,46 @@ const LASER_SOLUTIONS = {
     { id: 'm1', r: 0, c: 3, type: '/' },
     { id: 'm2', r: 2, c: 4, type: '\\' },
     { id: 'm3', r: 5, c: 4, type: '\\' }
+  ],
+  las_g3_6: [
+    { id: 'm1', r: 1, c: 2, type: '\\' },
+    { id: 's1', r: 4, c: 2, type: '\\' },
+    { id: 'm2', r: 5, c: 2, type: '\\' },
+    { id: 'm3', r: 4, c: 4, type: '/' },
+    { id: 'm4', r: 0, c: 4, type: '/' }
+  ],
+  las_g3_7: [
+    { id: 's1', r: 0, c: 2, type: '\\' },
+    { id: 's2', r: 3, c: 2, type: '\\' },
+    { id: 'm1', r: 5, c: 2, type: '/' },
+    { id: 'm2', r: 3, c: 6, type: '\\' },
+    { id: 'm3', r: 5, c: 6, type: '\\' }
+  ],
+  las_g3_8: [
+    { id: 'm1', r: 3, c: 0, type: '/' },
+    { id: 's1', r: 3, c: 2, type: '/' },
+    { id: 's2', r: 1, c: 2, type: '/' },
+    { id: 'm2', r: 0, c: 2, type: '\\' },
+    { id: 'm3', r: 1, c: 4, type: '/' },
+    { id: 'm4', r: 0, c: 4, type: '/' },
+    { id: 'm5', r: 3, c: 6, type: '\\' }
+  ],
+  las_g3_9: [
+    { id: 'm1', r: 2, c: 5, type: '\\' },
+    { id: 'm2', r: 0, c: 5, type: '\\' },
+    { id: 's1', r: 0, c: 3, type: '/' },
+    { id: 's2', r: 4, c: 3, type: '\\' },
+    { id: 'm3', r: 5, c: 3, type: '/' }
+  ],
+  las_g3_10: [
+    { id: 'm1', r: 2, c: 0, type: '\\' },
+    { id: 's1', r: 2, c: 2, type: '\\' },
+    { id: 's2', r: 4, c: 2, type: '/' },
+    { id: 's3', r: 2, c: 5, type: '\\' },
+    { id: 'm2', r: 5, c: 2, type: '/' },
+    { id: 'm3', r: 4, c: 1, type: '\\' },
+    { id: 'm4', r: 0, c: 1, type: '/' },
+    { id: 'm5', r: 5, c: 5, type: '\\' }
   ]
 };
 
@@ -308,6 +427,152 @@ const CIRCUIT_SOLUTIONS = {
     { r: 2, c: 1, rots: [0, 2] },
     { r: 4, c: 1, rots: [3] },
     { r: 4, c: 0, rots: [1] }
+  ],
+  cir_g1_6: [
+    { r: 0, c: 1, rots: [1, 3] },
+    { r: 0, c: 2, rots: [2] },
+    { r: 2, c: 2, rots: [0] },
+    { r: 2, c: 3, rots: [2] },
+    { r: 3, c: 3, rots: [3] }
+  ],
+  cir_g1_7: [
+    { r: 3, c: 0, rots: [0, 2] },
+    { r: 2, c: 0, rots: [1] },
+    { r: 2, c: 1, rots: [1, 3] },
+    { r: 2, c: 2, rots: [3] },
+    { r: 1, c: 2, rots: [1] },
+    { r: 1, c: 3, rots: [1, 3] },
+    { r: 1, c: 4, rots: [2] },
+    { r: 2, c: 4, rots: [0, 2] },
+    { r: 3, c: 4, rots: [3] },
+    { r: 3, c: 3, rots: [1] },
+    { r: 4, c: 3, rots: [0] }
+  ],
+  cir_g1_8: [
+    { r: 2, c: 1, rots: [1, 3] },
+    { r: 2, c: 3, rots: [3] },
+    { r: 1, c: 3, rots: [2] },
+    { r: 1, c: 2, rots: [1] },
+    { r: 3, c: 2, rots: [0] },
+    { r: 3, c: 3, rots: [1, 3] },
+    { r: 3, c: 4, rots: [3] }
+  ],
+  cir_g1_9: [
+    { r: 1, c: 2, rots: [0, 2] },
+    { r: 2, c: 2, rots: [0, 2] },
+    { r: 3, c: 2, rots: [0] },
+    { r: 3, c: 4, rots: [3] },
+    { r: 2, c: 4, rots: [2] },
+    { r: 2, c: 3, rots: [0] },
+    { r: 1, c: 3, rots: [1] },
+    { r: 1, c: 4, rots: [3] }
+  ],
+  cir_g1_10: [
+    { r: 4, c: 1, rots: [1, 3] },
+    { r: 4, c: 2, rots: [3] },
+    { r: 2, c: 2, rots: [1] },
+    { r: 2, c: 3, rots: [2] },
+    { r: 3, c: 3, rots: [3] },
+    { r: 3, c: 1, rots: [0] },
+    { r: 2, c: 1, rots: [0, 2] },
+    { r: 1, c: 1, rots: [1] },
+    { r: 1, c: 3, rots: [1, 3] },
+    { r: 1, c: 4, rots: [2] },
+    { r: 2, c: 4, rots: [0, 2] },
+    { r: 3, c: 4, rots: [0, 2] }
+  ],
+  cir_g3_6: [
+    { r: 1, c: 1, rots: [0, 2] },
+    { r: 3, c: 1, rots: [0] },
+    { r: 3, c: 2, rots: [1, 3] },
+    { r: 3, c: 4, rots: [3] },
+    { r: 2, c: 4, rots: [0, 2] },
+    { r: 1, c: 4, rots: [2] },
+    { r: 2, c: 3, rots: [0, 2] },
+    { r: 4, c: 3, rots: [0, 2] },
+    { r: 5, c: 3, rots: [3] },
+    { r: 5, c: 2, rots: [1, 3] },
+    { r: 5, c: 1, rots: [1, 3] },
+    { r: 5, c: 0, rots: [0] },
+    { r: 4, c: 0, rots: [0, 2] },
+    { r: 3, c: 0, rots: [0, 2] },
+    { r: 2, c: 0, rots: [1] }
+  ],
+  cir_g3_7: [
+    { r: 2, c: 2, rots: [1, 2] },
+    { r: 4, c: 2, rots: [0] },
+    { r: 4, c: 3, rots: [1, 3] },
+    { r: 4, c: 4, rots: [3] },
+    { r: 3, c: 4, rots: [0, 2] },
+    { r: 2, c: 4, rots: [2] },
+    { r: 2, c: 3, rots: [1] },
+    { r: 3, c: 3, rots: [3] },
+    { r: 3, c: 1, rots: [0] },
+    { r: 1, c: 1, rots: [0, 2] },
+    { r: 0, c: 1, rots: [1] }
+  ],
+  cir_g3_8: [
+    { r: 4, c: 5, rots: [0, 2] },
+    { r: 3, c: 5, rots: [2] },
+    { r: 3, c: 3, rots: [1] },
+    { r: 4, c: 3, rots: [3] },
+    { r: 4, c: 2, rots: [0] },
+    { r: 3, c: 2, rots: [0, 2] },
+    { r: 2, c: 2, rots: [1] },
+    { r: 2, c: 4, rots: [2] },
+    { r: 4, c: 4, rots: [0, 2] },
+    { r: 5, c: 4, rots: [3] },
+    { r: 5, c: 3, rots: [1, 3] },
+    { r: 5, c: 2, rots: [1, 3] },
+    { r: 5, c: 1, rots: [0] },
+    { r: 4, c: 1, rots: [0, 2] },
+    { r: 3, c: 1, rots: [0, 2] },
+    { r: 2, c: 1, rots: [0, 2] },
+    { r: 1, c: 1, rots: [1] },
+    { r: 1, c: 2, rots: [1, 3] },
+    { r: 1, c: 3, rots: [1, 3] },
+    { r: 1, c: 4, rots: [3] }
+  ],
+  cir_g3_9: [
+    { r: 1, c: 1, rots: [1, 3] },
+    { r: 1, c: 3, rots: [1, 3] },
+    { r: 1, c: 4, rots: [2] },
+    { r: 2, c: 4, rots: [0] },
+    { r: 2, c: 5, rots: [2] },
+    { r: 3, c: 5, rots: [0, 2] },
+    { r: 4, c: 5, rots: [3] },
+    { r: 4, c: 4, rots: [0] },
+    { r: 3, c: 4, rots: [2] },
+    { r: 3, c: 2, rots: [1] },
+    { r: 4, c: 2, rots: [0] },
+    { r: 4, c: 3, rots: [3] },
+    { r: 2, c: 3, rots: [2] },
+    { r: 2, c: 2, rots: [0] },
+    { r: 0, c: 2, rots: [2] }
+  ],
+  cir_g3_10: [
+    { r: 1, c: 0, rots: [0, 2] },
+    { r: 2, c: 0, rots: [0] },
+    { r: 2, c: 2, rots: [2] },
+    { r: 3, c: 2, rots: [0] },
+    { r: 3, c: 4, rots: [1, 3] },
+    { r: 3, c: 5, rots: [3] },
+    { r: 2, c: 5, rots: [2] },
+    { r: 1, c: 4, rots: [0, 2] },
+    { r: 0, c: 4, rots: [2] },
+    { r: 0, c: 3, rots: [1, 3] },
+    { r: 0, c: 2, rots: [1] },
+    { r: 1, c: 2, rots: [0] },
+    { r: 1, c: 3, rots: [2] },
+    { r: 2, c: 3, rots: [0, 2] },
+    { r: 4, c: 3, rots: [0] },
+    { r: 4, c: 4, rots: [2] },
+    { r: 5, c: 4, rots: [3] },
+    { r: 5, c: 3, rots: [1, 3] },
+    { r: 5, c: 1, rots: [0] },
+    { r: 4, c: 1, rots: [0, 2] },
+    { r: 3, c: 1, rots: [0, 2] },
+    { r: 1, c: 1, rots: [0, 2] }
   ]
 };
 

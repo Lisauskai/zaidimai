@@ -1,32 +1,32 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113k';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113k';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113k';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113k';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113l';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113l';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113l';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113l';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113k';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113k';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113k';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113k';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113k';
+} from './balance.js?v=20261113l';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113l';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113l';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113l';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113l';
 import {
   MathCrossEngine,
   MATHCROSS_LEVELS,
   MATHCROSS_CANVAS_W,
   MATHCROSS_CANVAS_H
-} from './mathcross.js?v=20261113k';
+} from './mathcross.js?v=20261113l';
 import {
   BridgesEngine,
   BRIDGES_LEVELS,
   BRIDGES_CANVAS_W,
   BRIDGES_CANVAS_H
-} from './bridges.js?v=20261113k';
+} from './bridges.js?v=20261113l';
 import {
   PipeValveEngine,
   JugPourEngine,
@@ -34,8 +34,8 @@ import {
   FLASK_CANVAS_W,
   FLASK_CANVAS_H,
   RYB_COLORS
-} from './flasks.js?v=20261113k';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113k';
+} from './flasks.js?v=20261113l';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113l';
 import {
   isSoundEnabled,
   toggleSound,
@@ -59,8 +59,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113k';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113k';
+} from './sound.js?v=20261113l';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113l';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -69,7 +69,8 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113k';
+} from './robot.js?v=20261113l';
+import { computeInventionsState } from './inventions.js?v=20261113l';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -375,6 +376,7 @@ function updateSummaryUI() {
   }
 
   renderRobotWorkshop(g1Crystals + g3Crystals);
+  renderInventionsBadge();
 }
 
 function handleRobotPartColorCycle(partId) {
@@ -3428,6 +3430,137 @@ victoryModal?.addEventListener('click', (e) => {
   if (e.target === victoryModal) {
     hideVictoryOverlay();
   }
+});
+
+// ==================== IŠRADIMŲ LENTYNOS VALDYMAS ====================
+const inventionsModal = document.getElementById('inventions-modal');
+const inventionsGrid = document.getElementById('inventions-shelf-grid');
+const inventionInspector = document.getElementById('invention-inspector');
+const inventionsBadgeEl = document.getElementById('inventions-count-badge');
+const inventionsSummaryPill = document.getElementById('inventions-summary-pill');
+let activeInventionsFilter = 'combined';
+
+function playInventionSignatureSound(kind) {
+  if (kind === 'pin') playPinPull();
+  else if (kind === 'cube') playCubePush();
+  else if (kind === 'laser') playLaserHum();
+  else if (kind === 'train') playTrainLaunch();
+  else if (kind === 'bell') playBalanceBell();
+  else if (kind === 'memory') playMemoryTone(2);
+  else if (kind === 'jump') playAlgoJump();
+  else if (kind === 'gear') playGearPlace();
+  else if (kind === 'slide') playGravitySlide();
+  else if (kind === 'portal') playPortalWarp();
+  else if (kind === 'victory') playVictoryFanfare();
+  else playHintChime();
+}
+
+function renderInventionsBadge() {
+  if (!inventionsBadgeEl) return;
+  const state = computeInventionsState(progress, getLevelsForMode, 'combined');
+  inventionsBadgeEl.textContent = `${state.unlockedCount} / ${state.totalCount}`;
+}
+
+function renderInventionsShelfModal() {
+  if (!inventionsGrid) return;
+  const state = computeInventionsState(progress, getLevelsForMode, activeInventionsFilter);
+
+  if (inventionsSummaryPill) {
+    inventionsSummaryPill.textContent = `🥈 ${state.silverUnlocked}/12 • 🥇 ${state.goldUnlocked}/12`;
+  }
+
+  document.querySelectorAll('.inv-filter-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.invFilter === activeInventionsFilter);
+  });
+
+  inventionsGrid.innerHTML = '';
+
+  const createTierCard = (zone, tierKey, unlocked, tierData, reqLevels) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = `invention-card ${tierKey} ${unlocked ? 'unlocked' : 'locked'}`;
+    card.innerHTML = `
+      <div class="inv-card-top">
+        <span class="inv-tier-tag">${tierKey === 'gold' ? '🥇 AUKSAS' : '🥈 SIDABRAS'}</span>
+        <span class="inv-zone-tag">${zone.zoneIcon} ${zone.solvedCount}/${reqLevels}</span>
+      </div>
+      <div class="inv-card-icon" aria-hidden="true">${unlocked ? tierData.icon : '🔒'}</div>
+      <div class="inv-card-name">${unlocked ? tierData.name : 'Užrakintas išradimas'}</div>
+    `;
+
+    card.addEventListener('click', () => {
+      if (!unlocked) {
+        playWrongBuzz();
+        if (inventionInspector) {
+          inventionInspector.innerHTML = `
+            <span class="inv-insp-icon" aria-hidden="true">🔒</span>
+            <div>
+              <strong>${zone.zoneName} – ${tierKey === 'gold' ? 'Auksinis' : 'Sidabrinis'} išradimas užrakintas</strong>
+              <p>Išspręsk bent <strong>${reqLevels}</strong> lygius šioje zonoje (dabar išspręsta: ${zone.solvedCount}/${zone.totalLevels}), kad atrakintum „${tierData.name}“!</p>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      playInventionSignatureSound(tierData.sound);
+      card.classList.remove('is-activated');
+      void card.offsetWidth;
+      card.classList.add('is-activated');
+
+      if (inventionInspector) {
+        inventionInspector.innerHTML = `
+          <span class="inv-insp-icon inv-insp-bounce" aria-hidden="true">${tierData.icon}</span>
+          <div>
+            <strong>${tierData.name} (${tierKey === 'gold' ? '🥇 Auksinis' : '🥈 Sidabrinis'})</strong>
+            <p>${tierData.desc}</p>
+          </div>
+        `;
+      }
+    });
+
+    return card;
+  };
+
+  state.zones.forEach((zone) => {
+    const row = document.createElement('section');
+    row.className = 'invention-zone-row';
+    row.innerHTML = `
+      <div class="inv-zone-header">
+        <span>${zone.zoneIcon} <strong>${zone.zoneName}</strong></span>
+        <span class="inv-zone-progress">Įveikta: ${zone.solvedCount} / ${zone.totalLevels}</span>
+      </div>
+      <div class="inv-zone-pair"></div>
+    `;
+    const pairEl = row.querySelector('.inv-zone-pair');
+    pairEl.appendChild(createTierCard(zone, 'silver', zone.hasSilver, zone.silver, 5));
+    pairEl.appendChild(createTierCard(zone, 'gold', zone.hasGold, zone.gold, 10));
+    inventionsGrid.appendChild(row);
+  });
+}
+
+function openInventionsModal() {
+  if (!inventionsModal) return;
+  playHintChime();
+  renderInventionsShelfModal();
+  inventionsModal.classList.remove('hidden');
+}
+
+function closeInventionsModal() {
+  inventionsModal?.classList.add('hidden');
+}
+
+document.getElementById('btn-open-inventions')?.addEventListener('click', openInventionsModal);
+document.getElementById('btn-close-inventions')?.addEventListener('click', closeInventionsModal);
+inventionsModal?.addEventListener('click', (e) => {
+  if (e.target === inventionsModal) closeInventionsModal();
+});
+document.querySelectorAll('.inv-filter-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    activeInventionsFilter = btn.dataset.invFilter || 'combined';
+    playMirrorClick();
+    renderInventionsShelfModal();
+  });
 });
 
 syncSoundToggleUI();

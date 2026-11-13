@@ -80,6 +80,76 @@ export const SOKOBAN_LEVELS = {
         '#T..E#',
         '######'
       ]
+    },
+    {
+      id: 'sok_g1_6',
+      title: '6. Dvi šachtos',
+      instruction: 'Aplenk vidurinę koloną ir nustumk abu energijos kubus į jų vietas!',
+      reward: 2,
+      map: [
+        '#######',
+        '#R....#',
+        '#.C#C.#',
+        '#.T.T.#',
+        '#....E#',
+        '#######'
+      ]
+    },
+    {
+      id: 'sok_g1_7',
+      title: '7. Reaktoriaus koridorius',
+      instruction: 'Kurį kubą stumti pirmą, kad neužblokuotum kelio kitam?',
+      reward: 2,
+      map: [
+        '#######',
+        '#R..T.#',
+        '#.C##.#',
+        '#..C..#',
+        '#.T..E#',
+        '#######'
+      ]
+    },
+    {
+      id: 'sok_g1_8',
+      title: '8. Trys energijos kubai',
+      instruction: 'Pirmą kartą net 3 energijos kubai! Sudėk juos ant visų trijų mygtukų.',
+      reward: 2,
+      map: [
+        '#######',
+        '#R....#',
+        '#.CCC.#',
+        '#.TTT.#',
+        '#....E#',
+        '#######'
+      ]
+    },
+    {
+      id: 'sok_g1_9',
+      title: '9. Kolonų labirintas',
+      instruction: 'Apvesk tris energijos kubus tarp kolonų iki šviečiančių mygtukų!',
+      reward: 3,
+      map: [
+        '########',
+        '#R.....#',
+        '#.C.#C.#',
+        '#..CT..#',
+        '#.T..TE#',
+        '########'
+      ]
+    },
+    {
+      id: 'sok_g1_10',
+      title: '10. Didysis robotuko sandėlis',
+      instruction: '1 klasės finalas! Teisinga eile sustumk visus 3 kubus į apačią ir išeik pro 🚪!',
+      reward: 3,
+      map: [
+        '########',
+        '#R....E#',
+        '#.C#C#.#',
+        '#..C...#',
+        '#..TTT.#',
+        '########'
+      ]
     }
   ],
 
@@ -159,6 +229,84 @@ export const SOKOBAN_LEVELS = {
         '#.CIIT.#',
         '#C.vC..#',
         '#T..T.E#',
+        '########'
+      ]
+    },
+    {
+      id: 'sok_g3_6',
+      title: '6. Ledinis tiltas ir vartai',
+      instruction: 'Panaudok ir ledą (❄️), ir vienkrypčius vartus (➡️), kad užpildytum visus 3 mygtukus!',
+      reward: 2,
+      map: [
+        '########',
+        '#R.....#',
+        '#.CIIT.#',
+        '#..#C>.#',
+        '#.C.I..#',
+        '#T..T.E#',
+        '########'
+      ]
+    },
+    {
+      id: 'sok_g3_7',
+      title: '7. Siauras čiuožimo koridorius',
+      instruction: 'Vieną kubą prastumk pro ➡️ ant ledo, o kitus du tiksliai sustatyk apačioje!',
+      reward: 2,
+      map: [
+        '########',
+        '#R..#..#',
+        '#.C>IT.#',
+        '#..#.#.#',
+        '#.C.CT.#',
+        '#T....E#',
+        '########'
+      ]
+    },
+    {
+      id: 'sok_g3_8',
+      title: '8. Dvigubas ledo slėnis',
+      instruction: 'Net dvi ledo atšakos ir vienkrypčiai vartai ➡️! Atsargiai pasirink, ką stumti pirma.',
+      reward: 3,
+      map: [
+        '########',
+        '#R.....#',
+        '#.C#C>.#',
+        '#..I.I.#',
+        '#.TI.IT#',
+        '#..C..T#',
+        '#.....E#',
+        '########'
+      ]
+    },
+    {
+      id: 'sok_g3_9',
+      title: '9. Ledo ir vartų sankryža',
+      instruction: 'Keturi kubai, ➡️ ir ⬇️ vartai bei ilgas ledo takas! Planuok kelis žingsnius į priekį.',
+      reward: 3,
+      map: [
+        '########',
+        '#R.....#',
+        '#.C>IT.#',
+        '#..#v#.#',
+        '#..CC..#',
+        '#.T..T.#',
+        '#..CITE#',
+        '########'
+      ]
+    },
+    {
+      id: 'sok_g3_10',
+      title: '10. Galutinis stumduko egzaminas',
+      instruction: '3 klasės finalas! Visos mechanikos vienoje salėje: vienkrypčiai vartai, dvigubas ledas ir 4 kubai!',
+      reward: 3,
+      map: [
+        '########',
+        '#R.....#',
+        '#..C>IT#',
+        '#..#.#.#',
+        '#.CIIT.#',
+        '#.CvC..#',
+        '#.T..TE#',
         '########'
       ]
     }

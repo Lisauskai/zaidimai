@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261113k" />
+  <link rel="stylesheet" href="./style.css?v=20261113l" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -68,13 +68,13 @@
             </div>
             <h3>1 klasė (Jaunasis išradėjas)</h3>
             <p class="diff-desc">
-              5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“, 5 „Raštų šifro“ lygiai ir 3 mini eksperimentai.
+              12 laboratorijos zonų po 10 nuoseklių lygių (120 galvosūkių): kaiščiai, stumdukas, lazeriai, grandinės, svarstyklės, šifrai, algoritmai, krumpliaračiai, gravitacija, skaičių kryžiažodžiai, tiltai ir kolbos.
             </p>
 
             <div class="diff-progress-box">
               <div class="progress-stat">
                 <span>✅ Išspręsti lygiai:</span>
-                <strong id="g1-solved-text">0 / 33</strong>
+                <strong id="g1-solved-text">0 / 120</strong>
               </div>
               <div class="progress-stat">
                 <span>💎 Proto kristalai:</span>
@@ -95,13 +95,13 @@
             </div>
             <h3>3 klasė (Vyriausiasis inžinierius)</h3>
             <p class="diff-desc">
-              5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“, 5 „Raštų ir atminties šifro“ lygiai + 3 mini eksperimentai.
+              12 laboratorijos zonų po 10 gilesnių lygių (120 galvosūkių) su ėjimų limitais, dalikliais, tiltais, krypties krumpliaračiais ir daugiažingsniais šifrais.
             </p>
 
             <div class="diff-progress-box">
               <div class="progress-stat">
                 <span>✅ Išspręsti lygiai:</span>
-                <strong id="g3-solved-text">0 / 33</strong>
+                <strong id="g3-solved-text">0 / 120</strong>
               </div>
               <div class="progress-stat">
                 <span>💎 Proto kristalai:</span>
@@ -132,6 +132,11 @@
           <div id="robot-canvas-box" class="robot-canvas-box"></div>
 
           <div id="robot-parts-list" class="robot-parts-list"></div>
+
+          <button id="btn-open-inventions" class="inventions-shelf-btn" type="button">
+            <span>🏆 Išradimų lentyna</span>
+            <span id="inventions-count-badge" class="inv-badge">0 / 24</span>
+          </button>
         </aside>
       </div>
     </section>
@@ -154,22 +159,22 @@
 
         <div class="lab-mode-tabs">
           <button id="tab-mode-pinpull" class="mode-tab-btn active" type="button">
-            🔩 Ištrauk kaištį (5)
+            🔩 Ištrauk kaištį (10)
           </button>
           <button id="tab-mode-sokoban" class="mode-tab-btn" type="button">
-            🤖 Robo-Stumdukas (5)
+            🤖 Robo-Stumdukas (10)
           </button>
           <button id="tab-mode-laser" class="mode-tab-btn" type="button">
-            🔦 Lazerių veidrodžiai (5)
+            🔦 Lazerių veidrodžiai (10)
           </button>
           <button id="tab-mode-circuit" class="mode-tab-btn" type="button">
-            🚂 Sujunk grandinę (5)
+            🚂 Sujunk grandinę (10)
           </button>
           <button id="tab-mode-balance" class="mode-tab-btn" type="button">
-            ⚖️ Kosminės svarstyklės (8)
+            ⚖️ Kosminės svarstyklės (10)
           </button>
           <button id="tab-mode-matrix" class="mode-tab-btn" type="button">
-            🧩 Raštai ir atmintis (5)
+            🧩 Raštai ir atmintis (10)
           </button>
           <button id="tab-mode-algo" class="mode-tab-btn" type="button">
             🧑‍💻 Algoritmų trasa (10)
@@ -181,10 +186,10 @@
             🧊 Gravitacijos labirintas (10)
           </button>
           <button id="tab-mode-mathcross" class="mode-tab-btn" type="button">
-            🔢 Skaičių kryžiažodžiai (8)
+            🔢 Skaičių kryžiažodžiai (10)
           </button>
           <button id="tab-mode-bridges" class="mode-tab-btn" type="button">
-            🌉 Energijos tiltai (8)
+            🌉 Energijos tiltai (10)
           </button>
           <button id="tab-mode-mini" class="mode-tab-btn" type="button">
             🧪 Kolbų laboratorija (10)
@@ -197,9 +202,9 @@
         <div class="world-map-head">
           <div>
             <h2 class="world-map-title">🗺️ Proto Laboratorijos žemėlapis</h2>
-            <p class="world-map-sub">Laisvai rinkis bet kurią iš 12 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
+            <p class="world-map-sub">Laisvai rinkis bet kurią iš 12 laboratorijos zonų! Viduje po 10 lygių – įveik 5 sidabriniam ir 10 auksiniam išradimui.</p>
           </div>
-          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 192</div>
+          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 360</div>
         </div>
         <div id="world-map-grid" class="world-map-grid"></div>
       </section>
@@ -625,6 +630,36 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js?v=20261113k"></script>
+  <!-- IŠRADIMŲ LENTYNOS MODALAS -->
+  <div id="inventions-modal" class="victory-modal hidden" role="dialog" aria-modal="true" aria-labelledby="inventions-modal-title">
+    <div class="inventions-modal-card">
+      <div class="inventions-modal-header">
+        <div>
+          <span class="diff-level-chip">🏆 KOLEKCIJA • 24 IŠRADIMAI</span>
+          <h2 id="inventions-modal-title">IŠRADIMŲ LENTYNA</h2>
+        </div>
+        <button id="btn-close-inventions" class="secondary-btn" type="button" aria-label="Uždaryti lentyną">✕ Uždaryti</button>
+      </div>
+
+      <div class="inventions-filter-row" role="tablist" aria-label="Klasės filtras">
+        <button class="inv-filter-btn active" type="button" data-inv-filter="combined">🌟 Bendras pažymys</button>
+        <button class="inv-filter-btn" type="button" data-inv-filter="grade1">🔭 1 klasė</button>
+        <button class="inv-filter-btn" type="button" data-inv-filter="grade3">🧪 3 klasė</button>
+        <span id="inventions-summary-pill" class="inv-summary-pill">🥈 0/12 • 🥇 0/12</span>
+      </div>
+
+      <div id="invention-inspector" class="invention-inspector">
+        <span class="inv-insp-icon" aria-hidden="true">✨</span>
+        <div>
+          <strong>Paspausk ant atrakinto išradimo!</strong>
+          <p>Įveik 5 lygius zonoje → 🥈 Sidabrinis išradimas. Visus 10 lygių → 🥇 Auksinis išradimas!</p>
+        </div>
+      </div>
+
+      <div id="inventions-shelf-grid" class="inventions-shelf-grid"></div>
+    </div>
+  </div>
+
+  <script type="module" src="./game.js?v=20261113l"></script>
 </body>
 </html>
