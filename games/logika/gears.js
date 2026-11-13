@@ -489,6 +489,12 @@ export class GearsEngine {
     this.liftReady = false;
     this.liftErrorReason = '';
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
+    this.sparks = [];
+    this.sparkAccum = 0;
     this.hintPeg = null;
 
     this.lastTime = performance.now();
@@ -513,6 +519,12 @@ export class GearsEngine {
   reset() {
     this.placed = {};
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
+    this.sparks = [];
+    this.sparkAccum = 0;
     this.hintPeg = null;
     this.liftProgress = 0;
     this.liftReady = false;
@@ -712,13 +724,37 @@ export class GearsEngine {
     }
 
     if (allGoalsOk && liftOk) {
-      if (!this.won) {
+      if (!this.won && !this.isWinning) {
         this.won = true;
-        this.callbacks.onWin?.();
+        this.isWinning = true;
+        this.inputLocked = true;
+        this.victoryTimer = 0;
+        this.winNotified = false;
+        this.spawnVictorySparks(18);
       }
     }
 
     this.callbacks.onStateChange?.();
+  }
+
+  spawnVictorySparks(count = 6) {
+    const targets = [this.level.motor, ...this.getGoals()];
+    for (let i = 0; i < count; i++) {
+      const origin = targets[i % targets.length];
+      if (!origin) continue;
+      const ang = Math.random() * Math.PI * 2;
+      const spd = 45 + Math.random() * 85;
+      const rOffset = (origin.radius || 32) * (0.75 + Math.random() * 0.35);
+      this.sparks.push({
+        x: origin.x + Math.cos(ang) * rOffset,
+        y: origin.y + Math.sin(ang) * rOffset,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 20,
+        life: 0.7 + Math.random() * 0.5,
+        maxLife: 1.2,
+        color: i % 2 === 0 ? '#fde047' : '#4ade80'
+      });
+    }
   }
 
   getStatusSummary() {
@@ -772,7 +808,7 @@ export class GearsEngine {
   }
 
   placeGearOnPeg(pegId, sizeKey) {
-    if (this.won) return false;
+    if (this.won || this.isWinning || this.inputLocked) return false;
     const prev = this.placed[pegId];
     if (prev === sizeKey) return false;
 
@@ -792,7 +828,7 @@ export class GearsEngine {
   }
 
   removeGearFromPeg(pegId) {
-    if (this.won || !this.placed[pegId]) return false;
+    if (this.won || this.isWinning || this.inputLocked || !this.placed[pegId]) return false;
     delete this.placed[pegId];
     this.callbacks.onAction?.();
     this.recomputePhysics();
@@ -800,7 +836,7 @@ export class GearsEngine {
   }
 
   handlePointerDown(mx, my) {
-    if (this.won) return;
+    if (this.won || this.isWinning || this.inputLocked) return;
     const peg = this.findPegAt(mx, my);
     if (!peg) return;
 
@@ -812,7 +848,7 @@ export class GearsEngine {
   }
 
   handleDropFromPalette(sizeKey, mx, my) {
-    if (this.won || !GEAR_SIZES[sizeKey]) return false;
+    if (this.won || this.isWinning || this.inputLocked || !GEAR_SIZES[sizeKey]) return false;
     let bestPeg = null;
     let bestDist = 72;
     for (const peg of this.level.pegs) {
@@ -831,9 +867,43 @@ export class GearsEngine {
       const dt = Math.min(0.05, (now - this.lastTime) / 1000);
       this.lastTime = now;
 
+      const spinBoost = this.isWinning
+        ? 1 + Math.min(0.9, this.victoryTimer * 0.5)
+        : this.winNotified
+          ? 1.65
+          : 1;
+
       for (const [id, omega] of Object.entries(this.speeds)) {
-        this.angles[id] = (this.angles[id] || 0) + omega * dt;
+        this.angles[id] = (this.angles[id] || 0) + omega * spinBoost * dt;
       }
+
+      if (this.isWinning && !this.winNotified) {
+        this.victoryTimer += dt;
+        this.sparkAccum += dt;
+        if (this.sparkAccum >= 0.14) {
+          this.sparkAccum = 0;
+          this.spawnVictorySparks(4);
+        }
+        if (this.victoryTimer >= 2.2) {
+          this.isWinning = false;
+          this.winNotified = true;
+          this.callbacks.onWin?.();
+        }
+      } else if (this.winNotified) {
+        this.sparkAccum += dt;
+        if (this.sparkAccum >= 0.35) {
+          this.sparkAccum = 0;
+          this.spawnVictorySparks(2);
+        }
+      }
+
+      for (const sp of this.sparks) {
+        sp.x += sp.vx * dt;
+        sp.y += sp.vy * dt;
+        sp.vy += 120 * dt;
+        sp.life -= dt;
+      }
+      this.sparks = this.sparks.filter((sp) => sp.life > 0);
 
       const targetLift = this.liftReady ? 1 : 0;
       this.liftProgress += (targetLift - this.liftProgress) * Math.min(1, dt * 4);
@@ -1015,15 +1085,25 @@ export class GearsEngine {
       this.drawGear(ctx, g, ang, isJammed, omega);
     }
 
-    // Variklio etiketė
+    // Variklio etiketė ir būsenos lemputė
     ctx.save();
-    ctx.fillStyle = '#86efac';
+    ctx.fillStyle = this.won ? '#4ade80' : '#86efac';
     ctx.font = '900 12px Nunito, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(`VARIKLIS ${this.level.motor.dir > 0 ? '↻' : '↺'}`, this.level.motor.x, this.level.motor.y + this.level.motor.radius + 18);
+    if (this.won) {
+      const motorPulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.014);
+      ctx.strokeStyle = `rgba(250, 204, 21, ${(0.55 + motorPulse * 0.4).toFixed(2)})`;
+      ctx.lineWidth = 4;
+      ctx.shadowBlur = 22;
+      ctx.shadowColor = '#facc15';
+      ctx.beginPath();
+      ctx.arc(this.level.motor.x, this.level.motor.y, this.level.motor.radius + 10 + motorPulse * 4, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.restore();
 
-    // Tikslų ženkliukai (1–2 mechanizmai + kryptys)
+    // Tikslų ženkliukai (1–2 mechanizmai + kryptys) + žalios indikatoriaus lemputės
     for (const g of this.getGoals()) {
       const sp = this.speeds[g.id] || 0;
       const dirOk = g.requiredDir == null || (sp && Math.sign(sp) === g.requiredDir);
@@ -1033,11 +1113,41 @@ export class GearsEngine {
         this.drawRequiredDirBadge(ctx, g.x, g.y - g.radius - 22, g.requiredDir, active);
       }
 
+      // Indikatoriaus lemputė šalia tikslo
+      const ledX = g.x + g.radius + 12;
+      const ledY = g.y - g.radius + 4;
+      ctx.save();
+      if (active) {
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = '#4ade80';
+      }
+      ctx.fillStyle = active ? '#22c55e' : '#334155';
+      ctx.strokeStyle = active ? '#bbf7d0' : '#64748b';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(ledX, ledY, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
       ctx.save();
       ctx.fillStyle = active ? '#4ade80' : '#fef08a';
       ctx.font = '900 12px Nunito, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText(`${g.icon || '⚙️'} ${g.label || 'Tikslas'}`, g.x, g.y + g.radius + 18);
+      ctx.restore();
+    }
+
+    // Pergalės kibirkštys
+    for (const sp of this.sparks) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, sp.life / sp.maxLife));
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = sp.color;
+      ctx.fillStyle = sp.color;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 

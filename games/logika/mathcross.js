@@ -684,11 +684,24 @@ export class MathCrossEngine {
     this.hintSlotKey = null;
     this.badGroupIndices = new Set();
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
+    this.winPulse = 0;
+    this.rafId = null;
     this.hitboxes = []; // [{ key, x, y, r, isFixed, isFilled }]
 
     this.selectFirstEmptySlot();
     this.notifyState();
     this.draw();
+  }
+
+  destroy() {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
   }
 
   getSlotKeys() {
@@ -719,11 +732,17 @@ export class MathCrossEngine {
   }
 
   reset() {
+    this.destroy();
     this.placedBySlot = {};
     this.selectedCardCid = null;
     this.hintSlotKey = null;
     this.badGroupIndices.clear();
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
+    this.winPulse = 0;
     this.selectFirstEmptySlot();
     this.notifyState();
     this.draw();
@@ -880,11 +899,16 @@ export class MathCrossEngine {
 
     if (this.badGroupIndices.size === 0) {
       this.won = true;
+      this.isWinning = true;
+      this.inputLocked = true;
+      this.victoryTimer = 0;
+      this.winNotified = false;
+      this.winPulse = 0;
       this.selectedSlotKey = null;
       this.notifyState();
       this.draw();
       this.callbacks.onCheckResult?.({ ok: true, won: true });
-      this.callbacks.onWin?.();
+      this.startVictoryLoop();
       return { ok: true, won: true };
     }
 
@@ -928,33 +952,62 @@ export class MathCrossEngine {
     }
   }
 
+  startVictoryLoop() {
+    if (this.rafId !== null) return;
+    let last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      this.winPulse += dt;
+      if (this.isWinning && !this.winNotified) {
+        this.victoryTimer += dt;
+        if (this.victoryTimer >= 1.6) {
+          this.isWinning = false;
+          this.winNotified = true;
+          this.callbacks.onWin?.();
+        }
+      }
+      this.draw();
+      this.rafId = requestAnimationFrame(tick);
+    };
+    this.rafId = requestAnimationFrame(tick);
+  }
+
   drawNode(ctx, x, y, r, key, value, isFixed) {
     const isPlaced = !isFixed && value !== null && value !== undefined;
     const isSelected = !isFixed && this.selectedSlotKey === key;
     const isHinted = !isFixed && this.hintSlotKey === key;
+    const winGlow = this.won ? 0.5 + 0.5 * Math.sin(this.winPulse * 6 + x * 0.02 + y * 0.02) : 0;
 
     ctx.save();
-    if (isHinted || isSelected) {
+    if (this.won) {
+      ctx.shadowBlur = 14 + winGlow * 14;
+      ctx.shadowColor = '#4ade80';
+    } else if (isHinted || isSelected) {
       ctx.shadowBlur = 16;
       ctx.shadowColor = isHinted ? '#facc15' : '#38bdf8';
     }
 
-    ctx.fillStyle = isFixed
-      ? '#334155'
-      : this.won
-        ? '#15803d'
+    ctx.fillStyle = this.won
+      ? isFixed
+        ? '#166534'
+        : '#15803d'
+      : isFixed
+        ? '#334155'
         : isPlaced
           ? '#0369a1'
           : '#0f172a';
-    ctx.strokeStyle = isHinted
-      ? '#facc15'
-      : isSelected
-        ? '#38bdf8'
-        : isFixed
-          ? '#94a3b8'
-          : isPlaced
-            ? '#7dd3fc'
-            : '#6366f1';
+    ctx.strokeStyle = this.won
+      ? '#4ade80'
+      : isHinted
+        ? '#facc15'
+        : isSelected
+          ? '#38bdf8'
+          : isFixed
+            ? '#94a3b8'
+            : isPlaced
+              ? '#7dd3fc'
+              : '#6366f1';
     ctx.lineWidth = isSelected || isHinted ? 4 : 3;
 
     ctx.beginPath();
@@ -1095,16 +1148,21 @@ export class MathCrossEngine {
         ctx.fillText(cell.text, cx, cy + 1);
         ctx.restore();
       } else if (cell.type === 'num') {
+        const winGlow = this.won ? 0.5 + 0.5 * Math.sin(this.winPulse * 6 + cx * 0.02 + cy * 0.02) : 0;
         ctx.save();
-        ctx.fillStyle = '#1e293b';
-        ctx.strokeStyle = '#64748b';
+        if (this.won) {
+          ctx.shadowBlur = 12 + winGlow * 10;
+          ctx.shadowColor = '#4ade80';
+        }
+        ctx.fillStyle = this.won ? '#166534' : '#1e293b';
+        ctx.strokeStyle = this.won ? '#4ade80' : '#64748b';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.roundRect(cx - 28, cy - 28, 56, 56, 12);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = '#e2e8f0';
+        ctx.fillStyle = this.won ? '#dcfce7' : '#e2e8f0';
         ctx.font = '900 21px "Russo One", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -1115,20 +1173,26 @@ export class MathCrossEngine {
         const placed = this.placedBySlot[key];
         const isSelected = this.selectedSlotKey === key;
         const isHinted = this.hintSlotKey === key;
+        const winGlow = this.won ? 0.5 + 0.5 * Math.sin(this.winPulse * 6 + cx * 0.02 + cy * 0.02) : 0;
 
         ctx.save();
-        if (isHinted || isSelected) {
+        if (this.won) {
+          ctx.shadowBlur = 14 + winGlow * 14;
+          ctx.shadowColor = '#4ade80';
+        } else if (isHinted || isSelected) {
           ctx.shadowBlur = 16;
           ctx.shadowColor = isHinted ? '#facc15' : '#38bdf8';
         }
         ctx.fillStyle = this.won ? '#15803d' : placed ? '#0369a1' : '#0f172a';
-        ctx.strokeStyle = isHinted
-          ? '#facc15'
-          : isSelected
-            ? '#38bdf8'
-            : placed
-              ? '#7dd3fc'
-              : '#a855f7';
+        ctx.strokeStyle = this.won
+          ? '#4ade80'
+          : isHinted
+            ? '#facc15'
+            : isSelected
+              ? '#38bdf8'
+              : placed
+                ? '#7dd3fc'
+                : '#a855f7';
         ctx.lineWidth = isSelected || isHinted ? 4 : 3;
         ctx.beginPath();
         ctx.roundRect(cx - 28, cy - 28, 56, 56, 12);

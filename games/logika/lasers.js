@@ -671,6 +671,10 @@ export class LaserMirrorsEngine {
     this.rafId = null;
     this.time = 0;
     this.wonNotified = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winSparks = [];
 
     this.computeLayout();
     this.reset();
@@ -692,6 +696,10 @@ export class LaserMirrorsEngine {
     this.dragState = null;
     this.hint = null;
     this.wonNotified = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winSparks = [];
     this.movesUsed = 0;
     this.maxMoves = this.level.maxMoves || 10;
     this.outOfMoves = false;
@@ -713,9 +721,13 @@ export class LaserMirrorsEngine {
     const totalTargets = this.level.targets.length;
     const litTargets = this.trace.hitTargets.size;
     const movesLeft = Math.max(0, this.maxMoves - this.movesUsed);
-    const wonNow = this.trace.won && !this.wonNotified;
-    if (this.trace.won && !this.wonNotified) {
-      this.wonNotified = true;
+    if (this.trace.won && !this.wonNotified && !this.isWinning) {
+      this.isWinning = true;
+      this.inputLocked = true;
+      this.victoryTimer = 0;
+      this.selectedPieceId = null;
+      this.dragState = null;
+      this.spawnTargetSparks();
     } else if (!this.trace.won && this.movesUsed >= this.maxMoves && !this.outOfMoves) {
       this.outOfMoves = true;
     }
@@ -727,11 +739,35 @@ export class LaserMirrorsEngine {
         maxMoves: this.maxMoves,
         movesLeft,
         outOfMoves: this.outOfMoves,
-        won: wonNow
+        isWinning: this.isWinning,
+        won: false
       });
     }
     if (this.outOfMoves && this.callbacks.onOutOfMoves) {
       this.callbacks.onOutOfMoves();
+    }
+  }
+
+  spawnTargetSparks() {
+    const cs = this.cellSize;
+    const ox = this.originX;
+    const oy = this.originY;
+    for (const t of this.level.targets || []) {
+      const cx = ox + (t.c + 0.5) * cs;
+      const cy = oy + (t.r + 0.5) * cs;
+      for (let i = 0; i < 10; i++) {
+        const ang = (Math.PI * 2 * i) / 10 + Math.random() * 0.4;
+        const spd = 28 + Math.random() * 62;
+        this.winSparks.push({
+          x: cx,
+          y: cy,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          life: 0.7 + Math.random() * 0.5,
+          maxLife: 1.2,
+          color: i % 2 === 0 ? '#4ade80' : '#fef08a'
+        });
+      }
     }
   }
 
@@ -756,7 +792,7 @@ export class LaserMirrorsEngine {
   }
 
   rotatePiece(piece) {
-    if (this.outOfMoves || this.wonNotified) return;
+    if (this.outOfMoves || this.wonNotified || this.isWinning || this.inputLocked) return;
     piece.type = piece.type === '/' ? '\\' : '/';
     this.movesUsed++;
     this.hint = null;
@@ -765,7 +801,7 @@ export class LaserMirrorsEngine {
   }
 
   movePiece(piece, r, c) {
-    if (this.outOfMoves || this.wonNotified) return false;
+    if (this.outOfMoves || this.wonNotified || this.isWinning || this.inputLocked) return false;
     if (!this.level.movable) return false;
     if (!this.isCellEmptyForPiece(r, c)) return false;
     piece.r = r;
@@ -778,7 +814,7 @@ export class LaserMirrorsEngine {
   }
 
   handlePointerDown(mx, my) {
-    if (this.outOfMoves || this.wonNotified) return;
+    if (this.outOfMoves || this.wonNotified || this.isWinning || this.inputLocked) return;
     const cell = this.cellAtCoords(mx, my);
     if (!cell) {
       this.selectedPieceId = null;
@@ -820,7 +856,7 @@ export class LaserMirrorsEngine {
   }
 
   handlePointerMove(mx, my) {
-    if (!this.dragState) return;
+    if (!this.dragState || this.isWinning || this.inputLocked) return;
     this.dragState.currX = mx;
     this.dragState.currY = my;
     const dist = Math.hypot(mx - this.dragState.startX, my - this.dragState.startY);
@@ -831,7 +867,10 @@ export class LaserMirrorsEngine {
   }
 
   handlePointerUp(mx, my) {
-    if (!this.dragState) return;
+    if (!this.dragState || this.isWinning || this.inputLocked) {
+      this.dragState = null;
+      return;
+    }
     const drag = this.dragState;
     this.dragState = null;
 
@@ -865,6 +904,38 @@ export class LaserMirrorsEngine {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       this.time += dt;
+
+      for (const sp of this.winSparks) {
+        sp.x += sp.vx * dt;
+        sp.y += sp.vy * dt;
+        sp.life -= dt;
+      }
+      this.winSparks = this.winSparks.filter((sp) => sp.life > 0);
+
+      if (this.isWinning && !this.wonNotified) {
+        this.victoryTimer += dt;
+        if (this.winSparks.length < 12 && Math.random() < 0.25) {
+          this.spawnTargetSparks();
+        }
+        if (this.victoryTimer >= 2.2) {
+          this.isWinning = false;
+          this.wonNotified = true;
+          const totalTargets = this.level.targets.length;
+          const litTargets = this.trace.hitTargets.size;
+          const movesLeft = Math.max(0, this.maxMoves - this.movesUsed);
+          this.callbacks.onStatusChange?.({
+            litTargets,
+            totalTargets,
+            movesUsed: this.movesUsed,
+            maxMoves: this.maxMoves,
+            movesLeft,
+            outOfMoves: this.outOfMoves,
+            isWinning: false,
+            won: true
+          });
+        }
+      }
+
       this.draw();
       this.rafId = requestAnimationFrame(tick);
     };
@@ -996,6 +1067,19 @@ export class LaserMirrorsEngine {
       this.drawCrystal(ctx, ox + (t.c + 0.5) * cs, oy + (t.r + 0.5) * cs, cs, hit);
     });
 
+    // Kristalų užsidegimo kibirkštys
+    for (const sp of this.winSparks) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, Math.min(1, sp.life / sp.maxLife));
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = sp.color;
+      ctx.fillStyle = sp.color;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
     // Užuominos tikslo langelis (kai reikia perkelti elementą)
     if (this.hint && typeof this.hint.toR === 'number' && typeof this.hint.toC === 'number') {
       const hx = ox + this.hint.toC * cs + 4;
@@ -1071,18 +1155,33 @@ export class LaserMirrorsEngine {
   drawCrystal(ctx, cx, cy, cs, isHit) {
     ctx.save();
     const s = cs * 0.34;
+    const isAllWon = this.isWinning || this.wonNotified;
+    const charge = isAllWon ? Math.min(1, (this.victoryTimer || 2.2) / 1.3) : isHit ? 0.55 : 0;
+
     if (isHit) {
-      const pulse = 1 + 0.08 * Math.sin(this.time * 7);
+      const pulse = 1 + (isAllWon ? 0.13 : 0.08) * Math.sin(this.time * (isAllWon ? 10 : 7));
+      if (isAllWon) {
+        const ringR = cs * (0.44 + 0.14 * Math.sin(this.time * 8));
+        ctx.save();
+        ctx.strokeStyle = `rgba(134, 239, 172, ${(0.35 + 0.45 * charge).toFixed(2)})`;
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 22;
+        ctx.shadowColor = '#4ade80';
+        ctx.beginPath();
+        ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
       ctx.scale(pulse, pulse);
       cx /= pulse;
       cy /= pulse;
-      ctx.shadowBlur = 24;
-      ctx.shadowColor = '#4ade80';
+      ctx.shadowBlur = isAllWon ? 32 : 24;
+      ctx.shadowColor = isAllWon ? '#86efac' : '#4ade80';
     }
 
-    ctx.fillStyle = isHit ? '#22c55e' : '#065f46';
-    ctx.strokeStyle = isHit ? '#bbf7d0' : '#34d399';
-    ctx.lineWidth = 3;
+    ctx.fillStyle = isHit ? (isAllWon ? '#4ade80' : '#22c55e') : '#065f46';
+    ctx.strokeStyle = isHit ? (isAllWon ? '#fef08a' : '#bbf7d0') : '#34d399';
+    ctx.lineWidth = isAllWon ? 3.5 : 3;
     ctx.beginPath();
     ctx.moveTo(cx, cy - s);
     ctx.lineTo(cx + s * 0.8, cy - s * 0.15);
@@ -1091,6 +1190,17 @@ export class LaserMirrorsEngine {
     ctx.lineTo(cx - s * 0.8, cy - s * 0.15);
     ctx.closePath();
     ctx.fill();
+    if (isHit && charge > 0) {
+      ctx.save();
+      ctx.clip();
+      const fillH = s * 2 * charge;
+      const glowGrad = ctx.createLinearGradient(0, cy + s - fillH, 0, cy + s);
+      glowGrad.addColorStop(0, 'rgba(254, 240, 138, 0.85)');
+      glowGrad.addColorStop(1, 'rgba(74, 222, 128, 0.25)');
+      ctx.fillStyle = glowGrad;
+      ctx.fillRect(cx - s, cy + s - fillH, s * 2, fillH);
+      ctx.restore();
+    }
     ctx.stroke();
 
     // Vidinė briauna

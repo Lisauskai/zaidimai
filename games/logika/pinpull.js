@@ -777,7 +777,12 @@ export class PinPullEngine {
     }));
     this.sparks = [];
     this.hintPinId = null;
-    this.status = 'playing'; // 'playing' | 'won' | 'failed'
+    this.status = 'playing'; // 'playing' | 'winning' | 'won' | 'failed'
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
+    this.liquidFill = 0;
     this.failReason = '';
     this.goalCount = 0;
     this.trapCount = 0;
@@ -827,7 +832,7 @@ export class PinPullEngine {
   }
 
   pullPin(pinId) {
-    if (this.status !== 'playing') return false;
+    if (this.status !== 'playing' || this.isWinning || this.inputLocked) return false;
     const pin = this.pins.find((p) => p.id === pinId);
     if (!pin || pin.pulling || pin.removed) return false;
     pin.pulling = true;
@@ -1054,9 +1059,18 @@ export class PinPullEngine {
 
     this.goalCount = coloredInGoal;
 
+    const targetLiquid = Math.min(1, this.goalCount / Math.max(1, this.level.requiredGoal));
+    this.liquidFill += (targetLiquid - this.liquidFill) * 0.12;
+
     if (this.status === 'playing') {
       if (coloredInGoal >= this.level.requiredGoal) {
-        this.status = 'won';
+        this.status = 'winning';
+        this.isWinning = true;
+        this.inputLocked = true;
+        this.victoryTimer = 0;
+        this.winNotified = false;
+        const g = this.level.goal;
+        this.spawnMixSparks(g.x + g.w / 2, g.y + 12, '#4ade80');
         this.reportStatus();
       } else {
         const potentialTotal = this.balls.filter((b) => !b.removed && b.kind !== 'water').length;
@@ -1068,6 +1082,8 @@ export class PinPullEngine {
           this.callbacks.onTick?.({ goalCount: this.goalCount, requiredGoal: this.level.requiredGoal });
         }
       }
+    } else if (this.status === 'winning') {
+      this.callbacks.onTick?.({ goalCount: this.goalCount, requiredGoal: this.level.requiredGoal });
     }
   }
 
@@ -1101,8 +1117,24 @@ export class PinPullEngine {
   }
 
   startLoop() {
-    const frame = () => {
+    let last = performance.now();
+    const frame = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
       this.step();
+      if (this.isWinning && !this.winNotified) {
+        this.victoryTimer += dt;
+        if (Math.random() < 0.22) {
+          const g = this.level.goal;
+          this.spawnMixSparks(g.x + 14 + Math.random() * (g.w - 28), g.y + 8, '#4ade80');
+        }
+        if (this.victoryTimer >= 2.2) {
+          this.isWinning = false;
+          this.winNotified = true;
+          this.status = 'won';
+          this.reportStatus();
+        }
+      }
       this.draw();
       this.rafId = requestAnimationFrame(frame);
     };
@@ -1195,11 +1227,27 @@ export class PinPullEngine {
 
     // 3. Tikslo kolba apačioje
     const g = this.level.goal;
+    const isFlaskGreen = this.status === 'winning' || this.status === 'won';
     ctx.save();
-    ctx.fillStyle = 'rgba(6, 78, 59, 0.45)';
+    ctx.fillStyle = isFlaskGreen ? 'rgba(6, 95, 70, 0.55)' : 'rgba(6, 78, 59, 0.45)';
     ctx.fillRect(g.x, g.y, g.w, g.h);
-    ctx.strokeStyle = this.status === 'won' ? '#4ade80' : '#22d3ee';
-    ctx.lineWidth = 4;
+
+    // Kylantis skysčio / energijos lygis kolboje
+    if (this.liquidFill > 0.01) {
+      const liqH = Math.max(4, (g.h - 24) * Math.min(1, this.liquidFill));
+      const liqGrad = ctx.createLinearGradient(0, g.y + g.h - liqH, 0, g.y + g.h);
+      liqGrad.addColorStop(0, isFlaskGreen ? 'rgba(74, 222, 128, 0.55)' : 'rgba(56, 189, 248, 0.35)');
+      liqGrad.addColorStop(1, isFlaskGreen ? 'rgba(22, 163, 74, 0.72)' : 'rgba(14, 165, 233, 0.5)');
+      ctx.fillStyle = liqGrad;
+      ctx.fillRect(g.x + 2, g.y + g.h - liqH, g.w - 4, liqH - 2);
+    }
+
+    if (isFlaskGreen) {
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = '#4ade80';
+    }
+    ctx.strokeStyle = isFlaskGreen ? '#4ade80' : '#22d3ee';
+    ctx.lineWidth = isFlaskGreen ? 4.5 : 4;
     ctx.beginPath();
     ctx.moveTo(g.x, g.y);
     ctx.lineTo(g.x, g.y + g.h);
@@ -1207,8 +1255,19 @@ export class PinPullEngine {
     ctx.lineTo(g.x + g.w, g.y);
     ctx.stroke();
 
+    // Žalia indikatoriaus lemputė ant kolbos krašto
+    ctx.shadowBlur = isFlaskGreen ? 16 : 0;
+    ctx.fillStyle = isFlaskGreen ? '#22c55e' : '#334155';
+    ctx.strokeStyle = isFlaskGreen ? '#bbf7d0' : '#64748b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(g.x + g.w - 14, g.y + 14, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
     ctx.font = '900 13px "Russo One", sans-serif';
-    ctx.fillStyle = '#67e8f9';
+    ctx.fillStyle = isFlaskGreen ? '#86efac' : '#67e8f9';
     ctx.textAlign = 'center';
     ctx.fillText(`🧪 KOLBA (${this.goalCount}/${this.level.requiredGoal})`, g.x + g.w / 2, g.y + g.h - 10);
     ctx.restore();

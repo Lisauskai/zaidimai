@@ -1,32 +1,32 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113l';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113l';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113l';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113l';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113m';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113m';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113m';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113m';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113l';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113l';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113l';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113l';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113l';
+} from './balance.js?v=20261113m';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113m';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113m';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113m';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113m';
 import {
   MathCrossEngine,
   MATHCROSS_LEVELS,
   MATHCROSS_CANVAS_W,
   MATHCROSS_CANVAS_H
-} from './mathcross.js?v=20261113l';
+} from './mathcross.js?v=20261113m';
 import {
   BridgesEngine,
   BRIDGES_LEVELS,
   BRIDGES_CANVAS_W,
   BRIDGES_CANVAS_H
-} from './bridges.js?v=20261113l';
+} from './bridges.js?v=20261113m';
 import {
   PipeValveEngine,
   JugPourEngine,
@@ -34,8 +34,8 @@ import {
   FLASK_CANVAS_W,
   FLASK_CANVAS_H,
   RYB_COLORS
-} from './flasks.js?v=20261113l';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113l';
+} from './flasks.js?v=20261113m';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113m';
 import {
   isSoundEnabled,
   toggleSound,
@@ -59,8 +59,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113l';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113l';
+} from './sound.js?v=20261113m';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113m';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -69,8 +69,8 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113l';
-import { computeInventionsState } from './inventions.js?v=20261113l';
+} from './robot.js?v=20261113m';
+import { computeInventionsState } from './inventions.js?v=20261113m';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -147,6 +147,7 @@ let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'circuit' | 'b
 let activeLevelIndex = 0;
 let pinEngine = null;
 let sokobanGame = null;
+let sokobanWinTimer = null;
 let laserEngine = null;
 let laserResetTimer = null;
 let circuitEngine = null;
@@ -605,6 +606,7 @@ function showDifficultyScreen() {
   destroyMathCrossEngine();
   destroyBridgesEngine();
   destroyMiniFlaskEngine();
+  destroySokobanState();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -901,7 +903,18 @@ function destroyGravityEngine() {
 }
 
 function destroyMathCrossEngine() {
-  mathCrossEngine = null;
+  if (mathCrossEngine) {
+    mathCrossEngine.destroy();
+    mathCrossEngine = null;
+  }
+}
+
+function destroySokobanState() {
+  if (sokobanWinTimer) {
+    clearTimeout(sokobanWinTimer);
+    sokobanWinTimer = null;
+  }
+  sokobanGame = null;
 }
 
 function destroyBridgesEngine() {
@@ -1118,7 +1131,7 @@ function loadActiveLevel() {
   destroyMathCrossEngine();
   destroyBridgesEngine();
   destroyMiniFlaskEngine();
-  sokobanGame = null;
+  destroySokobanState();
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
 
@@ -1357,9 +1370,14 @@ function startPinPullLevel(level, totalInMode) {
     },
     onStatusChange: ({ status, failReason, goalCount, requiredGoal }) => {
       if (counterEl) {
-        counterEl.textContent = `🧪 Kolboje: ${goalCount} / ${requiredGoal}`;
+        counterEl.textContent =
+          status === 'winning' || status === 'won'
+            ? `🧪 Kolboje: ${goalCount} / ${requiredGoal} • 🟢 Pilna!`
+            : `🧪 Kolboje: ${goalCount} / ${requiredGoal}`;
       }
-      if (status === 'won') {
+      if (status === 'winning') {
+        playBalanceBell();
+      } else if (status === 'won') {
         markLevelSolved(level);
         if (nextBtn && activeLevelIndex < totalInMode - 1) {
           nextBtn.classList.remove('hidden');
@@ -1434,11 +1452,16 @@ function startLaserLevel(level, totalInMode) {
       prevLitTargets = litCount;
       recordPlayerMove();
     },
-    onStatusChange: ({ litTargets, totalTargets, movesLeft, maxMoves, won }) => {
+    onStatusChange: ({ litTargets, totalTargets, movesLeft, maxMoves, isWinning, won }) => {
       if (counterEl) {
         const leftText = typeof movesLeft === 'number' ? ` • 🔄 Liko ėjimų: ${movesLeft} / ${maxMoves}` : '';
-        counterEl.textContent = `💎 Kristalai: ${litTargets} / ${totalTargets}${leftText}`;
-        counterEl.classList.toggle('is-low-moves', typeof movesLeft === 'number' && movesLeft <= 2 && !won);
+        counterEl.textContent = isWinning
+          ? `💎 Kristalai: ${litTargets} / ${totalTargets} • ✨ Švyti!`
+          : `💎 Kristalai: ${litTargets} / ${totalTargets}${leftText}`;
+        counterEl.classList.toggle('is-low-moves', typeof movesLeft === 'number' && movesLeft <= 2 && !won && !isWinning);
+      }
+      if (isWinning) {
+        playBalanceBell();
       }
       if (won) {
         markLevelSolved(level);
@@ -1538,9 +1561,10 @@ function startCircuitLevel(level, totalInMode) {
     },
     onRunResult: ({ won, reason, starsCollected, totalStars }) => {
       if (launchBtn) {
-        launchBtn.disabled = false;
+        launchBtn.disabled = !!won;
       }
       if (won) {
+        playBalanceBell();
         if (counterEl) {
           counterEl.classList.remove('is-low-moves');
           counterEl.textContent = `⭐ Žvaigždutės: ${starsCollected} / ${totalStars} • 🎉 Pasiekta 🏁!`;
@@ -1856,19 +1880,34 @@ function startMatrixLevel(level, totalInMode) {
 
     if (selectedIdx === level.correctIndex) {
       solved = true;
+      lockedOut = true;
+      playBalanceBell();
       chosenBtn?.classList.remove('is-selected');
       chosenBtn?.classList.add('correct');
+      choiceBtns.forEach((b) => {
+        b.disabled = true;
+      });
       if (checkBtn) checkBtn.disabled = true;
       if (missingCellEl) {
         missingCellEl.classList.remove('missing');
         missingCellEl.classList.add('solved-cell');
         missingCellEl.innerHTML = renderShapeSvg(choiceSpec);
       }
+      boardEl.querySelectorAll('.matrix-cell').forEach((cellEl, cellIdx) => {
+        const delayMs = (Math.floor(cellIdx / 3) + (cellIdx % 3)) * 95;
+        cellEl.style.setProperty('--win-delay', `${delayMs}ms`);
+        cellEl.classList.add('matrix-won-sweep');
+      });
       if (counterEl) counterEl.textContent = '✅ Teisingas atsakymas!';
-      markLevelSolved(level);
-      if (nextBtn && activeLevelIndex < totalInMode - 1) {
-        nextBtn.classList.remove('hidden');
-      }
+      if (matrixResetTimer) clearTimeout(matrixResetTimer);
+      matrixResetTimer = setTimeout(() => {
+        matrixResetTimer = null;
+        if (!solved) return;
+        markLevelSolved(level);
+        if (nextBtn && activeLevelIndex < totalInMode - 1) {
+          nextBtn.classList.remove('hidden');
+        }
+      }, 1550);
     } else {
       playWrongBuzz();
       hearts = Math.max(0, hearts - 1);
@@ -1973,17 +2012,18 @@ function startAlgoLevel(level, totalInMode) {
 }
 
 function syncAlgoButtonsState(isRunning) {
+  const locked = isRunning || Boolean(algoEngine?.won || algoEngine?.isWinning || algoEngine?.inputLocked);
   const runBtn = document.getElementById('btn-algo-run');
   const undoBtn = document.getElementById('btn-algo-undo');
   const resetBtn = document.getElementById('btn-algo-reset');
   document.querySelectorAll('.algo-cmd-btn').forEach((btn) => {
-    btn.disabled = isRunning;
+    btn.disabled = locked;
   });
   if (runBtn) {
-    runBtn.disabled = isRunning;
+    runBtn.disabled = locked;
     runBtn.textContent = isRunning ? '⏳ Vykdoma programa...' : '▶️ Paleisti programą';
   }
-  if (undoBtn) undoBtn.disabled = isRunning;
+  if (undoBtn) undoBtn.disabled = locked;
   if (resetBtn) resetBtn.disabled = isRunning;
 }
 
@@ -2461,6 +2501,10 @@ const GATE_ICON = {
 };
 
 function startSokobanLevel(level, totalInMode) {
+  if (sokobanWinTimer) {
+    clearTimeout(sokobanWinTimer);
+    sokobanWinTimer = null;
+  }
   currentSokobanDef = level;
   currentSokobanTotal = totalInMode;
   sokobanGame = new SokobanGame(level);
@@ -2481,11 +2525,18 @@ function handleSokobanMove(dr, dc) {
   renderSokobanBoard();
 
   if (sokobanGame.won) {
-    markLevelSolved(currentSokobanDef);
-    const nextBtn = document.getElementById('btn-sok-next');
-    if (nextBtn && activeLevelIndex < currentSokobanTotal - 1) {
-      nextBtn.classList.remove('hidden');
-    }
+    playBalanceBell();
+    if (sokobanWinTimer) clearTimeout(sokobanWinTimer);
+    const solvedDef = currentSokobanDef;
+    sokobanWinTimer = setTimeout(() => {
+      sokobanWinTimer = null;
+      if (!sokobanGame || !sokobanGame.won || currentSokobanDef !== solvedDef) return;
+      markLevelSolved(solvedDef);
+      const nextBtn = document.getElementById('btn-sok-next');
+      if (nextBtn && activeLevelIndex < currentSokobanTotal - 1) {
+        nextBtn.classList.remove('hidden');
+      }
+    }, 2000);
   }
 }
 
@@ -2503,7 +2554,7 @@ function renderSokobanBoard() {
     counterEl.textContent = `⚡ Ant mygtukų: ${covered} / ${totalTargets} • ${gateOpen ? '🔓 Vartai ATIDARYTI!' : '🔒 Vartai uždaryti'} • Ėjimai: ${sokobanGame.moves}`;
   }
   if (undoBtn) {
-    undoBtn.disabled = sokobanGame.history.length === 0;
+    undoBtn.disabled = sokobanGame.won || sokobanGame.history.length === 0;
   }
 
   gridEl.style.gridTemplateColumns = `repeat(${sokobanGame.cols}, auto)`;
@@ -2527,10 +2578,17 @@ function renderSokobanBoard() {
         if (tile === 'I') cell.classList.add('ice');
         if (GATE_ICON[tile]) cell.classList.add('gate');
         if (isTarget) cell.classList.add('target');
-        if (isExit) cell.classList.add(gateOpen ? 'exit-open' : 'exit-locked');
+        if (isExit) {
+          cell.classList.add(gateOpen ? 'exit-open' : 'exit-locked');
+          if (sokobanGame.won) cell.classList.add('exit-won');
+        }
 
         if (isRobot) {
-          cell.textContent = '🤖';
+          if (sokobanGame.won) {
+            cell.innerHTML = '<span class="sok-robot-jump">🤖</span>';
+          } else {
+            cell.textContent = '🤖';
+          }
         } else if (hasCube) {
           if (isTarget) cell.classList.add('cube-on-target');
           cell.textContent = '⚡';
@@ -2797,6 +2855,10 @@ document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
 
 document.getElementById('btn-sok-reset')?.addEventListener('click', () => {
   if (!sokobanGame) return;
+  if (sokobanWinTimer) {
+    clearTimeout(sokobanWinTimer);
+    sokobanWinTimer = null;
+  }
   sokobanGame.reset();
   resetAttemptState();
   const feedbackEl = document.getElementById('puzzle-feedback');

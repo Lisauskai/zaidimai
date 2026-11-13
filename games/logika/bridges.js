@@ -483,6 +483,12 @@ export class BridgesEngine {
     this.flashCrossEdge = null;
     this.flashTimer = null;
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
+    this.winPulse = 0;
+    this.rafId = null;
     this.islandCoords = [];
     this.islandRadius = 24;
 
@@ -516,6 +522,10 @@ export class BridgesEngine {
       clearTimeout(this.flashTimer);
       this.flashTimer = null;
     }
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
   }
 
   reset() {
@@ -528,6 +538,11 @@ export class BridgesEngine {
     this.hintIslandId = null;
     this.flashCrossEdge = null;
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
+    this.winPulse = 0;
     this.draw();
     this.notifyState();
   }
@@ -610,11 +625,40 @@ export class BridgesEngine {
     if (!allMatch) return;
 
     if (this.isNetworkConnected()) {
-      this.won = true;
-      this.callbacks.onWin?.();
+      if (!this.won && !this.isWinning) {
+        this.won = true;
+        this.isWinning = true;
+        this.inputLocked = true;
+        this.victoryTimer = 0;
+        this.winNotified = false;
+        this.winPulse = 0;
+        this.notifyState();
+        this.startVictoryLoop();
+      }
     } else {
       this.callbacks.onDisconnected?.();
     }
+  }
+
+  startVictoryLoop() {
+    if (this.rafId !== null) return;
+    let last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      this.winPulse += dt;
+      if (this.isWinning && !this.winNotified) {
+        this.victoryTimer += dt;
+        if (this.victoryTimer >= 1.6) {
+          this.isWinning = false;
+          this.winNotified = true;
+          this.callbacks.onWin?.();
+        }
+      }
+      this.draw();
+      this.rafId = requestAnimationFrame(tick);
+    };
+    this.rafId = requestAnimationFrame(tick);
   }
 
   getGuaranteedHintIslandId() {
@@ -807,6 +851,18 @@ export class BridgesEngine {
         ctx.moveTo(p1.x + dx, p1.y + dy);
         ctx.lineTo(p2.x + dx, p2.y + dy);
         ctx.stroke();
+      }
+      if (this.won) {
+        // Šviesos impulsas keliauja per tiltą
+        const t = ((this.winPulse * 1.3 + e.u * 0.17) % 1);
+        const px = p1.x + (p2.x - p1.x) * t;
+        const py = p1.y + (p2.y - p1.y) * t;
+        ctx.fillStyle = '#fef08a';
+        ctx.shadowBlur = 14;
+        ctx.shadowColor = '#fde047';
+        ctx.beginPath();
+        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.restore();
     }

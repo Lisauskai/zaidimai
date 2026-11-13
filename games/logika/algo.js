@@ -532,6 +532,10 @@ export class AlgoEngine {
     this.activeLoopIndex = null;
     this.running = false;
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
     this.execPointer = null; // { slotIdx, subIdx }
     this.stepTimer = null;
     this.resetTimer = null;
@@ -595,6 +599,10 @@ export class AlgoEngine {
   resetAll() {
     this.stopExecutionTimers();
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
     this.slots = [];
     this.activeLoopIndex = null;
     this.resetRobotToStart();
@@ -957,12 +965,15 @@ export class AlgoEngine {
 
       if (this.isFinishReachedAndAllLit()) {
         this.won = true;
+        this.isWinning = true;
+        this.inputLocked = true;
+        this.victoryTimer = 0;
+        this.winNotified = false;
         this.running = false;
         this.execPointer = null;
         this.callbacks.onRunStateChange?.(false);
         this.callbacks.onQueueChange?.();
         this.render();
-        this.callbacks.onWin?.();
         return;
       }
 
@@ -974,8 +985,19 @@ export class AlgoEngine {
   }
 
   startAnimLoop() {
-    const tick = () => {
-      this.pulsePhase += 0.06;
+    let last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      this.pulsePhase += dt * 3.6;
+      if (this.isWinning && !this.winNotified) {
+        this.victoryTimer += dt;
+        if (this.victoryTimer >= 2.0) {
+          this.isWinning = false;
+          this.winNotified = true;
+          this.callbacks.onWin?.();
+        }
+      }
       this.render();
       this.animFrame = requestAnimationFrame(tick);
     };
@@ -1192,9 +1214,19 @@ export class AlgoEngine {
         // Finišo energijos baterija 🔋
         if (r === this.level.finish.r && c === this.level.finish.c) {
           const ready = bridgesUnlocked;
-          const pulse = 1 + 0.08 * Math.sin(this.pulsePhase * 2);
+          const pulse = 1 + (this.won ? 0.14 : 0.08) * Math.sin(this.pulsePhase * (this.won ? 3.2 : 2));
           ctx.save();
           ctx.translate(x + cellSize / 2, tileTopY + cellSize / 2);
+          if (this.won) {
+            const auraR = cellSize * (0.44 + 0.1 * Math.sin(this.pulsePhase * 4));
+            ctx.strokeStyle = 'rgba(74, 222, 128, 0.85)';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 22;
+            ctx.shadowColor = '#4ade80';
+            ctx.beginPath();
+            ctx.arc(0, 0, auraR, 0, Math.PI * 2);
+            ctx.stroke();
+          }
           ctx.scale(pulse, pulse);
 
           ctx.shadowColor = ready ? '#4ade80' : '#f59e0b';
@@ -1241,15 +1273,18 @@ export class AlgoEngine {
     const dirAngles = { U: -Math.PI / 2, R: 0, D: Math.PI / 2, L: Math.PI };
     const angle = dirAngles[dirKey] ?? 0;
     const bodyR = cellSize * 0.33;
+    const jumpLift = this.won ? Math.abs(Math.sin(this.pulsePhase * 2.5)) * (cellSize * 0.24) : 0;
 
     ctx.save();
     ctx.translate(cx, cy);
 
+    const shadowScale = Math.max(0.55, 1 - jumpLift / (cellSize * 0.45));
     ctx.fillStyle = 'rgba(2, 6, 23, 0.55)';
     ctx.beginPath();
-    ctx.ellipse(0, bodyR * 0.65, bodyR * 0.9, bodyR * 0.45, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, bodyR * 0.65, bodyR * 0.9 * shadowScale, bodyR * 0.45 * shadowScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    ctx.translate(0, -jumpLift);
     ctx.rotate(angle);
 
     ctx.fillStyle = this.won ? '#4ade80' : '#38bdf8';

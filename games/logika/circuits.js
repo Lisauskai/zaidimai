@@ -765,6 +765,9 @@ export class CircuitEngine {
     this.movesUsed = 0;
     this.maxMoves = this.level.maxMoves || 25;
     this.outOfMoves = false;
+    this.won = false;
+    this.isWinning = false;
+    this.inputLocked = false;
     this.recompute();
   }
 
@@ -793,7 +796,7 @@ export class CircuitEngine {
   }
 
   handlePointerDown(mx, my) {
-    if (this.trainAnim || this.outOfMoves || this.movesUsed >= this.maxMoves) return; // Kol važiuoja traukinukas arba baigėsi ėjimai, neleidžiame sukioti
+    if (this.trainAnim || this.outOfMoves || this.movesUsed >= this.maxMoves || this.won || this.isWinning || this.inputLocked) return; // Kol važiuoja traukinukas arba baigėsi ėjimai, neleidžiame sukioti
     const c = Math.floor((mx - this.originX) / this.cellSize);
     const r = Math.floor((my - this.originY) / this.cellSize);
     if (r < 0 || r >= this.level.rows || c < 0 || c >= this.level.cols) return;
@@ -820,6 +823,7 @@ export class CircuitEngine {
   }
 
   launchTrain() {
+    if (this.trainAnim || this.won || this.isWinning || this.inputLocked) return;
     this.recompute();
     if (this.outOfMoves) return;
     const an = this.analysis;
@@ -831,15 +835,22 @@ export class CircuitEngine {
       chosenPath = an.winPath;
       won = true;
       reason = '';
+      this.isWinning = true;
+      this.inputLocked = true;
     } else if (an.finishPathMissingStars) {
       chosenPath = an.finishPathMissingStars.path;
       reason = `⭐ Traukinukas pasiekė finišą, bet surinko tik ${an.finishPathMissingStars.starsCount} / ${an.totalStars} žvaigždučių! Surink VISAS ⭐!`;
     }
 
+    const stepsCount = Math.max(1, chosenPath.length - 1);
+    const speed = won
+      ? Math.max(2.6, Math.min(stepsCount / 1.45, Math.max(3.6, chosenPath.length * 0.45)))
+      : Math.max(3.6, chosenPath.length * 0.45);
+
     this.trainAnim = {
       path: chosenPath,
       progress: 0,
-      speed: Math.max(3.6, chosenPath.length * 0.45), // langelių per sekundę
+      speed, // langelių per sekundę
       won,
       reason,
       collectedStars: new Set(),
@@ -924,7 +935,8 @@ export class CircuitEngine {
         }
       } else {
         anim.finishedWait += dt;
-        if (!anim.notified && anim.finishedWait >= 0.25) {
+        const waitThreshold = anim.won ? 0.75 : 0.25;
+        if (!anim.notified && anim.finishedWait >= waitThreshold) {
           anim.notified = true;
           const result = {
             won: anim.won,
@@ -932,7 +944,10 @@ export class CircuitEngine {
             starsCollected: anim.collectedStars.size,
             totalStars: this.analysis.totalStars
           };
-          if (!anim.won) {
+          if (anim.won) {
+            this.won = true;
+            this.isWinning = false;
+          } else {
             this.trainAnim = null;
           }
           if (this.callbacks.onRunResult) {
@@ -1032,8 +1047,30 @@ export class CircuitEngine {
       }
     });
 
-    // Traukinuko animacija
+    // Traukinuko ir elektros impulso animacija
     if (this.trainAnim && this.trainAnim.path.length > 0) {
+      if (this.trainAnim.won) {
+        const path = this.trainAnim.path;
+        const limit = Math.min(path.length - 1, Math.floor(this.trainAnim.progress));
+        if (limit >= 1) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(74, 222, 128, 0.75)';
+          ctx.shadowBlur = 18;
+          ctx.shadowColor = '#4ade80';
+          ctx.lineWidth = 7;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          for (let i = 0; i <= limit; i++) {
+            const px = ox + (path[i].c + 0.5) * cs;
+            const py = oy + (path[i].r + 0.5) * cs;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
       this.drawTrain(ctx, ox, oy, cs);
     }
   }
@@ -1148,9 +1185,19 @@ export class CircuitEngine {
     const ty = oy + (c0.r + (c1.r - c0.r) * frac + 0.5) * cs;
 
     ctx.save();
+    if (anim.won && p >= anim.path.length - 1) {
+      const pulse = 0.5 + 0.5 * Math.sin(this.time * 10);
+      ctx.strokeStyle = '#4ade80';
+      ctx.shadowBlur = 22;
+      ctx.shadowColor = '#4ade80';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.arc(tx, ty, cs * (0.34 + pulse * 0.1), 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.shadowBlur = 18;
-    ctx.shadowColor = '#facc15';
-    ctx.fillStyle = '#f59e0b';
+    ctx.shadowColor = anim.won ? '#4ade80' : '#facc15';
+    ctx.fillStyle = anim.won ? '#22c55e' : '#f59e0b';
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 2.5;
     ctx.beginPath();

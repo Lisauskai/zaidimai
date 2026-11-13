@@ -710,6 +710,10 @@ export class PipeValveEngine {
     this.flowProgress = 0;
     this.lastResult = null;
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
     this.callbacks.onStateChange?.();
   }
 
@@ -718,7 +722,7 @@ export class PipeValveEngine {
   }
 
   triggerTest() {
-    if (this.flowing || this.won) return;
+    if (this.flowing || this.won || this.isWinning || this.inputLocked) return;
     this.hintValveId = null;
     this.lastResult = evaluatePipeNetwork(this.level, this.valveStates);
     this.flowing = true;
@@ -728,7 +732,7 @@ export class PipeValveEngine {
   }
 
   handlePointerDown(e) {
-    if (this.flowing || this.won) return;
+    if (this.flowing || this.won || this.isWinning || this.inputLocked) return;
     const rect = this.canvas.getBoundingClientRect();
     const scaleX = this.canvas.width / rect.width;
     const scaleY = this.canvas.height / rect.height;
@@ -762,11 +766,23 @@ export class PipeValveEngine {
           this.flowing = false;
           if (this.lastResult?.won) {
             this.won = true;
-            this.callbacks.onWin?.(this.lastResult);
+            this.isWinning = true;
+            this.inputLocked = true;
+            this.victoryTimer = 0;
+            this.winNotified = false;
           } else {
             this.callbacks.onFail?.(this.lastResult);
           }
           this.callbacks.onStateChange?.();
+        }
+      }
+
+      if (this.isWinning && !this.winNotified) {
+        this.victoryTimer += dt;
+        if (this.victoryTimer >= 1.5) {
+          this.isWinning = false;
+          this.winNotified = true;
+          this.callbacks.onWin?.(this.lastResult);
         }
       }
 
@@ -983,25 +999,53 @@ export class PipeValveEngine {
         ctx.fillText('NUTEKA', n.x, n.y + 14);
       } else if (n.type === 'target') {
         const tgtSpec = RYB_COLORS[this.level.targetColor];
-        const resKey = this.flowProgress >= 0.9 && this.lastResult ? this.lastResult.resultColor : 'EMPTY';
+        const resKey = this.flowProgress >= 0.72 && this.lastResult ? this.lastResult.resultColor : 'EMPTY';
         const resSpec = RYB_COLORS[resKey];
+        const fillProgress =
+          resKey === 'EMPTY'
+            ? 0
+            : this.won
+              ? Math.min(1, 0.55 + ((this.victoryTimer || 1.5) / 1.1) * 0.45)
+              : Math.min(0.65, Math.max(0.15, (this.flowProgress - 0.72) / 0.28));
 
         // Kolbos kūnas
+        if (this.won) {
+          ctx.shadowBlur = 22;
+          ctx.shadowColor = '#4ade80';
+        }
         ctx.fillStyle = '#0f172a';
         ctx.strokeStyle = this.won ? '#4ade80' : '#cbd5e1';
-        ctx.lineWidth = 3.5;
+        ctx.lineWidth = this.won ? 4 : 3.5;
         ctx.beginPath();
         ctx.roundRect(n.x - 36, n.y - 28, 72, 54, 14);
         ctx.fill();
         ctx.stroke();
+        ctx.shadowBlur = 0;
 
-        // Skystis viduje
-        if (resKey !== 'EMPTY') {
+        // Kylantis skystis viduje
+        if (resKey !== 'EMPTY' && fillProgress > 0) {
+          const maxLiqH = 44;
+          const liqH = Math.max(8, maxLiqH * fillProgress);
           ctx.fillStyle = resSpec.hex;
           ctx.beginPath();
-          ctx.roundRect(n.x - 31, n.y - 6, 62, 27, 9);
+          ctx.roundRect(n.x - 31, n.y + 21 - liqH, 62, liqH, 8);
           ctx.fill();
         }
+
+        // Žalia indikatoriaus šviesa virš kolbos
+        ctx.save();
+        if (this.won) {
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = '#4ade80';
+        }
+        ctx.fillStyle = this.won ? '#22c55e' : '#334155';
+        ctx.strokeStyle = this.won ? '#bbf7d0' : '#64748b';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y - 38, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
 
         // Tikslo užuominos kortelė šalia
         ctx.fillStyle = '#1e293b';
@@ -1059,6 +1103,11 @@ export class JugPourEngine {
     this.moves = 0;
     this.hintAction = null;
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
+    this.time = 0;
     this.callbacks.onStateChange?.();
   }
 
@@ -1093,7 +1142,7 @@ export class JugPourEngine {
   }
 
   fillJug(idx) {
-    if (this.won || !this.level.hasTap) return;
+    if (this.won || this.isWinning || this.inputLocked || !this.level.hasTap) return;
     if (this.amounts[idx] >= this.level.capacities[idx]) {
       this.callbacks.onFeedback?.(`⚠️ Kolba Nr. ${idx + 1} jau pilna (${this.level.capacities[idx]} L)!`);
       return;
@@ -1108,7 +1157,7 @@ export class JugPourEngine {
   }
 
   emptyJug(idx) {
-    if (this.won || !this.level.hasTap) return;
+    if (this.won || this.isWinning || this.inputLocked || !this.level.hasTap) return;
     if (this.amounts[idx] <= 0) {
       this.callbacks.onFeedback?.(`⚠️ Kolba Nr. ${idx + 1} jau tuščia!`);
       return;
@@ -1123,7 +1172,7 @@ export class JugPourEngine {
   }
 
   pourJug(fromIdx, toIdx) {
-    if (this.won || fromIdx === toIdx) return;
+    if (this.won || this.isWinning || this.inputLocked || fromIdx === toIdx) return;
     if (this.amounts[fromIdx] <= 0) {
       this.callbacks.onFeedback?.(`⚠️ Kolba Nr. ${fromIdx + 1} tuščia – nėra ko perpilti!`);
       this.selectedIdx = null;
@@ -1150,14 +1199,17 @@ export class JugPourEngine {
   }
 
   checkWin() {
-    if (this.amounts.includes(this.level.targetAmount)) {
+    if (!this.won && !this.isWinning && this.amounts.includes(this.level.targetAmount)) {
       this.won = true;
-      this.callbacks.onWin?.(this.moves);
+      this.isWinning = true;
+      this.inputLocked = true;
+      this.victoryTimer = 0;
+      this.winNotified = false;
     }
   }
 
   handlePointerDown(e) {
-    if (this.won) return;
+    if (this.won || this.isWinning || this.inputLocked) return;
     const rect = this.canvas.getBoundingClientRect();
     const scaleX = this.canvas.width / rect.width;
     const scaleY = this.canvas.height / rect.height;
@@ -1204,8 +1256,17 @@ export class JugPourEngine {
     const tick = (now) => {
       const dt = Math.min(0.05, (now - this.lastTime) / 1000);
       this.lastTime = now;
+      this.time = (this.time || 0) + dt;
       for (let i = 0; i < this.amounts.length; i++) {
         this.animAmounts[i] += (this.amounts[i] - this.animAmounts[i]) * Math.min(1, dt * 12);
+      }
+      if (this.isWinning && !this.winNotified) {
+        this.victoryTimer += dt;
+        if (this.victoryTimer >= 2.0) {
+          this.isWinning = false;
+          this.winNotified = true;
+          this.callbacks.onWin?.(this.moves);
+        }
       }
       this.render();
       this.rafId = requestAnimationFrame(tick);
@@ -1280,9 +1341,28 @@ export class JugPourEngine {
         ctx.beginPath();
         ctx.roundRect(box.x + 3, box.bottomY - fillH, box.w - 6, fillH - 2, [4, 4, 10, 10]);
         ctx.fill();
+
+        if (isTargetMatch && this.won) {
+          // Žalia šviesa ir burbuliukai tikslo kolboje
+          ctx.save();
+          ctx.fillStyle = 'rgba(220, 252, 231, 0.65)';
+          for (let bi = 0; bi < 4; bi++) {
+            const phase = ((this.time || 0) * 1.4 + bi * 0.27) % 1;
+            const bbx = box.x + 14 + ((bi * 23) % Math.max(16, box.w - 28));
+            const bby = box.bottomY - 8 - phase * Math.max(8, fillH - 14);
+            ctx.beginPath();
+            ctx.arc(bbx, bby, 2.5 + (bi % 2), 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
       }
 
       // Stiklinės kolbos kontūras + padalos
+      if (isTargetMatch && this.won) {
+        ctx.shadowBlur = 18;
+        ctx.shadowColor = '#4ade80';
+      }
       ctx.strokeStyle = isTargetMatch ? '#4ade80' : isSelected ? '#fde047' : '#cbd5e1';
       ctx.lineWidth = 3.5;
       ctx.beginPath();

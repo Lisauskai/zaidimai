@@ -495,6 +495,10 @@ export class BalanceScaleEngine {
     this.rightItems = [];
     this.hintRemove = false;
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
     this.outOfHearts = false;
     this.maxHearts = this.level.maxHearts || 3;
     this.hearts = this.maxHearts;
@@ -536,7 +540,7 @@ export class BalanceScaleEngine {
   }
 
   placeToken(uid) {
-    if (this.won || this.outOfHearts) return false;
+    if (this.won || this.isWinning || this.inputLocked || this.outOfHearts) return false;
     if (this.hasPlacedUid(uid)) return false;
     const token = (this.level.inventory || []).find((t) => t.uid === uid);
     if (!token) return false;
@@ -554,7 +558,7 @@ export class BalanceScaleEngine {
   }
 
   removeToken(uid) {
-    if (this.won || this.outOfHearts) return false;
+    if (this.won || this.isWinning || this.inputLocked || this.outOfHearts) return false;
     const idx = this.rightItems.findIndex((t) => t.uid === uid);
     if (idx === -1) return false;
 
@@ -571,7 +575,7 @@ export class BalanceScaleEngine {
   }
 
   checkBalance() {
-    if (this.won || this.outOfHearts) return null;
+    if (this.won || this.isWinning || this.inputLocked || this.outOfHearts) return null;
     if (this.rightItems.length === 0) {
       return { empty: true, hearts: this.hearts, maxHearts: this.maxHearts };
     }
@@ -582,7 +586,12 @@ export class BalanceScaleEngine {
     if (diff === 0) {
       this.lastCheckState = 'balanced';
       this.won = true;
-      this.angularVel = 0.05;
+      this.isWinning = true;
+      this.inputLocked = true;
+      this.victoryTimer = 0;
+      this.winNotified = false;
+      this.angle = -0.07;
+      this.angularVel = 0.28;
       this.notifyStatus();
       const result = {
         balanced: true,
@@ -593,7 +602,6 @@ export class BalanceScaleEngine {
         outOfHearts: false
       };
       this.callbacks.onCheckResult?.(result);
-      this.callbacks.onWin?.();
       return result;
     }
 
@@ -664,6 +672,15 @@ export class BalanceScaleEngine {
 
   update(dt) {
     this.time += dt;
+
+    if (this.isWinning && !this.winNotified) {
+      this.victoryTimer += dt;
+      if (this.victoryTimer >= 2.1) {
+        this.isWinning = false;
+        this.winNotified = true;
+        this.callbacks.onWin?.();
+      }
+    }
 
     let targetAngle = 0;
     if (!this.locked) {
@@ -764,6 +781,20 @@ export class BalanceScaleEngine {
 
     // Centrinė šviesos lemputė (užrakinta „?“ arba patikrinimo rezultatas)
     ctx.save();
+    if (balancedConfirmed) {
+      // Pusiausvyros šviesos banga nuo centro
+      for (let w = 0; w < 2; w++) {
+        const wavePhase = (this.time * 1.15 + w * 0.5) % 1;
+        const wr = 24 + wavePhase * 195;
+        ctx.strokeStyle = `rgba(74, 222, 128, ${((1 - wavePhase) * 0.72).toFixed(2)})`;
+        ctx.lineWidth = 4 - wavePhase * 2;
+        ctx.shadowBlur = 16;
+        ctx.shadowColor = '#4ade80';
+        ctx.beginPath();
+        ctx.arc(pivotX, pivotY, wr, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
     const lampColor = balancedConfirmed
       ? '#22c55e'
       : this.locked

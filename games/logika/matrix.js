@@ -568,7 +568,12 @@ export class MemoryCodeController {
         this.phase = 'won';
         this.renderBoard();
         this.notify();
-        if (this.callbacks.onWin) this.callbacks.onWin();
+        const winId = setTimeout(() => {
+          if (this.phase === 'won' && this.callbacks.onWin) {
+            this.callbacks.onWin();
+          }
+        }, 1550);
+        this.timers.push(winId);
       } else {
         this.renderBoard();
         this.notify();
@@ -616,6 +621,12 @@ export class MemoryCodeController {
         btn.textContent = '✖';
       } else {
         btn.textContent = '•';
+      }
+
+      if (this.phase === 'won') {
+        const waveDelay = (Math.floor(idx / n) + (idx % n)) * 85;
+        btn.classList.add('won-sweep');
+        btn.style.setProperty('--win-delay', `${waveDelay}ms`);
       }
 
       if (this.hintCellIndex === idx && this.phase === 'input') {

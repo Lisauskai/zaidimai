@@ -450,7 +450,7 @@ export class SokobanGame {
   }
 
   undo() {
-    if (this.history.length === 0) return false;
+    if (this.won || this.history.length === 0) return false;
     const prev = this.history.pop();
     this.robot = prev.robot;
     this.cubes = prev.cubes;

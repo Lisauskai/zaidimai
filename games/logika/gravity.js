@@ -385,11 +385,17 @@ export class GravityMazeEngine {
 
     this.hintDir = null;
     this.animFrame = null;
+    this.slideTimer = null;
+    this.time = 0;
     this.reset();
     this.startAnimLoop();
   }
 
   destroy() {
+    if (this.slideTimer) {
+      clearTimeout(this.slideTimer);
+      this.slideTimer = null;
+    }
     if (this.animFrame) {
       cancelAnimationFrame(this.animFrame);
       this.animFrame = null;
@@ -397,6 +403,10 @@ export class GravityMazeEngine {
   }
 
   reset() {
+    if (this.slideTimer) {
+      clearTimeout(this.slideTimer);
+      this.slideTimer = null;
+    }
     const rows = this.level.grid.length;
     const cols = this.level.grid[0].length;
     this.rows = rows;
@@ -449,6 +459,10 @@ export class GravityMazeEngine {
     this.drawBall = { x: this.ball.c, y: this.ball.r };
     this.sliding = false;
     this.won = false;
+    this.isWinning = false;
+    this.victoryTimer = 0;
+    this.inputLocked = false;
+    this.winNotified = false;
     this.moves = 0;
     this.tilt = { angle: 0, dx: 0, dy: 0 };
     this.trail = [];
@@ -468,7 +482,7 @@ export class GravityMazeEngine {
   }
 
   slide(dirKey) {
-    if (this.sliding || this.won) return false;
+    if (this.sliding || this.won || this.isWinning || this.inputLocked) return false;
     const vec = DIR_VEC[dirKey];
     if (!vec) return false;
 
@@ -559,7 +573,10 @@ export class GravityMazeEngine {
 
         if (fellOut) {
           this.callbacks.onAbyss?.();
-          setTimeout(() => this.reset(), 480);
+          this.slideTimer = setTimeout(() => {
+            this.slideTimer = null;
+            this.reset();
+          }, 480);
           return;
         }
 
@@ -579,8 +596,11 @@ export class GravityMazeEngine {
         const atFinish = cr === this.finish.r && cc === this.finish.c;
         if (atFinish && this.starsRemaining.size === 0) {
           this.won = true;
+          this.isWinning = true;
+          this.inputLocked = true;
+          this.victoryTimer = 0;
+          this.winNotified = false;
           this.callbacks.onStateChange?.();
-          this.callbacks.onWin?.();
           return;
         }
         if (atFinish && this.starsRemaining.size > 0) {
@@ -608,7 +628,7 @@ export class GravityMazeEngine {
       }
 
       wpIdx += 1;
-      setTimeout(stepNextWaypoint, wp.jump ? 55 : 42);
+      this.slideTimer = setTimeout(stepNextWaypoint, wp.jump ? 55 : 42);
     };
 
     stepNextWaypoint();
@@ -629,7 +649,19 @@ export class GravityMazeEngine {
   }
 
   startAnimLoop() {
-    const tick = () => {
+    let last = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      this.time += dt;
+      if (this.isWinning && !this.winNotified) {
+        this.victoryTimer += dt;
+        if (this.victoryTimer >= 2.0) {
+          this.isWinning = false;
+          this.winNotified = true;
+          this.callbacks.onWin?.();
+        }
+      }
       for (const sh of this.shards) {
         sh.r += sh.vy * 0.04;
         sh.c += sh.vx * 0.04;
@@ -829,10 +861,18 @@ export class GravityMazeEngine {
         // Teleportacijos finišo platforma
         if (ch === 'F') {
           ctx.save();
+          if (this.won) {
+            const p = 0.5 + 0.5 * Math.sin(this.time * 8);
+            ctx.strokeStyle = 'rgba(74, 222, 128, 0.85)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(x + cellSize / 2, y + cellSize / 2, cellSize * (0.44 + p * 0.14), 0, Math.PI * 2);
+            ctx.stroke();
+          }
           ctx.shadowColor = '#4ade80';
-          ctx.shadowBlur = 14;
-          ctx.fillStyle = '#15803d';
-          ctx.strokeStyle = '#86efac';
+          ctx.shadowBlur = this.won ? 26 : 14;
+          ctx.fillStyle = this.won ? '#16a34a' : '#15803d';
+          ctx.strokeStyle = this.won ? '#bbf7d0' : '#86efac';
           ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.roundRect(x + 6, y + 6, cellSize - 12, cellSize - 12, 10);
@@ -888,7 +928,8 @@ export class GravityMazeEngine {
 
     // Švytintis energijos rutulys
     const bx = ox + this.drawBall.x * cellSize + cellSize / 2;
-    const by = oy + this.drawBall.y * cellSize + cellSize / 2;
+    const bounceLift = this.won ? Math.abs(Math.sin(this.time * 7)) * (cellSize * 0.16) : 0;
+    const by = oy + this.drawBall.y * cellSize + cellSize / 2 - bounceLift;
     ctx.save();
     ctx.shadowColor = this.won ? '#4ade80' : '#facc15';
     ctx.shadowBlur = 18;
