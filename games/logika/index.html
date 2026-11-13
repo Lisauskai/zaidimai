@@ -61,13 +61,13 @@
           </div>
           <h3>1 klasė (Jaunasis išradėjas)</h3>
           <p class="diff-desc">
-            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“ lygiai ir 3 mini eksperimentai.
+            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“, 5 „Raštų šifro“ lygiai ir 3 mini eksperimentai.
           </p>
 
           <div class="diff-progress-box">
             <div class="progress-stat">
               <span>✅ Išspręsti lygiai:</span>
-              <strong id="g1-solved-text">0 / 28</strong>
+              <strong id="g1-solved-text">0 / 33</strong>
             </div>
             <div class="progress-stat">
               <span>💎 Proto kristalai:</span>
@@ -88,13 +88,13 @@
           </div>
           <h3>3 klasė (Vyriausiasis inžinierius)</h3>
           <p class="diff-desc">
-            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“ (dvigubos lygtys) lygiai + 3 mini eksperimentai.
+            5 „Ištrauk kaištį“, 5 „Robo-Stumduko“, 5 „Lazerių veidrodžių“, 5 „Sujunk grandinę“, 5 „Kosminių svarstyklių“, 5 „Raštų ir atminties šifro“ lygiai + 3 mini eksperimentai.
           </p>
 
           <div class="diff-progress-box">
             <div class="progress-stat">
               <span>✅ Išspręsti lygiai:</span>
-              <strong id="g3-solved-text">0 / 28</strong>
+              <strong id="g3-solved-text">0 / 33</strong>
             </div>
             <div class="progress-stat">
               <span>💎 Proto kristalai:</span>
@@ -137,6 +137,9 @@
           </button>
           <button id="tab-mode-balance" class="mode-tab-btn" type="button">
             ⚖️ Kosminės svarstyklės (5)
+          </button>
+          <button id="tab-mode-matrix" class="mode-tab-btn" type="button">
+            🧩 Raštai ir atmintis (5)
           </button>
           <button id="tab-mode-mini" class="mode-tab-btn" type="button">
             🧪 Mini Eksperimentai (3)
@@ -293,6 +296,27 @@
           </div>
 
           <div id="balance-tray" class="balance-tray" aria-label="Objektų pasirinkimas"></div>
+        </div>
+
+        <!-- RAŠTŲ IR ATMINTIES ŠIFRAS (IQ MATRICOS IR ATMINTIS) ZONA -->
+        <div id="matrix-stage" class="matrix-stage hidden">
+          <div class="pinpull-controls-bar">
+            <span id="matrix-counter" class="pinpull-counter">🧩 Pasirink trūkstamą figūrą</span>
+            <div class="pinpull-btn-group">
+              <button id="btn-memory-replay" class="sok-undo-btn hidden" type="button">
+                👀 Rodyti seką (3 s)
+              </button>
+              <button id="btn-matrix-reset" class="pin-reset-btn" type="button">
+                🔄 Iš naujo (Reset)
+              </button>
+              <button id="btn-matrix-next" class="pin-next-btn hidden" type="button">
+                Kitas lygis ▶
+              </button>
+            </div>
+          </div>
+
+          <div id="matrix-board" class="matrix-grid" aria-label="3x3 raštų tinklelis"></div>
+          <div id="matrix-choices" class="matrix-choices" aria-label="Atsakymų variantai"></div>
         </div>
 
         <!-- MINI EKSPERIMENTŲ ZONA -->

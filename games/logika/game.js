@@ -11,6 +11,7 @@ import {
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
 } from './balance.js';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -158,7 +159,7 @@ export const LAB_LEVELS = {
 // ==================== BŪSENA ====================
 let progress = loadLabProgress();
 let currentDifficulty = null;
-let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'circuit' | 'balance' | 'mini'
+let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'circuit' | 'balance' | 'matrix' | 'mini'
 let activeLevelIndex = 0;
 let mirrorStates = [];
 let switchStates = [];
@@ -167,6 +168,7 @@ let sokobanGame = null;
 let laserEngine = null;
 let circuitEngine = null;
 let balanceEngine = null;
+let memoryCtrl = null;
 let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
@@ -186,6 +188,7 @@ const circuitCanvas = document.getElementById('circuit-canvas');
 const circuitStage = document.getElementById('circuit-stage');
 const balanceCanvas = document.getElementById('balance-canvas');
 const balanceStage = document.getElementById('balance-stage');
+const matrixStage = document.getElementById('matrix-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
@@ -201,6 +204,7 @@ function getAllLevelsForDiff(diff) {
     ...LASER_LEVELS[diff],
     ...CIRCUIT_LEVELS[diff],
     ...BALANCE_LEVELS[diff],
+    ...MATRIX_LEVELS[diff],
     ...LAB_LEVELS[diff]
   ];
 }
@@ -211,6 +215,7 @@ function getCurrentModeLevels(diff = currentDifficulty) {
   if (currentMode === 'laser') return LASER_LEVELS[diff];
   if (currentMode === 'circuit') return CIRCUIT_LEVELS[diff];
   if (currentMode === 'balance') return BALANCE_LEVELS[diff];
+  if (currentMode === 'matrix') return MATRIX_LEVELS[diff];
   return LAB_LEVELS[diff];
 }
 
@@ -270,6 +275,7 @@ function showDifficultyScreen() {
   destroyLaserEngine();
   destroyCircuitEngine();
   destroyBalanceEngine();
+  destroyMemoryCtrl();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -283,6 +289,7 @@ function syncModeTabsUI() {
   document.getElementById('tab-mode-laser')?.classList.toggle('active', currentMode === 'laser');
   document.getElementById('tab-mode-circuit')?.classList.toggle('active', currentMode === 'circuit');
   document.getElementById('tab-mode-balance')?.classList.toggle('active', currentMode === 'balance');
+  document.getElementById('tab-mode-matrix')?.classList.toggle('active', currentMode === 'matrix');
   document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
 }
 
@@ -293,6 +300,7 @@ function switchLabMode(mode) {
     mode !== 'laser' &&
     mode !== 'circuit' &&
     mode !== 'balance' &&
+    mode !== 'matrix' &&
     mode !== 'mini'
   ) {
     return;
@@ -327,7 +335,9 @@ function renderLevelsStrip() {
               ? '🚂 Grandinė'
               : currentMode === 'balance'
                 ? '⚖️ Svoriai'
-                : '🧩 Užduotis';
+                : currentMode === 'matrix'
+                  ? lvl.kind === 'memory' ? '🧠 Atmintis' : '🧩 Raštas'
+                  : '🧩 Užduotis';
     btn.innerHTML = `
       <div class="level-tab-top">
         <span>${label}</span>
@@ -392,11 +402,19 @@ function destroyBalanceEngine() {
   }
 }
 
+function destroyMemoryCtrl() {
+  if (memoryCtrl) {
+    memoryCtrl.destroy();
+    memoryCtrl = null;
+  }
+}
+
 function loadActiveLevel() {
   destroyPinEngine();
   destroyLaserEngine();
   destroyCircuitEngine();
   destroyBalanceEngine();
+  destroyMemoryCtrl();
   sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
@@ -412,7 +430,9 @@ function loadActiveLevel() {
             ? `🚂 SUJUNK GRANDINĘ • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
             : currentMode === 'balance'
               ? `⚖️ KOSMINĖS SVARSTYKLĖS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-              : level.badge;
+              : currentMode === 'matrix'
+                ? `🧩 RAŠTAI IR ATMINTIS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+                : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -426,6 +446,7 @@ function loadActiveLevel() {
   document.getElementById('btn-laser-next')?.classList.add('hidden');
   document.getElementById('btn-circuit-next')?.classList.add('hidden');
   document.getElementById('btn-balance-next')?.classList.add('hidden');
+  document.getElementById('btn-matrix-next')?.classList.add('hidden');
 
   if (currentMode === 'pinpull') {
     pinPullStage.classList.remove('hidden');
@@ -433,6 +454,7 @@ function loadActiveLevel() {
     laserStage?.classList.add('hidden');
     circuitStage?.classList.add('hidden');
     balanceStage?.classList.add('hidden');
+    matrixStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startPinPullLevel(level, levels.length);
   } else if (currentMode === 'sokoban') {
@@ -441,6 +463,7 @@ function loadActiveLevel() {
     laserStage?.classList.add('hidden');
     circuitStage?.classList.add('hidden');
     balanceStage?.classList.add('hidden');
+    matrixStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startSokobanLevel(level, levels.length);
   } else if (currentMode === 'laser') {
@@ -449,6 +472,7 @@ function loadActiveLevel() {
     laserStage?.classList.remove('hidden');
     circuitStage?.classList.add('hidden');
     balanceStage?.classList.add('hidden');
+    matrixStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startLaserLevel(level, levels.length);
   } else if (currentMode === 'circuit') {
@@ -457,6 +481,7 @@ function loadActiveLevel() {
     laserStage?.classList.add('hidden');
     circuitStage?.classList.remove('hidden');
     balanceStage?.classList.add('hidden');
+    matrixStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startCircuitLevel(level, levels.length);
   } else if (currentMode === 'balance') {
@@ -465,14 +490,25 @@ function loadActiveLevel() {
     laserStage?.classList.add('hidden');
     circuitStage?.classList.add('hidden');
     balanceStage?.classList.remove('hidden');
+    matrixStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startBalanceLevel(level, levels.length);
+  } else if (currentMode === 'matrix') {
+    pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.add('hidden');
+    laserStage?.classList.add('hidden');
+    circuitStage?.classList.add('hidden');
+    balanceStage?.classList.add('hidden');
+    matrixStage?.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startMatrixLevel(level, levels.length);
   } else {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.add('hidden');
     laserStage?.classList.add('hidden');
     circuitStage?.classList.add('hidden');
     balanceStage?.classList.add('hidden');
+    matrixStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
 
@@ -704,6 +740,106 @@ function startBalanceLevel(level, totalInMode) {
     }
   });
   balanceEngine.startLoop();
+}
+
+// ==================== RAŠTŲ IR ATMINTIES ŠIFRAS (IQ MATRICOS IR ATMINTIS) ====================
+function startMatrixLevel(level, totalInMode) {
+  const boardEl = document.getElementById('matrix-board');
+  const choicesEl = document.getElementById('matrix-choices');
+  const counterEl = document.getElementById('matrix-counter');
+  const replayBtn = document.getElementById('btn-memory-replay');
+  const nextBtn = document.getElementById('btn-matrix-next');
+
+  boardEl.innerHTML = '';
+  choicesEl.innerHTML = '';
+  choicesEl.classList.toggle('hidden', level.kind === 'memory');
+  replayBtn?.classList.toggle('hidden', level.kind !== 'memory');
+
+  if (level.kind === 'memory') {
+    memoryCtrl = new MemoryCodeController(boardEl, level, {
+      onStatusChange: ({ phase, progress: cur, total }) => {
+        if (counterEl) {
+          counterEl.textContent =
+            phase === 'showing'
+              ? `👀 Įsimink seką! (${total} žingsniai per 3 s)`
+              : phase === 'won'
+                ? `🎉 Kodas atkartotas! (${total} / ${total})`
+                : phase === 'failed'
+                  ? '❌ Netinkamas langelis! Paspausk „Rodyti seką“ arba „Iš naujo“.'
+                  : `🎯 Pakartok seką: ${cur} / ${total}`;
+        }
+        if (replayBtn) {
+          replayBtn.disabled = phase === 'showing';
+        }
+      },
+      onWin: () => {
+        markLevelSolved(level);
+        if (nextBtn && activeLevelIndex < totalInMode - 1) {
+          nextBtn.classList.remove('hidden');
+        }
+      },
+      onFail: () => {
+        const feedbackEl = document.getElementById('puzzle-feedback');
+        feedbackEl.textContent = '❌ Nepataikei eilės tvarkos! Paspausk „👀 Rodyti seką (3 s)“ ir pamėgink dar kartą.';
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
+    });
+    return;
+  }
+
+  // IQ Matrica (3x3)
+  if (counterEl) {
+    counterEl.textContent = '🧩 Pasirink figūrą vietoj [ ? ]';
+  }
+  boardEl.style.gridTemplateColumns = 'repeat(3, auto)';
+
+  let missingCellEl = null;
+  level.grid.forEach((cellSpec) => {
+    const cell = document.createElement('div');
+    cell.className = 'matrix-cell';
+    if (!cellSpec) {
+      cell.classList.add('missing');
+      cell.textContent = '?';
+      missingCellEl = cell;
+    } else {
+      cell.innerHTML = renderShapeSvg(cellSpec);
+    }
+    boardEl.appendChild(cell);
+  });
+
+  let solved = false;
+  level.choices.forEach((choiceSpec, idx) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'matrix-choice-btn';
+    btn.dataset.choiceIndex = String(idx);
+    btn.innerHTML = renderShapeSvg(choiceSpec);
+    btn.addEventListener('click', () => {
+      if (solved) return;
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (idx === level.correctIndex) {
+        solved = true;
+        btn.classList.add('correct');
+        if (missingCellEl) {
+          missingCellEl.classList.remove('missing');
+          missingCellEl.classList.add('solved-cell');
+          missingCellEl.innerHTML = renderShapeSvg(choiceSpec);
+        }
+        if (counterEl) counterEl.textContent = '✅ Teisingas atsakymas!';
+        markLevelSolved(level);
+        if (nextBtn && activeLevelIndex < totalInMode - 1) {
+          nextBtn.classList.remove('hidden');
+        }
+      } else {
+        btn.classList.add('wrong');
+        feedbackEl.textContent = '❌ Ne visai! Atidžiai palygink kiekvieną eilutę ir stulpelį.';
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
+    });
+    choicesEl.appendChild(btn);
+  });
 }
 
 // ==================== ROBO-STUMDUKAS RENDERIS IR VALDYMAS ====================
@@ -966,6 +1102,7 @@ document.getElementById('tab-mode-sokoban')?.addEventListener('click', () => swi
 document.getElementById('tab-mode-laser')?.addEventListener('click', () => switchLabMode('laser'));
 document.getElementById('tab-mode-circuit')?.addEventListener('click', () => switchLabMode('circuit'));
 document.getElementById('tab-mode-balance')?.addEventListener('click', () => switchLabMode('balance'));
+document.getElementById('tab-mode-matrix')?.addEventListener('click', () => switchLabMode('matrix'));
 document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
 
 document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
@@ -1167,5 +1304,30 @@ if (balanceCanvas) {
     balanceEngine.handlePointerDown(mx, my);
   });
 }
+
+document.getElementById('btn-memory-replay')?.addEventListener('click', () => {
+  if (!memoryCtrl) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  memoryCtrl.startShowcase();
+});
+
+document.getElementById('btn-matrix-reset')?.addEventListener('click', () => {
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-matrix-next')?.classList.add('hidden');
+  loadActiveLevel();
+});
+
+document.getElementById('btn-matrix-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
 
 updateSummaryUI();
