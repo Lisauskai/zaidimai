@@ -947,6 +947,7 @@ export function createDefaultDriverProfile(driverKey) {
     racesPlayed: 0,
     totalTakedowns: 0,
     currentHp: 85,
+    needsRepair: false,
     selectedTrackId: 'city_asphalt',
     selectedLayoutId: 'auto',
     unlockedTracks: ['city_asphalt'],
@@ -1042,9 +1043,18 @@ export class GarageManager {
           selLayout = 'auto';
         }
 
+        const hasSavedHp = parsed.currentHp !== undefined;
+        const parsedHpNum = Number(parsed.currentHp);
+        const safeHp = !hasSavedHp
+          ? def.currentHp
+          : (parsed.currentHp !== null && Number.isFinite(parsedHpNum) ? Math.max(0, parsedHpNum) : 0);
+        const needsRepair = Boolean(parsed.needsRepair) || safeHp <= 0;
+
         return {
           ...def,
           ...parsed,
+          currentHp: safeHp,
+          needsRepair,
           unlockedTracks: unlocked,
           ownedParts: owned,
           parts: partsDict,

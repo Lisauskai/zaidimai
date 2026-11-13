@@ -688,6 +688,7 @@ function updateGarageUI() {
 
   if (profile.currentHp > stats.maxHp) profile.currentHp = stats.maxHp;
   const hp = Math.max(0, Math.round(profile.currentHp));
+  if (hp <= 0) profile.needsRepair = true;
   const hpPct = Math.max(0, Math.min(100, (hp / stats.maxHp) * 100));
 
   document.getElementById('garage-hp-text').textContent = `${hp} / ${stats.maxHp} HP`;
@@ -700,16 +701,37 @@ function updateGarageUI() {
         ? 'linear-gradient(90deg, #f59e0b, #facc15)'
         : 'linear-gradient(90deg, #dc2626, #ef4444)';
 
-  const missingHp = stats.maxHp - hp;
+  const missingHp = Math.max(0, stats.maxHp - hp);
+  const mustRepair = Boolean(profile.needsRepair || hp <= 0 || missingHp > 0);
   const repairRow = document.getElementById('repair-actions-row');
-  if (missingHp > 0) {
+  const repairWarn = document.getElementById('garage-repair-warning');
+  const startBtn = document.getElementById('btn-start-race');
+
+  if (mustRepair) {
     repairRow.classList.remove('hidden');
-    const fullRepairCost = Math.max(80, Math.round(missingHp * 3));
+    if (repairWarn) repairWarn.classList.remove('hidden');
+    const ratio = stats.maxHp > 0 ? missingHp / stats.maxHp : 1;
+    const fullRepairCost = Math.min(150, Math.max(100, Math.round(100 + ratio * 50)));
+    const btnMath = document.getElementById('btn-repair-math');
+    if (btnMath) {
+      btnMath.textContent = '🛠️ Taisyti nemokamai (išspręsk 3 užduotis)';
+    }
     const btnCoins = document.getElementById('btn-repair-coins');
-    btnCoins.textContent = `🪙 Brangus remontas be matematikos (${fullRepairCost} 🪙)`;
+    btnCoins.textContent = `🪙 Greitas remontas (${fullRepairCost} 🪙)`;
     btnCoins.dataset.cost = fullRepairCost;
+    if (startBtn) {
+      startBtn.disabled = true;
+      startBtn.classList.add('disabled');
+      startBtn.textContent = '🔒 MAŠINA SUDAUŽYTA! REIKIA REMONTO';
+    }
   } else {
     repairRow.classList.add('hidden');
+    if (repairWarn) repairWarn.classList.add('hidden');
+    if (startBtn) {
+      startBtn.disabled = false;
+      startBtn.classList.remove('disabled');
+      startBtn.textContent = '🏁 VAŽIUOTI Į TRASĄ! (3 RATAI / 90s)';
+    }
   }
 
   // Charakteristikos (Kėbulo klasė, Greitis, Taranas, Galios Lygis)
@@ -944,7 +966,7 @@ function buyMicroUpgradeDirect(upDef, priceToPay) {
   profile.microUpgrades[upDef.id] = curLvl + 1;
 
   const newStats = garage.getComputedCarStats(profile);
-  if (upDef.id === 'armor' || wasFullHp) {
+  if (!profile.needsRepair && (upDef.id === 'armor' || wasFullHp)) {
     profile.currentHp = newStats.maxHp;
   }
 
@@ -1271,7 +1293,7 @@ function upgradePartLevelDirect(part, priceToPay) {
   }
 
   const newStats = garage.getComputedCarStats(profile);
-  if (wasFullHp || part.slot === 'bumper' || part.slot === 'roof') {
+  if (!profile.needsRepair && (wasFullHp || part.slot === 'bumper' || part.slot === 'roof')) {
     profile.currentHp = Math.min(newStats.maxHp, profile.currentHp + Math.max(0, newStats.maxHp - prevStats.maxHp));
   }
 
@@ -1575,10 +1597,11 @@ function loadNextPitStopQuestion() {
 
   const choicesGrid = document.getElementById('math-choices-grid');
   choicesGrid.innerHTML = '';
+  choicesGrid.classList.toggle('math-choices-two', q.choices.length === 2);
   q.choices.forEach((val) => {
     const btn = document.createElement('button');
     btn.className = 'math-choice-btn';
-    btn.textContent = val;
+    btn.textContent = String(val);
     btn.addEventListener('click', () => handlePitStopAnswer(val));
     choicesGrid.appendChild(btn);
   });
@@ -1726,6 +1749,7 @@ function finishPitStopMathChallenge() {
 
   if (mode === 'repair') {
     profile.currentHp = stats.maxHp;
+    profile.needsRepair = false;
     garage.saveDriver();
     audio.fanfare();
     closePitStopModal();
@@ -1885,10 +1909,7 @@ const TRACK_LAYOUTS = {
       { x: 5350, y: 2100, angle: Math.PI * 0.5, width: 170, length: 80 },
       { x: 4200, y: 950, angle: Math.PI, width: 170, length: 80 }
     ],
-    shortcutZones: [
-      { id: 'sc_ring_1', name: 'Parko Kirtimas', x1: 3950, y1: 1050, x2: 2700, y2: 1050, r: 240 },
-      { id: 'sc_ring_2', name: 'Pietų Kirtimas', x1: 4900, y1: 3450, x2: 5350, y2: 2550, r: 230 }
-    ]
+    shortcutZones: []
   },
   figure8: {
     id: 'figure8',
@@ -1921,10 +1942,7 @@ const TRACK_LAYOUTS = {
       // Tramplinas kairiajame žiede:
       { x: 1750, y: 1350, angle: Math.PI * 0.8, width: 170, length: 80 }
     ],
-    shortcutZones: [
-      { id: 'sc_fig8_1', name: 'Kairioji Bekelė', x1: 1550, y1: 2950, x2: 2250, y2: 3450, r: 240 },
-      { id: 'sc_fig8_2', name: 'Dešinioji Bekelė', x1: 5100, y1: 1750, x2: 4450, y2: 3250, r: 250 }
-    ]
+    shortcutZones: []
   },
   zigzag: {
     id: 'zigzag',
@@ -1961,12 +1979,7 @@ const TRACK_LAYOUTS = {
       // Tramplinas leidžiantis žemyn prieš finišą:
       { x: 1400, y: 2850, angle: Math.PI * 0.5, width: 170, length: 80 }
     ],
-    shortcutZones: [
-      // Kirtimas apatiniame dešiniajame 90° posūkyje:
-      { id: 'sc_zig_1', name: 'Apatinė Bekelė', x1: 4700, y1: 3550, x2: 5450, y2: 2600, r: 250 },
-      // Kirtimas viršutiniame 180° posūkyje:
-      { id: 'sc_zig_2', name: 'Viršutinė Bekelė', x1: 4900, y1: 1050, x2: 4300, y2: 1600, r: 240 }
-    ]
+    shortcutZones: []
   }
 };
 
@@ -2377,6 +2390,14 @@ function startNewRace() {
   }
 
   const pStats = garage.getComputedCarStats(profile);
+  if (profile.needsRepair || profile.currentHp <= 0 || profile.currentHp < pStats.maxHp) {
+    profile.needsRepair = true;
+    garage.saveDriver();
+    updateGarageUI();
+    alert('Mašina sudaužyta! Prieš lenktynes būtina ją suremontuoti garaže.');
+    return;
+  }
+
   // 1 PUNKTAS: TRASŲ TEMŲ (BIOMES) PARINKIMAS (Atsitiktinis arba pasirinktas)
   const rawTrack = normalizeTrackId(profile.selectedTrackId);
   let resolvedBiome = rawTrack;
@@ -2400,10 +2421,6 @@ function startNewRace() {
   const trackSpline = getOrCreateSpline(layoutId);
   const s0 = trackSpline.samples[0];
   const startAngle = Math.atan2(s0.tangentY, s0.tangentX);
-
-  if (profile.currentHp <= 5) {
-    profile.currentHp = Math.round(pStats.maxHp * 0.4);
-  }
 
   // Žaidėjo startinė pozicija ties starto linija
   const playerStartX = s0.x - s0.tangentX * 55 + s0.normalX * 70;
@@ -2430,19 +2447,8 @@ function startNewRace() {
   // Dinamiškai sugeneruojame 4 AI priešininkus pagal žaidėjo Galios Lygį ir Biomo sąlygas!
   const bots = spawnEnemies(profile, trackType, s0, startAngle);
 
-  // Sugeneruojame klampaus purvo / ledo / smėlio balas pagal biomą
+  // Lėtinančios purvo/bekelės zonos visiškai pašalintos – visas kelias vienodai greitas!
   const mudPuddles = [];
-  const puddleCount = biome === 'desert_sand' ? 9 : biome === 'winter_snow' ? 6 : 4;
-  for (let i = 0; i < puddleCount; i++) {
-    const prog = 0.08 + (i / puddleCount) * 0.84;
-    const offsetRatio = biome === 'desert_sand' ? -0.45 + (i % 3) * 0.45 : i % 2 === 0 ? -0.75 : 0.75;
-    const pt = getSplinePointAtProgress(trackSpline, prog, offsetRatio);
-    mudPuddles.push({
-      x: pt.x,
-      y: pt.y,
-      r: biome === 'desert_sand' ? 68 + (i % 3) * 16 : 50
-    });
-  }
 
   // STATINĖS KLIŪTYS TRASOJE: sumažinta ~75–80% (tik 3 tepalo balos ir 3 akmenys/padangų krūvos per visą trasą!).
   // Išdėstomos retai ir vienoje kelio pusėje, kad visada liktų platus pravažiavimas (> 550px laisvo kelio).
@@ -3328,42 +3334,13 @@ function updateSingleCar(car, dt) {
   steer = Math.max(-1, Math.min(1, steer));
   car.steerInput += (steer - car.steerInput) * 0.26;
 
-  // ==================== 3 PUNKTAS: DANGOS PASIPRIEŠINIMAS IR PADANGŲ FIZIKA ====================
-  let isOffroadSurface = false;
+  // ==================== 3 PUNKTAS: PADANGŲ IR TRASOS FIZIKA (BE LĖTINANČIŲ ZONŲ) ====================
   if (raceState.spline && raceState.spline.samples) {
     const cl = findClosestSample(raceState.spline.samples, car.x, car.y, car.trackSampleIndex);
     car.trackSampleIndex = cl.index;
-    if (Math.abs(cl.latDist) > TRACK_HALF_WIDTH) {
-      isOffroadSurface = true;
-    }
-  } else {
-    const carProgAngle = getTrackProgressAngle(car.x, car.y);
-    const trackBounds = getTrackBoundsAtAngle(carProgAngle);
-    const normOuter = Math.hypot(
-      (car.x - TRACK.cx) / trackBounds.asphaltOuterRx,
-      (car.y - TRACK.cy) / trackBounds.asphaltOuterRy
-    );
-    const normInner = Math.hypot(
-      (car.x - TRACK.cx) / trackBounds.asphaltInnerRx,
-      (car.y - TRACK.cy) / trackBounds.asphaltInnerRy
-    );
-    if (normOuter > 1.0 || normInner < 1.0) isOffroadSurface = true;
-  }
-
-  let inDeepMudPuddle = false;
-  if (!car.isFlying) {
-    for (const mp of raceState.mudPuddles) {
-      if (Math.hypot(car.x - mp.x, car.y - mp.y) < mp.r) {
-        inDeepMudPuddle = true;
-        break;
-      }
-    }
   }
 
   const currentBiome = raceState.biome || 'city_asphalt';
-  const inShortcut = !car.isFlying && isPointInShortcutZone(car.x, car.y, raceState.shortcutZones);
-  const isMudSurface =
-    currentBiome === 'desert_sand' || currentBiome === 'mud_arena' || isOffroadSurface || inDeepMudPuddle || inShortcut;
 
   // ==================== 2 & 3 PUNKTAS: BIOMŲ FIZIKA IR KĖBULO PRISITAIKYMAS ====================
   let biomeGripMult = 1.0;
@@ -3399,13 +3376,8 @@ function updateSingleCar(car, dt) {
     biomeBrakingFriction = 0.986;
   }
 
-  let speedMult = (isMudSurface ? car.stats.mudSpeedMult : car.stats.asphaltSpeedMult) * biomeSpeedMult;
-  let gripStat = (isMudSurface ? car.stats.mudGrip : car.stats.asphaltGrip) * biomeGripMult;
-
-  if (inDeepMudPuddle && car.wheelsId !== 'wheels_offroad' && !car.stats.ignoresMudSlowdown) {
-    speedMult *= 0.82;
-    gripStat *= 0.88;
-  }
+  let speedMult = car.stats.asphaltSpeedMult * biomeSpeedMult;
+  let gripStat = car.stats.asphaltGrip * biomeGripMult;
 
   // 1. LĖTESNIS BAZINIS GREITIS IR ĮSIBĖGĖJIMAS + MINI-TURBO / SUPER-STARTO BONUSAS (+30% / +50%)
   const tankActive = car.tankTimer > 0;
@@ -3416,47 +3388,6 @@ function updateSingleCar(car, dt) {
     maxSpeed *= car.aiSpeedFactor * car.rubberBandMult;
   }
   let accel = 0.18 * speedMult * (car.stats.accelMult || 1.0) * biomeAccelMult * turboMult;
-
-  // TAKTINIAI KIRTIMAI (SHORTCUTS IR BEKELĖ)
-  if (inShortcut) {
-    if (tankActive) {
-      // SUPER-DAIKTO PRANAŠUMAS: Buldozerio/Tanko režimas visiškai IGNORUOJA greičio bausmę!
-      // Skrieja 200% greičiu ir kelia didžiulius purvo/dulkių fontanus!
-      if (animTick % 2 === 0) {
-        for (let i = 0; i < 2; i++) {
-          raceState.dustParticles.push({
-            x: car.x - Math.cos(car.angle) * 22 + (Math.random() - 0.5) * 16,
-            y: car.y - Math.sin(car.angle) * 22 + (Math.random() - 0.5) * 16,
-            vx: -Math.cos(car.angle) * 5 + (Math.random() - 0.5) * 3,
-            vy: -Math.sin(car.angle) * 5 + (Math.random() - 0.5) * 3,
-            r: 7 + Math.random() * 5,
-            maxR: 24,
-            color: currentBiome === 'winter_snow' ? '224, 242, 254' : currentBiome === 'desert_sand' ? '180, 83, 9' : '69, 26, 3',
-            alpha: 0.85,
-            decay: 0.035
-          });
-        }
-      }
-    } else {
-      // DIDELĖ BAUDA ĮPRASTOMS MAŠINOMS: greitis krenta iki 20-25%!
-      maxSpeed *= 0.23;
-      accel *= 0.35;
-      gripStat *= 0.35;
-      if (animTick % 3 === 0) {
-        raceState.dustParticles.push({
-          x: car.x - Math.cos(car.angle) * 16,
-          y: car.y - Math.sin(car.angle) * 16,
-          vx: (Math.random() - 0.5) * 1.5,
-          vy: (Math.random() - 0.5) * 1.5,
-          r: 5,
-          maxR: 14,
-          color: currentBiome === 'winter_snow' ? '224, 242, 254' : '69, 26, 3',
-          alpha: 0.65,
-          decay: 0.045
-        });
-      }
-    }
-  }
 
   const speedMag = Math.hypot(car.vx, car.vy);
 
@@ -3489,7 +3420,7 @@ function updateSingleCar(car, dt) {
   }
 
   vForward += throttle * accel;
-  vForward *= isMudSurface && !car.stats.ignoresMudSlowdown ? 0.972 : biomeBrakingFriction;
+  vForward *= biomeBrakingFriction;
   if (vForward > maxSpeed) vForward = maxSpeed;
   if (vForward < -maxSpeed * 0.48) vForward = -maxSpeed * 0.48;
 
@@ -3565,8 +3496,6 @@ function updateSingleCar(car, dt) {
         ? 'rgba(241, 245, 249, 0.65)'
         : currentBiome === 'desert_sand'
         ? 'rgba(180, 83, 9, 0.55)'
-        : isMudSurface
-        ? 'rgba(69, 26, 3, 0.55)'
         : 'rgba(15, 23, 42, 0.45)';
     raceState.skidMarks.push({
       x: car.x - newForwardX * 16 + newRightX * 13,
@@ -4300,11 +4229,6 @@ function enforceTrackWalls(car) {
   // Skrendanti mašina prašoka virš sienų ir antžeminių kliūčių
   if (car.isFlying) return;
 
-  // Taktiniai kirtimai: jei mašina kerta posūkį per bekelės zoną (Shortcut), siena jos neblokuoja!
-  if (isPointInShortcutZone(car.x, car.y, raceState?.shortcutZones)) {
-    return;
-  }
-
   if (raceState && raceState.spline && raceState.spline.samples) {
     const cl = findClosestSample(raceState.spline.samples, car.x, car.y, car.trackSampleIndex);
     car.trackSampleIndex = cl.index;
@@ -4845,13 +4769,6 @@ function drawRace() {
       }
       ctx.closePath();
     };
-
-    // A. Pirmiausia nupiešiame taktikinius bekelės kirtimus (kad jie glotniai susilietų po keliu)
-    if (raceState.shortcutZones) {
-      for (const sc of raceState.shortcutZones) {
-        drawShortcutZone(ctx, sc, currentBiome);
-      }
-    }
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -5653,22 +5570,6 @@ function drawRaceMinimap(ctx, canvasW) {
     ctx.closePath();
     ctx.stroke();
 
-    // C. Kirtimai (Shortcuts) minimape
-    if (raceState.shortcutZones) {
-      ctx.strokeStyle = 'rgba(250, 204, 21, 0.85)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([3, 3]);
-      for (const sc of raceState.shortcutZones) {
-        const [x1, y1] = toMap(sc.x1, sc.y1);
-        const [x2, y2] = toMap(sc.x2, sc.y2);
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.stroke();
-      }
-      ctx.setLineDash([]);
-    }
-
     // D. Tramplinai (Ramps) minimape
     if (raceState.ramps) {
       ctx.fillStyle = '#facc15';
@@ -5833,6 +5734,12 @@ function triggerGameOver() {
   const totalEarned = placeReward + damageReward + takedownReward;
   raceState.coinsEarned = totalEarned;
 
+  // Iš karto išsaugome sudaužytos mašinos būseną į localStorage, kad grįžus į garažą reikėtų remonto
+  const brokenProfile = garage.getActiveProfile();
+  brokenProfile.currentHp = 0;
+  brokenProfile.needsRepair = true;
+  garage.saveDriver();
+
   raceState.floatingTexts.push({
     x: p.x,
     y: p.y - 32,
@@ -5851,13 +5758,16 @@ function triggerGameOver() {
 }
 
 function handleGameOverReturnToGarage() {
-  if (raceState && !raceState.coinsSaved) {
-    raceState.coinsSaved = true;
+  if (raceState) {
     const profile = garage.getActiveProfile();
-    profile.coins += (raceState.coinsEarned || 0);
-    profile.currentHp = Math.max(10, Math.round(profile.maxHp * 0.25));
-    profile.racesPlayed = (profile.racesPlayed || 0) + 1;
-    profile.totalTakedowns = (profile.totalTakedowns || 0) + (raceState.takedownsByPlayer || 0);
+    if (!raceState.coinsSaved) {
+      raceState.coinsSaved = true;
+      profile.coins += (raceState.coinsEarned || 0);
+      profile.racesPlayed = (profile.racesPlayed || 0) + 1;
+      profile.totalTakedowns = (profile.totalTakedowns || 0) + (raceState.takedownsByPlayer || 0);
+    }
+    profile.currentHp = 0;
+    profile.needsRepair = true;
     garage.saveDriver();
   }
 
@@ -5982,8 +5892,10 @@ function triggerPodium() {
   if (!raceState.coinsSaved) {
     raceState.coinsSaved = true;
     const profile = garage.getActiveProfile();
+    const pStats = garage.getComputedCarStats(profile);
     profile.coins += totalEarned;
-    profile.currentHp = Math.max(10, Math.round(p.hp));
+    profile.currentHp = p.hp <= 0 ? 0 : Math.min(pStats.maxHp, Math.max(10, Math.round(p.hp)));
+    profile.needsRepair = profile.currentHp < pStats.maxHp;
     profile.racesPlayed = (profile.racesPlayed || 0) + 1;
     if (playerRank === 1) {
       profile.wins = (profile.wins || 0) + 1;
@@ -6000,8 +5912,13 @@ function handlePodiumReturnToGarage() {
   if (raceState && !raceState.coinsSaved) {
     raceState.coinsSaved = true;
     const profile = garage.getActiveProfile();
+    const pStats = garage.getComputedCarStats(profile);
     profile.coins += (raceState.coinsEarned || 0);
-    profile.currentHp = Math.max(10, Math.round(raceState.player.hp));
+    profile.currentHp =
+      raceState.player.hp <= 0
+        ? 0
+        : Math.min(pStats.maxHp, Math.max(10, Math.round(raceState.player.hp)));
+    profile.needsRepair = profile.currentHp < pStats.maxHp;
     profile.racesPlayed = (profile.racesPlayed || 0) + 1;
     if (raceState.player.position === 1) {
       profile.wins = (profile.wins || 0) + 1;
@@ -6367,15 +6284,16 @@ function initEvents() {
   });
 
   document.getElementById('btn-repair-coins').addEventListener('click', (e) => {
-    const cost = Number(e.currentTarget.dataset.cost || 200);
+    const cost = Number(e.currentTarget.dataset.cost || 120);
     const profile = garage.getActiveProfile();
     const stats = garage.getComputedCarStats(profile);
     if (profile.coins < cost) {
-      alert('Nepakanka monetų! Pasirink žalią „Mechaniko Iššūkio“ mygtuką ir suremontuok mašiną NEMOKAMAI (0 🪙)!');
+      alert('Nepakanka monetų! Pasirink žalią „Taisyti nemokamai“ mygtuką ir išspręsk 3 užduotis!');
       return;
     }
     profile.coins -= cost;
     profile.currentHp = stats.maxHp;
+    profile.needsRepair = false;
     garage.saveDriver();
     audio.correct();
     updateGarageUI();
@@ -6400,7 +6318,14 @@ function initEvents() {
   document.getElementById('btn-exit-race').addEventListener('click', () => {
     if (raceState && !raceState.isOver) {
       const profile = garage.getActiveProfile();
-      profile.currentHp = Math.max(10, Math.round(raceState.player.hp));
+      const pStats = garage.getComputedCarStats(profile);
+      if (raceState.player.hp <= 0) {
+        profile.currentHp = 0;
+        profile.needsRepair = true;
+      } else {
+        profile.currentHp = Math.min(pStats.maxHp, Math.max(10, Math.round(raceState.player.hp)));
+        profile.needsRepair = profile.currentHp < pStats.maxHp;
+      }
       garage.saveDriver();
     }
     returnToGarage();
