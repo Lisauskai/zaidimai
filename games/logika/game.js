@@ -1,20 +1,21 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113c';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113c';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113c';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113c';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113d';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113d';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113d';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113d';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113c';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113c';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113c';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113c';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113c';
+} from './balance.js?v=20261113d';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113d';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113d';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113d';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113d';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113d';
 import {
   isSoundEnabled,
   toggleSound,
@@ -34,9 +35,12 @@ import {
   playVictoryFanfare,
   playAlgoJump,
   playGearPlace,
-  playGearJam
-} from './sound.js?v=20261113c';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113c';
+  playGearJam,
+  playGravitySlide,
+  playIceBreak,
+  playPortalWarp
+} from './sound.js?v=20261113d';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113d';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -45,7 +49,7 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113c';
+} from './robot.js?v=20261113d';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -221,6 +225,7 @@ let balanceEngine = null;
 let memoryCtrl = null;
 let algoEngine = null;
 let gearsEngine = null;
+let gravityEngine = null;
 let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
@@ -258,6 +263,8 @@ const algoCanvas = document.getElementById('algo-canvas');
 const algoStage = document.getElementById('algo-stage');
 const gearsCanvas = document.getElementById('gears-canvas');
 const gearsStage = document.getElementById('gears-stage');
+const gravityCanvas = document.getElementById('gravity-canvas');
+const gravityStage = document.getElementById('gravity-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
@@ -276,6 +283,7 @@ function getAllLevelsForDiff(diff) {
     ...MATRIX_LEVELS[diff],
     ...ALGO_LEVELS[diff],
     ...GEARS_LEVELS[diff],
+    ...GRAVITY_LEVELS[diff],
     ...LAB_LEVELS[diff]
   ];
 }
@@ -336,6 +344,13 @@ const LAB_WORLD_ZONES = [
     desc: 'Kryptys, perdavimas ir diržai',
     icon: '⚙️',
     accent: '#fb923c'
+  },
+  {
+    mode: 'gravity',
+    title: '9. Gravitacijos labirintas',
+    desc: 'Slydimas ledu, portalai ir prarajos',
+    icon: '🧊',
+    accent: '#60a5fa'
   }
 ];
 
@@ -348,6 +363,7 @@ function getLevelsForMode(mode, diff = currentDifficulty) {
   if (mode === 'matrix') return MATRIX_LEVELS[diff];
   if (mode === 'algo') return ALGO_LEVELS[diff];
   if (mode === 'gears') return GEARS_LEVELS[diff];
+  if (mode === 'gravity') return GRAVITY_LEVELS[diff];
   return LAB_LEVELS[diff];
 }
 
@@ -555,6 +571,7 @@ export function showWorldMapView() {
   destroyMemoryCtrl();
   destroyAlgoEngine();
   destroyGearsEngine();
+  destroyGravityEngine();
 
   worldMapPanel?.classList.remove('hidden');
   labPuzzleArea?.classList.add('hidden');
@@ -614,6 +631,7 @@ function showDifficultyScreen() {
   destroyMemoryCtrl();
   destroyAlgoEngine();
   destroyGearsEngine();
+  destroyGravityEngine();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -632,6 +650,7 @@ function syncModeTabsUI() {
   document.getElementById('tab-mode-matrix')?.classList.toggle('active', currentMode === 'matrix');
   document.getElementById('tab-mode-algo')?.classList.toggle('active', currentMode === 'algo');
   document.getElementById('tab-mode-gears')?.classList.toggle('active', currentMode === 'gears');
+  document.getElementById('tab-mode-gravity')?.classList.toggle('active', currentMode === 'gravity');
   document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
 }
 
@@ -645,6 +664,7 @@ function switchLabMode(mode) {
     mode !== 'matrix' &&
     mode !== 'algo' &&
     mode !== 'gears' &&
+    mode !== 'gravity' &&
     mode !== 'mini'
   ) {
     return;
@@ -692,7 +712,9 @@ function renderLevelsStrip() {
                       ? '🧑‍💻 Kodas'
                       : currentMode === 'gears'
                         ? '⚙️ Variklis'
-                        : '🧩 Užduotis';
+                        : currentMode === 'gravity'
+                          ? '🧊 Ledas'
+                          : '🧩 Užduotis';
     btn.innerHTML = `
       <div class="level-tab-top">
         <span>${label}</span>
@@ -868,6 +890,13 @@ function destroyGearsEngine() {
   }
 }
 
+function destroyGravityEngine() {
+  if (gravityEngine) {
+    gravityEngine.destroy();
+    gravityEngine = null;
+  }
+}
+
 // ==================== UŽUOMINOS LEMPUTĖ IR ĖJIMŲ SKAITIKLIS ====================
 function stopLevelTimer() {
   if (levelTimerId !== null) {
@@ -937,6 +966,7 @@ function clearAllHints() {
   balanceEngine?.setHintRemove(false);
   memoryCtrl?.setHintCell(null);
   gearsEngine?.setHint(null);
+  gravityEngine?.setHint(null);
 }
 
 function recordPlayerMove() {
@@ -967,6 +997,7 @@ function applyFirstHint() {
     balanceEngine,
     memoryCtrl,
     gearsEngine,
+    gravityEngine,
     mirrorStates,
     switchStates
   });
@@ -1019,6 +1050,10 @@ function applyFirstHint() {
     gearsEngine?.setHint({ pegId: hint.pegId, sizeKey: hint.sizeKey });
     const btn = document.querySelector(`.gear-pick-btn[data-gear-size="${hint.sizeKey}"]`);
     btn?.classList.add('hint-btn-pulse');
+  } else if (hint.kind === 'gravity-dir') {
+    gravityEngine?.setHint(hint.dir);
+    const btn = document.querySelector(`.grav-dpad-btn[data-grav-dir="${hint.dir}"]`);
+    btn?.classList.add('hint-btn-pulse');
   }
 
   hintUsedInLevel = true;
@@ -1048,6 +1083,7 @@ function loadActiveLevel() {
   destroyMemoryCtrl();
   destroyAlgoEngine();
   destroyGearsEngine();
+  destroyGravityEngine();
   sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
@@ -1069,7 +1105,9 @@ function loadActiveLevel() {
                   ? `🧑‍💻 ALGORITMŲ TRASA • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
                   : currentMode === 'gears'
                     ? `⚙️ KRUMPLIARAČIŲ VARIKLIS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-                    : level.badge;
+                    : currentMode === 'gravity'
+                      ? `🧊 GRAVITACIJOS LABIRINTAS • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+                      : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -1086,6 +1124,7 @@ function loadActiveLevel() {
   document.getElementById('btn-matrix-next')?.classList.add('hidden');
   document.getElementById('btn-algo-next')?.classList.add('hidden');
   document.getElementById('btn-gears-next')?.classList.add('hidden');
+  document.getElementById('btn-gravity-next')?.classList.add('hidden');
 
   if (currentMode === 'pinpull') {
     pinPullStage.classList.remove('hidden');
@@ -1096,6 +1135,7 @@ function loadActiveLevel() {
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startPinPullLevel(level, levels.length);
   } else if (currentMode === 'sokoban') {
@@ -1107,6 +1147,7 @@ function loadActiveLevel() {
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startSokobanLevel(level, levels.length);
   } else if (currentMode === 'laser') {
@@ -1118,6 +1159,7 @@ function loadActiveLevel() {
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startLaserLevel(level, levels.length);
   } else if (currentMode === 'circuit') {
@@ -1129,6 +1171,7 @@ function loadActiveLevel() {
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startCircuitLevel(level, levels.length);
   } else if (currentMode === 'balance') {
@@ -1140,6 +1183,7 @@ function loadActiveLevel() {
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startBalanceLevel(level, levels.length);
   } else if (currentMode === 'matrix') {
@@ -1151,6 +1195,7 @@ function loadActiveLevel() {
     matrixStage?.classList.remove('hidden');
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startMatrixLevel(level, levels.length);
   } else if (currentMode === 'algo') {
@@ -1162,6 +1207,7 @@ function loadActiveLevel() {
     matrixStage?.classList.add('hidden');
     algoStage?.classList.remove('hidden');
     gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startAlgoLevel(level, levels.length);
   } else if (currentMode === 'gears') {
@@ -1173,8 +1219,21 @@ function loadActiveLevel() {
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
     gearsStage?.classList.remove('hidden');
+    gravityStage?.classList.add('hidden');
     miniStage.classList.add('hidden');
     startGearsLevel(level, levels.length);
+  } else if (currentMode === 'gravity') {
+    pinPullStage.classList.add('hidden');
+    sokobanStage?.classList.add('hidden');
+    laserStage?.classList.add('hidden');
+    circuitStage?.classList.add('hidden');
+    balanceStage?.classList.add('hidden');
+    matrixStage?.classList.add('hidden');
+    algoStage?.classList.add('hidden');
+    gearsStage?.classList.add('hidden');
+    gravityStage?.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startGravityLevel(level, levels.length);
   } else {
     pinPullStage.classList.add('hidden');
     sokobanStage?.classList.add('hidden');
@@ -1184,6 +1243,7 @@ function loadActiveLevel() {
     matrixStage?.classList.add('hidden');
     algoStage?.classList.add('hidden');
     gearsStage?.classList.add('hidden');
+    gravityStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
 
@@ -1820,6 +1880,64 @@ function getGearsCanvasCoords(e) {
   };
 }
 
+// ==================== 9. GRAVITACIJOS LABIRINTAS RENDERIS IR VALDYMAS ====================
+function startGravityLevel(level, totalInMode) {
+  const counterEl = document.getElementById('gravity-counter');
+  const nextBtn = document.getElementById('btn-gravity-next');
+
+  const syncCounter = () => {
+    if (!gravityEngine || !counterEl) return;
+    const collected = gravityEngine.totalStars - gravityEngine.starsRemaining.size;
+    counterEl.textContent = `⭐ Žvaigždutės: ${collected} / ${gravityEngine.totalStars} • Slydimai: ${gravityEngine.moves}`;
+  };
+
+  gravityEngine = new GravityMazeEngine(gravityCanvas, level, {
+    onMove: () => {
+      playGravitySlide();
+      recordPlayerMove();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      feedbackEl.className = 'puzzle-feedback hidden';
+      feedbackEl.textContent = '';
+    },
+    onWallHit: () => {
+      playTrackClick();
+    },
+    onIceBreak: () => {
+      playIceBreak();
+    },
+    onPortal: () => {
+      playPortalWarp();
+    },
+    onStarCollect: () => {
+      playBalanceBell();
+      syncCounter();
+    },
+    onAbyss: () => {
+      playWrongBuzz();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      feedbackEl.textContent = '🌌 Rutulys išskriejo į kosmoso prarają! Pradedame iš naujo.';
+      feedbackEl.className = 'puzzle-feedback error';
+      feedbackEl.classList.remove('hidden');
+    },
+    onMissingStars: (left) => {
+      playWrongBuzz();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      feedbackEl.textContent = `⭐ Prieš baigdamas dar surink likusias žvaigždutes (${left})!`;
+      feedbackEl.className = 'puzzle-feedback error';
+      feedbackEl.classList.remove('hidden');
+    },
+    onStateChange: syncCounter,
+    onWin: () => {
+      syncCounter();
+      markLevelSolved(level);
+      if (nextBtn && activeLevelIndex < totalInMode - 1) {
+        nextBtn.classList.remove('hidden');
+      }
+    }
+  });
+  syncCounter();
+}
+
 // ==================== ROBO-STUMDUKAS RENDERIS IR VALDYMAS ====================
 const GATE_ICON = {
   '>': '➡️',
@@ -2110,6 +2228,7 @@ document.getElementById('tab-mode-balance')?.addEventListener('click', () => swi
 document.getElementById('tab-mode-matrix')?.addEventListener('click', () => switchLabMode('matrix'));
 document.getElementById('tab-mode-algo')?.addEventListener('click', () => switchLabMode('algo'));
 document.getElementById('tab-mode-gears')?.addEventListener('click', () => switchLabMode('gears'));
+document.getElementById('tab-mode-gravity')?.addEventListener('click', () => switchLabMode('gravity'));
 document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
 
 document.getElementById('btn-sok-undo')?.addEventListener('click', () => {
@@ -2154,7 +2273,9 @@ document.querySelectorAll('.dpad-btn[data-dir]').forEach((btn) => {
 let swipeStart = null;
 
 function isSokobanSwipeActive(target) {
-  if (!currentDifficulty || currentMode !== 'sokoban' || !sokobanGame || sokobanGame.won) return false;
+  if (!currentDifficulty || !['sokoban', 'gravity'].includes(currentMode)) return false;
+  if (currentMode === 'sokoban' && (!sokobanGame || sokobanGame.won)) return false;
+  if (currentMode === 'gravity' && (!gravityEngine || gravityEngine.won || gravityEngine.sliding)) return false;
   if (victoryModal && !victoryModal.classList.contains('hidden')) return false;
   if (target && target.closest && target.closest('button, a')) return false;
   return true;
@@ -2185,6 +2306,15 @@ window.addEventListener(
     const absY = Math.abs(dy);
     if (Math.max(absX, absY) < 26) return;
 
+    if (currentMode === 'gravity') {
+      if (absX > absY) {
+        gravityEngine.slide(dx > 0 ? 'R' : 'L');
+      } else {
+        gravityEngine.slide(dy > 0 ? 'D' : 'U');
+      }
+      return;
+    }
+
     if (absX > absY) {
       handleSokobanMove(0, dx > 0 ? 1 : -1);
     } else {
@@ -2194,32 +2324,41 @@ window.addEventListener(
   { passive: true }
 );
 
-// Užtikriname, kad braukimas pirštu neslinktų ekrano „Robo-Stumduko“ metu
-sokobanStage?.addEventListener(
-  'touchmove',
-  (e) => {
-    if (currentDifficulty && currentMode === 'sokoban') {
-      e.preventDefault();
-    }
-  },
-  { passive: false }
-);
+// Užtikriname, kad braukimas pirštu neslinktų ekrano „Robo-Stumduko“ ir „Gravitacijos“ metu
+[sokobanStage, gravityStage].forEach((stageEl) => {
+  stageEl?.addEventListener(
+    'touchmove',
+    (e) => {
+      if (currentDifficulty && (currentMode === 'sokoban' || currentMode === 'gravity')) {
+        e.preventDefault();
+      }
+    },
+    { passive: false }
+  );
+});
 
 window.addEventListener('keydown', (e) => {
-  if (!currentDifficulty || currentMode !== 'sokoban' || !sokobanGame) return;
+  if (!currentDifficulty) return;
   const k = e.key.toLowerCase();
-  if (k === 'arrowup' || k === 'w') {
+  const keyMap = {
+    arrowup: ['U', -1, 0],
+    w: ['U', -1, 0],
+    arrowdown: ['D', 1, 0],
+    s: ['D', 1, 0],
+    arrowleft: ['L', 0, -1],
+    a: ['L', 0, -1],
+    arrowright: ['R', 0, 1],
+    d: ['R', 0, 1]
+  };
+  const entry = keyMap[k];
+  if (!entry) return;
+
+  if (currentMode === 'sokoban' && sokobanGame) {
     e.preventDefault();
-    handleSokobanMove(-1, 0);
-  } else if (k === 'arrowdown' || k === 's') {
+    handleSokobanMove(entry[1], entry[2]);
+  } else if (currentMode === 'gravity' && gravityEngine) {
     e.preventDefault();
-    handleSokobanMove(1, 0);
-  } else if (k === 'arrowleft' || k === 'a') {
-    e.preventDefault();
-    handleSokobanMove(0, -1);
-  } else if (k === 'arrowright' || k === 'd') {
-    e.preventDefault();
-    handleSokobanMove(0, 1);
+    gravityEngine.slide(entry[0]);
   }
 });
 
@@ -2541,12 +2680,40 @@ if (gearsCanvas) {
   });
 }
 
+// 9. Gravitacijos labirinto mygtukai
+document.querySelectorAll('.grav-dpad-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (!gravityEngine || gravityEngine.won || gravityEngine.sliding) return;
+    const dir = btn.dataset.gravDir;
+    if (dir) gravityEngine.slide(dir);
+  });
+});
+
+document.getElementById('btn-gravity-reset')?.addEventListener('click', () => {
+  if (!gravityEngine) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-gravity-next')?.classList.add('hidden');
+  gravityEngine.reset();
+  resetAttemptState();
+});
+
+document.getElementById('btn-gravity-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
+
 btnSoundToggle?.addEventListener('click', () => {
   toggleSound();
   syncSoundToggleUI();
 });
 
-const MODE_SEQUENCE = ['pinpull', 'sokoban', 'laser', 'circuit', 'balance', 'matrix', 'algo', 'gears', 'mini'];
+const MODE_SEQUENCE = ['pinpull', 'sokoban', 'laser', 'circuit', 'balance', 'matrix', 'algo', 'gears', 'gravity', 'mini'];
 
 document.getElementById('btn-victory-next')?.addEventListener('click', () => {
   hideVictoryOverlay();

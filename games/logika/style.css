@@ -2271,3 +2271,57 @@ body {
   color: #fde047;
   font-size: 0.82rem;
 }
+
+/* ==================== 9. GRAVITACIJOS LABIRINTAS ==================== */
+.gravity-tilt-controls {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.grav-dpad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 48px);
+  gap: 7px;
+  align-items: center;
+  justify-items: center;
+}
+
+.grav-dpad-btn {
+  width: 56px;
+  height: 48px;
+  border-radius: 14px;
+  border: 3px solid #020617;
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+  color: #f8fafc;
+  font-size: 1.25rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #020617;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, filter 0.12s ease;
+}
+
+.grav-dpad-btn:hover {
+  filter: brightness(1.1);
+}
+
+.grav-dpad-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #020617;
+}
+
+.grav-dpad-center {
+  font-size: 1.5rem;
+}
+
+.gravity-hint-sub {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}

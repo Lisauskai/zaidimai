@@ -205,3 +205,17 @@ export function playGearJam() {
   playTone({ type: 'sawtooth', freqStart: 160, freqEnd: 95, duration: 0.16, gain: 0.09 });
   playTone({ type: 'triangle', freqStart: 130, freqEnd: 85, duration: 0.18, gain: 0.08, delay: 0.08 });
 }
+
+// 16. Ledo slydimo ir atsimušimo garsai (Gravitacijos labirintas)
+export function playGravitySlide() {
+  playTone({ type: 'sine', freqStart: 420, freqEnd: 260, duration: 0.11, gain: 0.07 });
+}
+
+export function playIceBreak() {
+  playTone({ type: 'square', freqStart: 880, freqEnd: 310, duration: 0.09, gain: 0.08 });
+  playTone({ type: 'triangle', freqStart: 620, freqEnd: 220, duration: 0.11, gain: 0.08, delay: 0.03 });
+}
+
+export function playPortalWarp() {
+  playTone({ type: 'sine', freqStart: 380, freqEnd: 920, duration: 0.16, gain: 0.09 });
+}

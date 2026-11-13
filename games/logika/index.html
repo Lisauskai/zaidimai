@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261113c" />
+  <link rel="stylesheet" href="./style.css?v=20261113d" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -177,20 +177,23 @@
           <button id="tab-mode-gears" class="mode-tab-btn" type="button">
             ⚙️ Krumpliaračiai (5)
           </button>
+          <button id="tab-mode-gravity" class="mode-tab-btn" type="button">
+            🧊 Gravitacijos labirintas (5)
+          </button>
           <button id="tab-mode-mini" class="mode-tab-btn" type="button">
             🧪 Mini Eksperimentai (3)
           </button>
         </div>
       </div>
 
-      <!-- NUOTYKIŲ ŽEMĖLAPIS (8 LABORATORIJOS ZONOS) -->
+      <!-- NUOTYKIŲ ŽEMĖLAPIS (9 LABORATORIJOS ZONOS) -->
       <section id="world-map-panel" class="world-map-panel" aria-label="Proto laboratorijos nuotykių žemėlapis">
         <div class="world-map-head">
           <div>
             <h2 class="world-map-title">🗺️ Proto Laboratorijos žemėlapis</h2>
-            <p class="world-map-sub">Laisvai rinkis bet kurią iš 8 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
+            <p class="world-map-sub">Laisvai rinkis bet kurią iš 9 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
           </div>
-          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 120</div>
+          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 135</div>
         </div>
         <div id="world-map-grid" class="world-map-grid"></div>
       </section>
@@ -463,6 +466,46 @@
           <div id="gears-palette" class="gears-palette" aria-label="Krumpliaračių dydžių pasirinkimas"></div>
         </div>
 
+        <!-- 9. GRAVITACIJOS LABIRINTAS (TILT & SLIDE) -->
+        <div id="gravity-stage" class="pinpull-stage hidden">
+          <div class="pinpull-controls-bar">
+            <span id="gravity-counter" class="pinpull-counter">⭐ Žvaigždutės: 0 / 1 • Slydimai: 0</span>
+            <div class="pinpull-btn-group">
+              <button id="btn-gravity-reset" class="pin-reset-btn" type="button">
+                🔄 Iš naujo (Reset)
+              </button>
+              <button id="btn-gravity-next" class="pin-next-btn hidden" type="button">
+                Kitas lygis ▶
+              </button>
+            </div>
+          </div>
+
+          <div class="pinpull-canvas-wrap">
+            <canvas
+              id="gravity-canvas"
+              class="pinpull-canvas"
+              width="540"
+              height="440"
+              aria-label="Gravitacijos labirinto lenta"
+            ></canvas>
+          </div>
+
+          <div class="gravity-tilt-controls" aria-label="Pakreipimo krypties mygtukai">
+            <div class="grav-dpad-grid">
+              <span></span>
+              <button class="grav-dpad-btn" data-grav-dir="U" type="button" aria-label="Pakreipti aukštyn">▲</button>
+              <span></span>
+              <button class="grav-dpad-btn" data-grav-dir="L" type="button" aria-label="Pakreipti kairėn">◄</button>
+              <span class="grav-dpad-center" aria-hidden="true">🧊</span>
+              <button class="grav-dpad-btn" data-grav-dir="R" type="button" aria-label="Pakreipti dešinėn">►</button>
+              <span></span>
+              <button class="grav-dpad-btn" data-grav-dir="D" type="button" aria-label="Pakreipti žemyn">▼</button>
+              <span></span>
+            </div>
+            <p class="gravity-hint-sub">Valdyk rodyklėmis klaviatūroje, brauk pirštu per lentą arba spausk ▲ ▼ ◄ ►!</p>
+          </div>
+        </div>
+
         <!-- MINI EKSPERIMENTŲ ZONA -->
         <div id="puzzle-stage" class="puzzle-stage hidden"></div>
 
@@ -492,6 +535,6 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js?v=20261113c"></script>
+  <script type="module" src="./game.js?v=20261113d"></script>
 </body>
 </html>

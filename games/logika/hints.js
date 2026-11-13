@@ -57,7 +57,14 @@ export const OPTIMAL_PAR_MOVES = {
   gea_g3_4: 5,
   gea_g3_5: 5,
 
-  // 9. Mini eksperimentai
+  // 9. Gravitacijos labirintas
+  grv_g3_1: 5,
+  grv_g3_2: 5,
+  grv_g3_3: 5,
+  grv_g3_4: 4,
+  grv_g3_5: 5,
+
+  // 10. Mini eksperimentai
   g3_laser_1: 4,
   g3_switches_1: 4,
   g3_sequence_1: 1
@@ -552,6 +559,29 @@ export function computeFirstHint(mode, level, context = {}) {
         message: `💡 Pirmas žingsnis: uždėk ${sizeLabels[target.sizeKey]} krumpliaratį ant pažymėto geltono kaiščio!`
       };
     }
+  }
+
+  if (mode === 'gravity') {
+    const firstDirs = {
+      grv_g1_1: 'R',
+      grv_g1_2: 'R',
+      grv_g1_3: 'R',
+      grv_g1_4: 'L',
+      grv_g1_5: 'U',
+      grv_g3_1: 'R',
+      grv_g3_2: 'R',
+      grv_g3_3: 'D',
+      grv_g3_4: 'R',
+      grv_g3_5: 'R'
+    };
+    const dirNames = { U: '▲ AUKŠTYN', D: '▼ ŽEMYN', L: '◄ KAIRĖN', R: '► DEŠINĖN' };
+    const dir = firstDirs[level.id] || 'R';
+    return {
+      mode,
+      kind: 'gravity-dir',
+      dir,
+      message: `💡 Pirmas žingsnis: pakreipk lauką ${dirNames[dir]}!`
+    };
   }
 
   if (mode === 'mini') {
