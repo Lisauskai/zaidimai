@@ -778,32 +778,160 @@ body {
   gap: 14px;
 }
 
+.balance-status-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.balance-hearts {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #1e1b4b;
+  border: 3px solid #fb7185;
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-size: 1.15rem;
+  letter-spacing: 2px;
+  box-shadow: 0 3px 0 var(--outline);
+}
+
+.balance-check-btn {
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: 3px solid var(--outline);
+  background: linear-gradient(180deg, #10b981, #059669);
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.98rem;
+  cursor: pointer;
+  box-shadow: inset 0 2px 0 #6ee7b7, 0 4px 0 var(--outline);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.balance-check-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.balance-check-btn:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+.balance-check-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .balance-hints {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  max-width: 640px;
+  max-width: 660px;
 }
 
-.balance-hint-pill {
-  display: inline-flex;
+.clue-scale-card {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  background: #0f172a;
+  min-width: 240px;
+  flex: 1 1 250px;
+  max-width: 320px;
+  background: linear-gradient(180deg, #0f172a, #1e1b4b);
   border: 3px solid #38bdf8;
-  border-radius: 14px;
-  padding: 9px 16px;
-  font-family: 'Russo One', sans-serif;
-  font-size: 1.25rem;
-  color: #f8fafc;
+  border-radius: 16px;
+  padding: 10px 12px 12px;
   box-shadow: 0 4px 0 var(--outline);
 }
 
-.balance-hint-eq {
-  color: #facc15;
-  font-size: 1.35rem;
+.clue-scale-caption {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 900;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7dd3fc;
+  margin-bottom: 6px;
+}
+
+.clue-scale-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.clue-pan {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  min-height: 40px;
+  padding: 6px 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border-bottom: 4px solid #38bdf8;
+  border-radius: 10px 10px 4px 4px;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.05rem;
+  color: #f8fafc;
+}
+
+.clue-fulcrum {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.clue-eq-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #052e16;
+  font-family: 'Russo One', sans-serif;
+  font-size: 1rem;
+  border: 2px solid #ffffff;
+}
+
+.clue-weight-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: #b45309;
+  border: 2px solid #fde047;
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.92rem;
+}
+
+.clue-mult-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: #1e293b;
+  border: 2px solid #a78bfa;
+  color: #fde047;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.92rem;
+}
+
+.clue-item-icon {
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
 #balance-canvas {
@@ -820,43 +948,50 @@ body {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
-  max-width: 640px;
+  max-width: 660px;
 }
 
-.balance-add-btn {
+.weight-token-btn {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 13px 22px;
+  gap: 8px;
+  padding: 12px 20px;
   border-radius: 14px;
   border: 4px solid var(--outline);
-  background: #312e81;
+  background: #0369a1;
   color: #ffffff;
   font-family: 'Russo One', sans-serif;
-  font-size: 1.08rem;
+  font-size: 1.12rem;
   cursor: pointer;
-  box-shadow: inset 0 3px 0 #818cf8, 0 5px 0 var(--outline);
-  transition: transform 0.12s ease, background 0.12s ease;
+  box-shadow: inset 0 3px 0 #38bdf8, 0 5px 0 var(--outline);
+  transition: transform 0.12s ease, background 0.12s ease, opacity 0.15s ease;
 }
 
-.balance-add-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
+.weight-token-btn.is-mult {
   background: #4338ca;
+  box-shadow: inset 0 3px 0 #818cf8, 0 5px 0 var(--outline);
 }
 
-.balance-add-btn:active:not(:disabled) {
+.weight-token-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+
+.weight-token-btn:active:not(:disabled) {
   transform: translateY(2px);
 }
 
-.balance-add-btn:disabled {
-  opacity: 0.5;
+.weight-token-btn.is-placed,
+.weight-token-btn:disabled {
+  opacity: 0.36;
   cursor: not-allowed;
+  transform: none;
 }
 
-.balance-add-icon {
-  font-size: 1.45rem;
+.weight-token-icon {
+  font-size: 1.2rem;
 }
 
 /* ==================== RAŠTŲ IR ATMINTIES ŠIFRAS (IQ MATRICOS) ==================== */

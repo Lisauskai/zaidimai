@@ -29,12 +29,15 @@ export const OPTIMAL_PAR_MOVES = {
   cir_g3_4: 25,
   cir_g3_5: 26,
 
-  // 5. Kosminės svarstyklės
-  bal_g3_1: 5,
-  bal_g3_2: 7,
-  bal_g3_3: 7,
-  bal_g3_4: 8,
+  // 5. Kosminės svarstyklės (svarsčių uždėjimai + Patikrinti)
+  bal_g3_1: 3,
+  bal_g3_2: 4,
+  bal_g3_3: 3,
+  bal_g3_4: 4,
   bal_g3_5: 4,
+  bal_g3_6: 4,
+  bal_g3_7: 4,
+  bal_g3_8: 4,
 
   // 6. Raštų ir atminties šifras
   mat_g3_1: 1,
@@ -451,31 +454,33 @@ export function computeFirstHint(mode, level, context = {}) {
   if (mode === 'balance') {
     const eng = context.balanceEngine;
     if (!eng) return null;
-    const diff = eng.getWeightDiff();
-    if (diff > 0) {
+    const solutionUids = eng.getSolutionUids?.() || [];
+    const placedUids = (eng.rightItems || []).map((t) => t.uid);
+
+    const wrongPlaced = placedUids.find((uid) => !solutionUids.includes(uid));
+    if (wrongPlaced) {
       return {
         mode,
         kind: 'balance-remove',
-        message: '💡 Pirmas žingsnis: dešinė lėkštė per sunki – spustelėk objektą ant jos, kad nuimtum!'
+        message: '💡 Pirmas žingsnis: vienas svarstis dešinėje lėkštėje netinka – spustelėk jį, kad nuimtum!'
       };
     }
-    if (diff < 0) {
-      const need = -diff;
-      const weights = level.weights || {};
-      const sortedPalette = [...(level.palette || [])].sort(
-        (a, b) => (weights[b] || 0) - (weights[a] || 0)
-      );
-      const best = sortedPalette.find((k) => (weights[k] || 0) <= need) || sortedPalette[sortedPalette.length - 1];
-      if (best) {
-        return {
-          mode,
-          kind: 'balance-add',
-          itemKind: best,
-          message: '💡 Pirmas žingsnis: paspausk paryškintą objekto mygtuką apačioje!'
-        };
-      }
+
+    const nextUid = solutionUids.find((uid) => !placedUids.includes(uid));
+    if (nextUid) {
+      return {
+        mode,
+        kind: 'balance-add',
+        uid: nextUid,
+        message: '💡 Pirmas žingsnis: uždėk paryškintą svarstį ant dešinės lėkštės!'
+      };
     }
-    return null;
+
+    return {
+      mode,
+      kind: 'balance-check',
+      message: '💡 Svarsčiai paruošti – spausk „⚖️ Patikrinti pusiausvyrą“!'
+    };
   }
 
   if (mode === 'matrix') {

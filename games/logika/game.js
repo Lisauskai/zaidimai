@@ -1,21 +1,21 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113d';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113d';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113d';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113d';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113e';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113e';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113e';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113e';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113d';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113d';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113d';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113d';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113d';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113d';
+} from './balance.js?v=20261113e';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113e';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113e';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113e';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113e';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113e';
 import {
   isSoundEnabled,
   toggleSound,
@@ -39,8 +39,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113d';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113d';
+} from './sound.js?v=20261113e';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113e';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -49,7 +49,7 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113d';
+} from './robot.js?v=20261113e';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -222,6 +222,7 @@ let sokobanGame = null;
 let laserEngine = null;
 let circuitEngine = null;
 let balanceEngine = null;
+let balanceResetTimer = null;
 let memoryCtrl = null;
 let algoEngine = null;
 let gearsEngine = null;
@@ -863,6 +864,10 @@ function destroyCircuitEngine() {
 }
 
 function destroyBalanceEngine() {
+  if (balanceResetTimer) {
+    clearTimeout(balanceResetTimer);
+    balanceResetTimer = null;
+  }
   if (balanceEngine) {
     balanceEngine.destroy();
     balanceEngine = null;
@@ -1021,10 +1026,12 @@ function applyFirstHint() {
   } else if (hint.kind === 'circuit-launch') {
     document.getElementById('btn-circuit-launch')?.classList.add('hint-highlight');
   } else if (hint.kind === 'balance-add') {
-    const btn = document.querySelector(`.balance-add-btn[data-kind="${hint.itemKind}"]`);
+    const btn = document.querySelector(`.weight-token-btn[data-uid="${hint.uid}"]`);
     btn?.classList.add('hint-highlight');
   } else if (hint.kind === 'balance-remove') {
     balanceEngine?.setHintRemove(true);
+  } else if (hint.kind === 'balance-check') {
+    document.getElementById('btn-balance-check')?.classList.add('hint-highlight');
   } else if (hint.kind === 'memory-cell') {
     memoryCtrl?.setHintCell(hint.cellIndex);
   } else if (hint.kind === 'matrix-eliminate') {
@@ -1430,21 +1437,39 @@ function getBalanceCanvasCoords(evt) {
   };
 }
 
+function formatCluePanHtml(entries = []) {
+  return entries
+    .map((entry) => {
+      if (typeof entry.weight === 'number') {
+        return `<span class="clue-weight-badge">${entry.weight}</span>`;
+      }
+      const meta = ITEM_CATALOG[entry.kind] || ITEM_CATALOG.bolt;
+      if (entry.mult && entry.mult > 1) {
+        return `<span class="clue-mult-badge">${entry.mult}×${meta.icon}</span>`;
+      }
+      const count = entry.count || 1;
+      return `<span class="clue-item-icon">${meta.icon.repeat(count)}</span>`;
+    })
+    .join('<span aria-hidden="true">+</span>');
+}
+
 function renderBalanceHints(level) {
   const hintsEl = document.getElementById('balance-hints');
   if (!hintsEl) return;
   hintsEl.innerHTML = '';
 
-  const formatSide = (groups) =>
-    groups
-      .map((g) => (ITEM_CATALOG[g.kind]?.icon || '').repeat(g.count))
-      .join(' + ');
-
-  level.hints.forEach((h) => {
-    const pill = document.createElement('div');
-    pill.className = 'balance-hint-pill';
-    pill.innerHTML = `<span>${formatSide(h.left)}</span><span class="balance-hint-eq">=</span><span>${formatSide(h.right)}</span>`;
-    hintsEl.appendChild(pill);
+  (level.clues || []).forEach((clue, idx) => {
+    const card = document.createElement('div');
+    card.className = 'clue-scale-card';
+    card.innerHTML = `
+      <span class="clue-scale-caption">⚖️ UŽUOMINŲ SVARSTYKLĖS ${level.clues.length > 1 ? `#${idx + 1}` : ''}</span>
+      <div class="clue-scale-row">
+        <div class="clue-pan">${formatCluePanHtml(clue.left)}</div>
+        <div class="clue-fulcrum"><span class="clue-eq-badge">=</span></div>
+        <div class="clue-pan">${formatCluePanHtml(clue.right)}</div>
+      </div>
+    `;
+    hintsEl.appendChild(card);
   });
 }
 
@@ -1453,50 +1478,102 @@ function renderBalanceTray(level) {
   if (!trayEl) return;
   trayEl.innerHTML = '';
 
-  level.palette.forEach((kind) => {
-    const meta = ITEM_CATALOG[kind];
-    if (!meta) return;
+  (level.inventory || []).forEach((token) => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'balance-add-btn';
-    btn.dataset.kind = kind;
-    btn.innerHTML = `<span class="balance-add-icon">${meta.icon}</span><span>+ ${meta.label}</span>`;
+    btn.className = token.mult ? 'weight-token-btn is-mult' : 'weight-token-btn';
+    btn.dataset.uid = token.uid;
+    btn.innerHTML = `<span class="weight-token-icon">⚖️</span><span>${token.label}</span>`;
     btn.addEventListener('click', () => {
       if (!balanceEngine) return;
-      balanceEngine.addItem(kind);
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (feedbackEl) {
+        feedbackEl.className = 'puzzle-feedback hidden';
+        feedbackEl.textContent = '';
+      }
+      balanceEngine.placeToken(token.uid);
     });
     trayEl.appendChild(btn);
   });
 }
 
+function updateBalanceHeartsUI(hearts, maxHearts) {
+  const heartsEl = document.getElementById('balance-hearts');
+  if (!heartsEl) return;
+  const full = '❤️'.repeat(Math.max(0, hearts));
+  const empty = '🖤'.repeat(Math.max(0, maxHearts - hearts));
+  heartsEl.textContent = `${full}${empty}`;
+}
+
 function startBalanceLevel(level, totalInMode) {
   const counterEl = document.getElementById('balance-counter');
   const nextBtn = document.getElementById('btn-balance-next');
+  const checkBtn = document.getElementById('btn-balance-check');
+
+  if (balanceResetTimer) {
+    clearTimeout(balanceResetTimer);
+    balanceResetTimer = null;
+  }
 
   renderBalanceHints(level);
   renderBalanceTray(level);
 
-  let prevBalanced = false;
   balanceEngine = new BalanceScaleEngine(balanceCanvas, level, {
     onMove: (action) => {
       playBalancePop(action === 'remove');
       recordPlayerMove();
     },
-    onStatusChange: ({ rightCount, balanced, won }) => {
-      if (balanced && !prevBalanced) {
-        playBalanceBell();
-      }
-      prevBalanced = !!balanced;
+    onStatusChange: ({ rightCount, rightUids, hearts, maxHearts, outOfHearts, won }) => {
+      updateBalanceHeartsUI(hearts, maxHearts);
       if (counterEl) {
         counterEl.textContent = won
-          ? `🟢 Pusiausvyra pasiekta! (${rightCount} vnt.)`
-          : balanced
-            ? `🟢 Lygu! Svarstyklės išsilygina... (${rightCount} vnt.)`
-            : `⚖️ Dešinėje lėkštėje: ${rightCount} vnt.`;
+          ? `🟢 Pusiausvyra pasiekta! (${rightCount} sv.)`
+          : `⚖️ Dešinėje lėkštėje: ${rightCount} sv.`;
       }
-      document.querySelectorAll('.balance-add-btn').forEach((b) => {
-        b.disabled = !!won || rightCount >= 16;
+      if (checkBtn) {
+        checkBtn.disabled = !!won || !!outOfHearts;
+      }
+      const placedSet = new Set(rightUids || []);
+      document.querySelectorAll('.weight-token-btn').forEach((b) => {
+        const isPlaced = placedSet.has(b.dataset.uid);
+        b.classList.toggle('is-placed', isPlaced);
+        b.disabled = isPlaced || !!won || !!outOfHearts;
       });
+    },
+    onCheckResult: ({ balanced, diff, hearts, outOfHearts }) => {
+      recordPlayerMove();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (balanced) {
+        playBalanceBell();
+        if (feedbackEl) {
+          feedbackEl.className = 'puzzle-feedback hidden';
+          feedbackEl.textContent = '';
+        }
+        return;
+      }
+
+      playWrongBuzz();
+      if (feedbackEl) {
+        if (outOfHearts) {
+          feedbackEl.textContent = '💔 Baigėsi visos 3 širdelės! Svarstyklės netrukus persikraus iš naujo.';
+          balanceResetTimer = setTimeout(() => {
+            balanceResetTimer = null;
+            if (!balanceEngine) return;
+            balanceEngine.reset();
+            resetAttemptState();
+            feedbackEl.className = 'puzzle-feedback hidden';
+            feedbackEl.textContent = '';
+          }, 1700);
+        } else {
+          const sideMsg =
+            diff < 0
+              ? '⬅️ Kairė pusė nusvėrė! Dešinė per lengva – pakeisk arba pridėk svarsčių.'
+              : '➡️ Dešinė pusė nusvėrė! Paspausk ant svarsčio dešinėje lėkštėje, kad nuimtum.';
+          feedbackEl.textContent = `${sideMsg} (Liko ❤️ ${hearts})`;
+        }
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
     },
     onWin: () => {
       markLevelSolved(level);
@@ -2511,8 +2588,25 @@ if (circuitCanvas) {
   );
 }
 
+document.getElementById('btn-balance-check')?.addEventListener('click', () => {
+  if (!balanceEngine) return;
+  const res = balanceEngine.checkBalance();
+  if (res?.empty) {
+    const feedbackEl = document.getElementById('puzzle-feedback');
+    if (feedbackEl) {
+      feedbackEl.textContent = '⚠️ Pirmiausia uždėk bent vieną svarstį ant dešinės lėkštės!';
+      feedbackEl.className = 'puzzle-feedback error';
+      feedbackEl.classList.remove('hidden');
+    }
+  }
+});
+
 document.getElementById('btn-balance-reset')?.addEventListener('click', () => {
   if (!balanceEngine) return;
+  if (balanceResetTimer) {
+    clearTimeout(balanceResetTimer);
+    balanceResetTimer = null;
+  }
   const feedbackEl = document.getElementById('puzzle-feedback');
   feedbackEl.className = 'puzzle-feedback hidden';
   feedbackEl.textContent = '';

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261113d" />
+  <link rel="stylesheet" href="./style.css?v=20261113e" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -166,7 +166,7 @@
             🚂 Sujunk grandinę (5)
           </button>
           <button id="tab-mode-balance" class="mode-tab-btn" type="button">
-            ⚖️ Kosminės svarstyklės (5)
+            ⚖️ Kosminės svarstyklės (8)
           </button>
           <button id="tab-mode-matrix" class="mode-tab-btn" type="button">
             🧩 Raštai ir atmintis (5)
@@ -193,7 +193,7 @@
             <h2 class="world-map-title">🗺️ Proto Laboratorijos žemėlapis</h2>
             <p class="world-map-sub">Laisvai rinkis bet kurią iš 9 laboratorijos zonų! Viduje lygiai atsirakina po vieną.</p>
           </div>
-          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 135</div>
+          <div id="world-map-stars-total" class="world-map-stars-pill">⭐ 0 / 144</div>
         </div>
         <div id="world-map-grid" class="world-map-grid"></div>
       </section>
@@ -334,10 +334,16 @@
         <!-- KOSMINĖS SVARSTYKLĖS (VISUAL LOGIC BALANCE) ZONA -->
         <div id="balance-stage" class="balance-stage hidden">
           <div class="pinpull-controls-bar">
-            <span id="balance-counter" class="pinpull-counter">⚖️ Dešinėje lėkštėje: 0 vnt.</span>
+            <div class="balance-status-group">
+              <span id="balance-hearts" class="balance-hearts" title="Likę bandymai">❤️❤️❤️</span>
+              <span id="balance-counter" class="pinpull-counter">⚖️ Dešinėje lėkštėje: 0 sv.</span>
+            </div>
             <div class="pinpull-btn-group">
+              <button id="btn-balance-check" class="balance-check-btn" type="button">
+                ⚖️ Patikrinti pusiausvyrą
+              </button>
               <button id="btn-balance-reset" class="pin-reset-btn" type="button">
-                🔄 Iš naujo (Reset)
+                🔄 Iš naujo
               </button>
               <button id="btn-balance-next" class="pin-next-btn hidden" type="button">
                 Kitas lygis ▶
@@ -345,13 +351,13 @@
             </div>
           </div>
 
-          <div id="balance-hints" class="balance-hints" aria-label="Svorių taisyklės"></div>
+          <div id="balance-hints" class="balance-hints" aria-label="Mažosios užuominų svarstyklės"></div>
 
           <div class="pinpull-canvas-wrap">
             <canvas id="balance-canvas" width="640" height="380"></canvas>
           </div>
 
-          <div id="balance-tray" class="balance-tray" aria-label="Objektų pasirinkimas"></div>
+          <div id="balance-tray" class="balance-tray" aria-label="Ribotas svarsčių rinkinys"></div>
         </div>
 
         <!-- RAŠTŲ IR ATMINTIES ŠIFRAS (IQ MATRICOS IR ATMINTIS) ZONA -->
@@ -535,6 +541,6 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js?v=20261113d"></script>
+  <script type="module" src="./game.js?v=20261113e"></script>
 </body>
 </html>
