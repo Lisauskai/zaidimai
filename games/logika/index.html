@@ -229,17 +229,18 @@
 
           <div id="sokoban-grid" class="sokoban-grid" aria-label="Robo-Stumduko tinklelis"></div>
 
-          <div class="sok-controls-footer">
-            <div class="sok-dpad" aria-label="Valdymo rodyklės">
-              <button class="dpad-btn dpad-up" data-dir="-1,0" type="button">⬆️</button>
-              <div class="dpad-mid">
-                <button class="dpad-btn" data-dir="0,-1" type="button">⬅️</button>
-                <button class="dpad-btn" data-dir="1,0" type="button">⬇️</button>
-                <button class="dpad-btn" data-dir="0,1" type="button">➡️</button>
-              </div>
+          <div class="sok-floating-dpad" aria-label="Greito valdymo mygtukai kampe">
+            <button class="dpad-btn dpad-up" data-dir="-1,0" type="button" aria-label="Į viršų">▲</button>
+            <div class="dpad-mid">
+              <button class="dpad-btn" data-dir="0,-1" type="button" aria-label="Į kairę">◄</button>
+              <button class="dpad-btn" data-dir="1,0" type="button" aria-label="Žemyn">▼</button>
+              <button class="dpad-btn" data-dir="0,1" type="button" aria-label="Į dešinę">►</button>
             </div>
+          </div>
+
+          <div class="sok-controls-footer">
             <div class="sok-legend">
-              <span>🤖 Robotas (WASD / Rodyklės / paspaudimas)</span>
+              <span>🤖 Robotas (WASD / Rodyklės / Swipe / ▲▼◄►)</span>
               <span>⚡ Kubas (stumk ant 🔘)</span>
               <span>❄️ Ledas (kubas slysta)</span>
               <span>➡️ Vienkrypčiai vartai</span>
@@ -271,7 +272,7 @@
           <div class="sok-legend laser-legend">
             <span>🔴 Lazerio šaltinis</span>
             <span>🟡 Veidrodis (spausk = pasukti 90°)</span>
-            <span id="laser-legend-splitter" class="hidden">🔷 Daliklis (praleidžia + atspindi 90° | vilk į laisvą langelį)</span>
+            <span id="laser-legend-splitter" class="hidden">🔷 Daliklis (nutempk arba pasirink ir paspausk laisvą langelį • pasukti: spausk dar kartą)</span>
             <span>💎 Energijos kristalas (tikslas)</span>
           </div>
         </div>

@@ -477,8 +477,8 @@ export class LaserMirrorsEngine {
 
     const piece = this.pieceAtCell(cell.r, cell.c);
 
-    // Jei esame 3 klasėje "move" režime ir jau pasirinktas kitas elementas -> perkeliame į tuščią langelį
-    if (this.level.movable && this.interactionMode === 'move' && this.selectedPieceId && !piece) {
+    // 3 klasėje: jei jau pasirinktas elementas ir paspaudžiama ant tuščio langelio -> perkeliame ten!
+    if (this.level.movable && this.selectedPieceId && !piece) {
       const sel = this.pieces.find((p) => p.id === this.selectedPieceId);
       if (sel && this.movePiece(sel, cell.r, cell.c)) {
         this.selectedPieceId = null;
@@ -537,16 +537,14 @@ export class LaserMirrorsEngine {
       return;
     }
 
-    // Greitas paspaudimas be vilkimo
-    if (this.interactionMode === 'move') {
+    // Greitas paspaudimas be vilkimo (3 klasėje: paspaudus pirmą kartą pasirenkame perkėlimui, antrą kartą – pasukame 90°)
+    if (this.level.movable) {
       if (this.selectedPieceId === piece.id) {
-        // Antras paspaudimas ant jau pasirinkto elemento pasuka jį 90°
         this.rotatePiece(piece);
       } else {
         this.selectedPieceId = piece.id;
       }
     } else {
-      // Numatytas režimas: paspaudimas pasuka 90°
       this.rotatePiece(piece);
     }
   }
@@ -597,11 +595,10 @@ export class LaserMirrorsEngine {
         ctx.lineWidth = 1.5;
         ctx.strokeRect(x + 2, y + 2, cs - 4, cs - 4);
 
-        // Pažymime laisvus langelius, kai tempiame arba perkėlimo režime pasirinkome elementą
+        // Pažymime laisvus langelius, kai tempiame arba kai pasirinkome elementą 3 klasėje
         const showDropHint =
           this.level.movable &&
-          ((this.dragState && this.dragState.movedEnough) ||
-            (this.interactionMode === 'move' && this.selectedPieceId));
+          ((this.dragState && this.dragState.movedEnough) || !!this.selectedPieceId);
         if (showDropHint && this.isCellEmptyForPiece(r, c)) {
           const isHover =
             this.dragState?.hoverCell?.r === r && this.dragState?.hoverCell?.c === c;

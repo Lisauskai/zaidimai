@@ -961,8 +961,8 @@ function updateLaserToolBtnUI() {
   if (!btn) return;
   btn.classList.toggle('move-active', laserMoveToolActive);
   btn.textContent = laserMoveToolActive
-    ? '✋ Režimas: Perkelti (spausk ant veidrodžio, tada ant langelio)'
-    : '🔄 Paspaudus: Sukti 90° (Vilkti = Perkelti)';
+    ? '✋ Režimas: Perkelti (spausk elementą → spausk langelį)'
+    : '👆 Vilkti arba spausk elementą → tuščią langelį (2x = Sukti 90°)';
 }
 
 function startLaserLevel(level, totalInMode) {
@@ -1590,6 +1590,61 @@ document.querySelectorAll('.dpad-btn[data-dir]').forEach((btn) => {
   });
 });
 
+// Braukimas pirštu (Swipe) bet kurioje ekrano vietoje „Robo-Stumduko“ režime
+let swipeStart = null;
+
+function isSokobanSwipeActive(target) {
+  if (!currentDifficulty || currentMode !== 'sokoban' || !sokobanGame || sokobanGame.won) return false;
+  if (victoryModal && !victoryModal.classList.contains('hidden')) return false;
+  if (target && target.closest && target.closest('button, a')) return false;
+  return true;
+}
+
+window.addEventListener(
+  'pointerdown',
+  (e) => {
+    if (!isSokobanSwipeActive(e.target)) {
+      swipeStart = null;
+      return;
+    }
+    swipeStart = { x: e.clientX, y: e.clientY, pointerId: e.pointerId };
+  },
+  { passive: true }
+);
+
+window.addEventListener(
+  'pointerup',
+  (e) => {
+    if (!swipeStart || e.pointerId !== swipeStart.pointerId) return;
+    const dx = e.clientX - swipeStart.x;
+    const dy = e.clientY - swipeStart.y;
+    swipeStart = null;
+    if (!isSokobanSwipeActive(null)) return;
+
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+    if (Math.max(absX, absY) < 26) return;
+
+    if (absX > absY) {
+      handleSokobanMove(0, dx > 0 ? 1 : -1);
+    } else {
+      handleSokobanMove(dy > 0 ? 1 : -1, 0);
+    }
+  },
+  { passive: true }
+);
+
+// Užtikriname, kad braukimas pirštu neslinktų ekrano „Robo-Stumduko“ metu
+sokobanStage?.addEventListener(
+  'touchmove',
+  (e) => {
+    if (currentDifficulty && currentMode === 'sokoban') {
+      e.preventDefault();
+    }
+  },
+  { passive: false }
+);
+
 window.addEventListener('keydown', (e) => {
   if (!currentDifficulty || currentMode !== 'sokoban' || !sokobanGame) return;
   const k = e.key.toLowerCase();
@@ -1628,11 +1683,16 @@ document.getElementById('btn-pin-next')?.addEventListener('click', () => {
 });
 
 if (pinCanvas) {
-  pinCanvas.addEventListener('pointerdown', (e) => {
-    if (!pinEngine) return;
-    const { mx, my } = getCanvasCoords(e);
-    pinEngine.handlePointerDown(mx, my);
-  });
+  pinCanvas.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!pinEngine) return;
+      e.preventDefault();
+      const { mx, my } = getCanvasCoords(e);
+      pinEngine.handlePointerDown(mx, my);
+    },
+    { passive: false }
+  );
 
   pinCanvas.addEventListener('pointermove', (e) => {
     if (!pinEngine) return;
@@ -1668,26 +1728,42 @@ document.getElementById('btn-laser-next')?.addEventListener('click', () => {
 });
 
 if (laserCanvas) {
-  laserCanvas.addEventListener('pointerdown', (e) => {
-    if (!laserEngine) return;
-    const { mx, my } = getLaserCanvasCoords(e);
-    laserEngine.handlePointerDown(mx, my);
-  });
+  laserCanvas.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!laserEngine) return;
+      e.preventDefault();
+      laserCanvas.setPointerCapture?.(e.pointerId);
+      const { mx, my } = getLaserCanvasCoords(e);
+      laserEngine.handlePointerDown(mx, my);
+    },
+    { passive: false }
+  );
 
-  laserCanvas.addEventListener('pointermove', (e) => {
-    if (!laserEngine) return;
-    const { mx, my } = getLaserCanvasCoords(e);
-    laserEngine.handlePointerMove(mx, my);
-  });
+  laserCanvas.addEventListener(
+    'pointermove',
+    (e) => {
+      if (!laserEngine) return;
+      const { mx, my } = getLaserCanvasCoords(e);
+      laserEngine.handlePointerMove(mx, my);
+    },
+    { passive: true }
+  );
 
   laserCanvas.addEventListener('pointerup', (e) => {
     if (!laserEngine) return;
+    if (laserCanvas.hasPointerCapture?.(e.pointerId)) {
+      laserCanvas.releasePointerCapture(e.pointerId);
+    }
     const { mx, my } = getLaserCanvasCoords(e);
     laserEngine.handlePointerUp(mx, my);
   });
 
   laserCanvas.addEventListener('pointercancel', (e) => {
     if (!laserEngine) return;
+    if (laserCanvas.hasPointerCapture?.(e.pointerId)) {
+      laserCanvas.releasePointerCapture(e.pointerId);
+    }
     const { mx, my } = getLaserCanvasCoords(e);
     laserEngine.handlePointerUp(mx, my);
   });
@@ -1724,11 +1800,16 @@ document.getElementById('btn-circuit-next')?.addEventListener('click', () => {
 });
 
 if (circuitCanvas) {
-  circuitCanvas.addEventListener('pointerdown', (e) => {
-    if (!circuitEngine) return;
-    const { mx, my } = getCircuitCanvasCoords(e);
-    circuitEngine.handlePointerDown(mx, my);
-  });
+  circuitCanvas.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!circuitEngine) return;
+      e.preventDefault();
+      const { mx, my } = getCircuitCanvasCoords(e);
+      circuitEngine.handlePointerDown(mx, my);
+    },
+    { passive: false }
+  );
 }
 
 document.getElementById('btn-balance-reset')?.addEventListener('click', () => {
@@ -1751,11 +1832,16 @@ document.getElementById('btn-balance-next')?.addEventListener('click', () => {
 });
 
 if (balanceCanvas) {
-  balanceCanvas.addEventListener('pointerdown', (e) => {
-    if (!balanceEngine) return;
-    const { mx, my } = getBalanceCanvasCoords(e);
-    balanceEngine.handlePointerDown(mx, my);
-  });
+  balanceCanvas.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!balanceEngine) return;
+      e.preventDefault();
+      const { mx, my } = getBalanceCanvasCoords(e);
+      balanceEngine.handlePointerDown(mx, my);
+    },
+    { passive: false }
+  );
 }
 
 document.getElementById('btn-memory-replay')?.addEventListener('click', () => {
