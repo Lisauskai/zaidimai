@@ -21,8 +21,8 @@ import {
   loadGlobalPlaytime,
   saveGlobalPlaytime,
   getRemainingPlaytimeSeconds
-} from './garage.js';
-import { PitStopMath } from './math.js';
+} from './garage.js?v=20261113n';
+import { PitStopMath } from './math.js?v=20261113n';
 
 const PARENT_PASSWORD = 'bosas123';
 
@@ -2976,27 +2976,31 @@ function updateSingleCar(car, dt) {
   // Mini-Turbo arba Super Start greičio bonuso laikmatis po sėkmingo 360° nusileidimo arba Super Starto
   if (car.turboBoostTimer > 0) {
     car.turboBoostTimer--;
-    // Įspūdingi turbo kibirkščių ir liepsnų pėdsakai už mašinos
-    if (animTick % 2 === 0) {
+    // Ryškios mėlynos ugnies dalelės ir kibirkštys iš duslintuvo (Boost)
+    if (animTick % 1 === 0) {
       const isSuper = !!car.superStartActive;
       const exhausts = [-10, 10];
       for (const ey of exhausts) {
         const normX = -Math.sin(car.angle) * ey;
         const normY = Math.cos(car.angle) * ey;
-        const rearX = car.x - Math.cos(car.angle) * 24 + normX;
-        const rearY = car.y - Math.sin(car.angle) * 24 + normY;
+        const rearX = car.x - Math.cos(car.angle) * 26 + normX;
+        const rearY = car.y - Math.sin(car.angle) * 26 + normY;
+        const pChoice = Math.random();
+        const flameColor = pChoice < 0.45
+          ? '56, 189, 248'
+          : pChoice < 0.8
+          ? '59, 130, 246'
+          : '224, 242, 254';
         raceState.dustParticles.push({
-          x: rearX + (Math.random() - 0.5) * 4,
-          y: rearY + (Math.random() - 0.5) * 4,
-          vx: -Math.cos(car.angle) * (isSuper ? 6 : 4) + (Math.random() - 0.5) * 1.5,
-          vy: -Math.sin(car.angle) * (isSuper ? 6 : 4) + (Math.random() - 0.5) * 1.5,
-          r: (isSuper ? 4 : 3) + Math.random() * 3,
+          x: rearX + (Math.random() - 0.5) * 3.5,
+          y: rearY + (Math.random() - 0.5) * 3.5,
+          vx: -Math.cos(car.angle) * (isSuper ? 6.8 : 4.8) + (Math.random() - 0.5) * 1.4,
+          vy: -Math.sin(car.angle) * (isSuper ? 6.8 : 4.8) + (Math.random() - 0.5) * 1.4,
+          r: (isSuper ? 4.5 : 3.4) + Math.random() * 2.8,
           maxR: isSuper ? 14 : 11,
-          color: isSuper
-            ? (Math.random() < 0.7 ? '56, 189, 248' : '147, 197, 253')
-            : (Math.random() < 0.6 ? '56, 189, 248' : '249, 115, 22'),
-          alpha: 0.9,
-          decay: isSuper ? 0.04 : 0.045
+          color: flameColor,
+          alpha: 0.94,
+          decay: isSuper ? 0.048 : 0.055
         });
       }
     }
@@ -3496,19 +3500,36 @@ function updateSingleCar(car, dt) {
         ? 'rgba(241, 245, 249, 0.65)'
         : currentBiome === 'desert_sand'
         ? 'rgba(180, 83, 9, 0.55)'
-        : 'rgba(15, 23, 42, 0.45)';
+        : 'rgba(15, 23, 42, 0.55)';
     raceState.skidMarks.push({
       x: car.x - newForwardX * 16 + newRightX * 13,
       y: car.y - newForwardY * 16 + newRightY * 13,
+      angle: car.angle,
       color: skidColor
     });
     raceState.skidMarks.push({
       x: car.x - newForwardX * 16 - newRightX * 13,
       y: car.y - newForwardY * 16 - newRightY * 13,
+      angle: car.angle,
       color: skidColor
     });
-    if (raceState.skidMarks.length > 420) {
+    if (raceState.skidMarks.length > 560) {
       raceState.skidMarks.splice(0, 2);
+    }
+    // Dreifo metu iš duslintuvo išsiveržiančios mėlynos ugnies dalelės ir padangų dūmai
+    if (throttle > 0.25 && !car.isDead && car.turboBoostTimer <= 0 && animTick % 4 === 0) {
+      const exhaustSign = Math.random() < 0.5 ? -10 : 10;
+      raceState.dustParticles.push({
+        x: car.x - newForwardX * 26 + newRightX * exhaustSign,
+        y: car.y - newForwardY * 26 + newRightY * exhaustSign,
+        vx: -newForwardX * 3.8 + (Math.random() - 0.5) * 1.2,
+        vy: -newForwardY * 3.8 + (Math.random() - 0.5) * 1.2,
+        r: 3 + Math.random() * 2.2,
+        maxR: 9.5,
+        color: Math.random() < 0.65 ? '56, 189, 248' : '96, 165, 250',
+        alpha: 0.85,
+        decay: 0.065
+      });
     }
   }
 
@@ -4694,6 +4715,68 @@ function drawRamp(ctx, ramp) {
   ctx.restore();
 }
 
+const surfacePatternCache = {};
+
+function getSurfaceTexturePattern(ctx, biomeId) {
+  if (surfacePatternCache[biomeId] !== undefined) {
+    return surfacePatternCache[biomeId];
+  }
+  const tile = document.createElement('canvas');
+  tile.width = 96;
+  tile.height = 96;
+  const tctx = tile.getContext('2d');
+  if (!tctx) {
+    surfacePatternCache[biomeId] = null;
+    return null;
+  }
+
+  // Deterministiniai smulkūs grūdeliai (asfalto, ledo arba smėlio tekstūrai)
+  let seed = 1337;
+  const nextRand = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+
+  if (biomeId === 'winter_snow') {
+    for (let i = 0; i < 120; i++) {
+      const x = nextRand() * 96;
+      const y = nextRand() * 96;
+      const r = 0.7 + nextRand() * 1.4;
+      tctx.fillStyle = nextRand() < 0.6 ? 'rgba(255, 255, 255, 0.14)' : 'rgba(56, 189, 248, 0.1)';
+      tctx.fillRect(x, y, r, r);
+    }
+    tctx.strokeStyle = 'rgba(224, 242, 254, 0.12)';
+    tctx.lineWidth = 1;
+    tctx.beginPath();
+    tctx.moveTo(8, 20);
+    tctx.lineTo(44, 34);
+    tctx.moveTo(54, 62);
+    tctx.lineTo(88, 74);
+    tctx.stroke();
+  } else if (biomeId === 'desert_sand') {
+    for (let i = 0; i < 150; i++) {
+      const x = nextRand() * 96;
+      const y = nextRand() * 96;
+      const r = 0.8 + nextRand() * 1.5;
+      tctx.fillStyle = nextRand() < 0.55 ? 'rgba(254, 240, 138, 0.12)' : 'rgba(69, 26, 3, 0.16)';
+      tctx.fillRect(x, y, r, r);
+    }
+  } else {
+    // Subtili grūdėto asfalto tekstūra
+    for (let i = 0; i < 190; i++) {
+      const x = nextRand() * 96;
+      const y = nextRand() * 96;
+      const r = 0.8 + nextRand() * 1.3;
+      tctx.fillStyle = nextRand() < 0.5 ? 'rgba(255, 255, 255, 0.075)' : 'rgba(2, 6, 23, 0.18)';
+      tctx.fillRect(x, y, r, r);
+    }
+  }
+
+  const pattern = ctx.createPattern(tile, 'repeat');
+  surfacePatternCache[biomeId] = pattern;
+  return pattern;
+}
+
 function traceTrackLoop(ctx, getRadiiFn, steps = 180) {
   ctx.beginPath();
   for (let i = 0; i <= steps; i++) {
@@ -4791,22 +4874,55 @@ function drawRace() {
       ctx.setLineDash([]);
     }
 
-    // C. Pagrindinė trasos kelio danga (Asfaltas / Ledas / Smėlis)
+    // C. Pagrindinė trasos kelio danga (Asfaltas / Ledas / Smėlis + smulki tekstūra)
     ctx.strokeStyle = bInfo.trackColor;
     ctx.lineWidth = TRACK_HALF_WIDTH * 2;
     traceSplineCenter();
     ctx.stroke();
 
-    // D. Bordiūrai abiejuose kelio kraštuose (-TRACK_HALF_WIDTH ir +TRACK_HALF_WIDTH)
+    const surfaceTex = getSurfaceTexturePattern(ctx, currentBiome);
+    if (surfaceTex) {
+      ctx.strokeStyle = surfaceTex;
+      ctx.lineWidth = TRACK_HALF_WIDTH * 2 - 8;
+      traceSplineCenter();
+      ctx.stroke();
+    }
+
+    // D. Bordiūrai abiejuose kelio kraštuose + raudonai-balti lenktynių borteliai posūkiuose
     for (const side of [-TRACK_HALF_WIDTH, TRACK_HALF_WIDTH]) {
       traceSplineOffset(side);
-      ctx.lineWidth = 14;
-      ctx.strokeStyle = bInfo.trackEdge1;
+      ctx.lineWidth = 18;
+      ctx.strokeStyle = 'rgba(2, 6, 23, 0.72)';
       ctx.stroke();
-      ctx.setLineDash([36, 36]);
-      ctx.strokeStyle = bInfo.trackEdge2;
+
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = currentBiome === 'city_asphalt' ? '#f8fafc' : bInfo.trackEdge1;
+      ctx.stroke();
+      ctx.setLineDash([34, 34]);
+      ctx.strokeStyle = currentBiome === 'city_asphalt' ? '#ef4444' : bInfo.trackEdge2;
       ctx.stroke();
       ctx.setLineDash([]);
+    }
+
+    // Ryškūs raudonai-balti lenktynių borteliai (curbs) aštresniuose posūkiuose
+    for (let i = 0; i < sampleCount; i++) {
+      const prev = samples[(i - 2 + sampleCount) % sampleCount];
+      const cur = samples[i];
+      const nxt = samples[(i + 2) % sampleCount];
+      const cross = prev.tangentX * nxt.tangentY - prev.tangentY * nxt.tangentX;
+      if (Math.abs(cross) > 0.045) {
+        const apexSide = cross > 0 ? TRACK_HALF_WIDTH - 4 : -(TRACK_HALF_WIDTH - 4);
+        const cx1 = cur.x + cur.normalX * apexSide;
+        const cy1 = cur.y + cur.normalY * apexSide;
+        const cx2 = nxt.x + nxt.normalX * apexSide;
+        const cy2 = nxt.y + nxt.normalY * apexSide;
+        ctx.strokeStyle = (Math.floor(i / 2) % 2 === 0) ? '#ef4444' : '#f8fafc';
+        ctx.lineWidth = 10;
+        ctx.beginPath();
+        ctx.moveTo(cx1, cy1);
+        ctx.lineTo(cx2, cy2);
+        ctx.stroke();
+      }
     }
 
     // E. Juostų žymėjimas (brūkšninės linijos)
@@ -4858,22 +4974,31 @@ function drawRace() {
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // 3. Pagrindinis trasos kelias su „S“ posūkiais ir susiaurėjimais
+    // 3. Pagrindinis trasos kelias su „S“ posūkiais, susiaurėjimais ir grūdėta tekstūra
     ctx.fillStyle = bInfo.trackColor;
     traceTrackLoop(ctx, (b) => [b.asphaltOuterRx, b.asphaltOuterRy]);
     ctx.fill();
 
-    // 3b. Bordiūrai abiejuose kelio kraštuose
+    const surfaceTexFallback = getSurfaceTexturePattern(ctx, currentBiome);
+    if (surfaceTexFallback) {
+      ctx.fillStyle = surfaceTexFallback;
+      ctx.fill();
+    }
+
+    // 3b. Raudonai-balti lenktynių bordiūrai abiejuose kelio kraštuose
     for (const edgeFn of [
       (b) => [b.asphaltOuterRx, b.asphaltOuterRy],
       (b) => [b.asphaltInnerRx, b.asphaltInnerRy]
     ]) {
       traceTrackLoop(ctx, edgeFn);
-      ctx.lineWidth = 14;
-      ctx.strokeStyle = bInfo.trackEdge1;
+      ctx.lineWidth = 18;
+      ctx.strokeStyle = 'rgba(2, 6, 23, 0.72)';
       ctx.stroke();
-      ctx.setLineDash([36, 36]);
-      ctx.strokeStyle = bInfo.trackEdge2;
+      ctx.lineWidth = 14;
+      ctx.strokeStyle = currentBiome === 'city_asphalt' ? '#f8fafc' : bInfo.trackEdge1;
+      ctx.stroke();
+      ctx.setLineDash([34, 34]);
+      ctx.strokeStyle = currentBiome === 'city_asphalt' ? '#ef4444' : bInfo.trackEdge2;
       ctx.stroke();
       ctx.setLineDash([]);
     }
@@ -4918,10 +5043,18 @@ function drawRace() {
     }
   }
 
-  // 8. Slydimo žymės
+  // 8. Slydimo žymės (realistiškos padangų žymės)
   for (const sk of raceState.skidMarks) {
     ctx.fillStyle = sk.color;
-    ctx.fillRect(sk.x - 3, sk.y - 3, 6, 6);
+    if (typeof sk.angle === 'number') {
+      ctx.save();
+      ctx.translate(sk.x, sk.y);
+      ctx.rotate(sk.angle);
+      ctx.fillRect(-5, -3.2, 10, 6.4);
+      ctx.restore();
+    } else {
+      ctx.fillRect(sk.x - 3, sk.y - 3, 6, 6);
+    }
   }
 
   // 8b. Didesni dulkių debesys Dykumos trasoje (Canvas dalelės už judančių mašinų)

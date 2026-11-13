@@ -1,4 +1,4 @@
-const CACHE_NAME = 'skaiciu-karalyste-v12-global-playtime';
+const CACHE_NAME = 'skaiciu-karalyste-v13-modern-ui';
 const ASSETS = [
   './',
   './index.html',

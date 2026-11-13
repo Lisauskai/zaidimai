@@ -2583,12 +2583,107 @@ function openMathDuel(encounter) {
   modalMath.classList.remove('hidden');
 }
 
+const celebrationParticles = [];
+let celebrationRafId = null;
+
+function triggerCelebrationBurst(originEl = null) {
+  const celCanvas = document.getElementById('math-celebration-canvas');
+  if (!celCanvas) return;
+  const ctxCel = celCanvas.getContext('2d');
+  if (!ctxCel) return;
+
+  if (celCanvas.width !== window.innerWidth || celCanvas.height !== window.innerHeight) {
+    celCanvas.width = window.innerWidth;
+    celCanvas.height = window.innerHeight;
+  }
+
+  let originX = window.innerWidth * 0.5;
+  let originY = window.innerHeight * 0.45;
+  if (originEl && typeof originEl.getBoundingClientRect === 'function') {
+    const rect = originEl.getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      originX = rect.left + rect.width * 0.5;
+      originY = rect.top + rect.height * 0.5;
+    }
+  }
+
+  const palette = ['#fde047', '#38bdf8', '#4ade80', '#f472b6', '#a855f7', '#ffffff'];
+  for (let i = 0; i < 34; i++) {
+    const angle = (Math.PI * 2 * i) / 34 + (Math.random() - 0.5) * 0.35;
+    const speed = 3 + Math.random() * 6.5;
+    celebrationParticles.push({
+      x: originX + (Math.random() - 0.5) * 24,
+      y: originY + (Math.random() - 0.5) * 18,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2.6,
+      size: 4 + Math.random() * 5.5,
+      color: palette[Math.floor(Math.random() * palette.length)],
+      life: 36 + Math.floor(Math.random() * 20),
+      maxLife: 56,
+      rot: Math.random() * Math.PI * 2,
+      vRot: (Math.random() - 0.5) * 0.28,
+      isStar: i % 2 === 0
+    });
+  }
+
+  if (celebrationRafId !== null) return;
+  const step = () => {
+    ctxCel.clearRect(0, 0, celCanvas.width, celCanvas.height);
+    for (let i = celebrationParticles.length - 1; i >= 0; i--) {
+      const p = celebrationParticles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.22;
+      p.vx *= 0.98;
+      p.rot += p.vRot;
+      p.life--;
+      if (p.life <= 0) {
+        celebrationParticles.splice(i, 1);
+        continue;
+      }
+      const alpha = Math.max(0, Math.min(1, p.life / (p.maxLife * 0.6)));
+      ctxCel.save();
+      ctxCel.globalAlpha = alpha;
+      ctxCel.translate(p.x, p.y);
+      ctxCel.rotate(p.rot);
+      ctxCel.fillStyle = p.color;
+      if (p.isStar) {
+        ctxCel.beginPath();
+        for (let k = 0; k < 4; k++) {
+          const a = (k * Math.PI) / 2;
+          ctxCel.lineTo(Math.cos(a) * p.size, Math.sin(a) * p.size);
+          ctxCel.lineTo(Math.cos(a + Math.PI / 4) * (p.size * 0.42), Math.sin(a + Math.PI / 4) * (p.size * 0.42));
+        }
+        ctxCel.closePath();
+        ctxCel.fill();
+      } else {
+        ctxCel.fillRect(-p.size * 0.5, -p.size * 0.3, p.size, p.size * 0.6);
+      }
+      ctxCel.restore();
+    }
+
+    if (celebrationParticles.length > 0) {
+      celebrationRafId = requestAnimationFrame(step);
+    } else {
+      ctxCel.clearRect(0, 0, celCanvas.width, celCanvas.height);
+      celebrationRafId = null;
+    }
+  };
+  celebrationRafId = requestAnimationFrame(step);
+}
+
 function updateChainProgressUI() {
   const chainTextEl = document.getElementById('math-chain-text');
   const chainDotsEl = document.getElementById('math-chain-dots');
+  const chainBarFillEl = document.getElementById('math-chain-bar-fill');
   if (!chainTextEl || !chainDotsEl) return;
 
   chainTextEl.textContent = `⛓️ Užduočių serija: ${activeDuel.chainCurrent} / ${activeDuel.chainTotal} įveikta!`;
+
+  if (chainBarFillEl) {
+    const pct = Math.min(100, Math.round((activeDuel.chainCurrent / Math.max(1, activeDuel.chainTotal)) * 100));
+    chainBarFillEl.style.width = `${pct}%`;
+  }
 
   let dotsHtml = '';
   for (let i = 0; i < activeDuel.chainTotal; i++) {
@@ -2827,6 +2922,13 @@ function handleMathAnswer(selectedValue, buttonEl = null) {
 
     activeDuel.chainCurrent++;
     audio.correct(profile.stats.currentStreak);
+    triggerCelebrationBurst(buttonEl || document.getElementById('math-prompt'));
+    const duelCardEl = document.querySelector('#modal-math .math-duel-card');
+    if (duelCardEl) {
+      duelCardEl.classList.remove('duel-correct-pulse');
+      void duelCardEl.offsetWidth;
+      duelCardEl.classList.add('duel-correct-pulse');
+    }
 
     // Jei pasirinktas Feniksas – skaičiuoja išspręstas užduotis (kas 3 užduotis atstato +1 prarastą ❤️)!
     if (player && player.tryPetPhoenixHeal(true)) {

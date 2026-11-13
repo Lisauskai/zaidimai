@@ -1208,6 +1208,36 @@ export class GarageManager {
  * Atvaizduoja visas 3 Kėbulų klases (Bagį, Sportinę mašiną, Šarvuotą Sunkvežimį),
  * visus bamperius, padangas ir visus 7 GINKLUS ant stogo!
  */
+function createMetallicBodyGradient(ctx, halfW, bodyHex, darkHex) {
+  const grad = ctx.createLinearGradient(0, -halfW, 0, halfW);
+  grad.addColorStop(0, darkHex);
+  grad.addColorStop(0.24, bodyHex);
+  grad.addColorStop(0.46, '#ffffff');
+  grad.addColorStop(0.56, bodyHex);
+  grad.addColorStop(0.84, bodyHex);
+  grad.addColorStop(1, darkHex);
+  return grad;
+}
+
+function drawHeadlightCones(ctx, frontX, yOffsets, spread = 24, reach = 64, intensity = 0.22) {
+  ctx.save();
+  for (const ly of yOffsets) {
+    const beam = ctx.createLinearGradient(frontX, ly, frontX + reach, ly);
+    beam.addColorStop(0, `rgba(254, 249, 195, ${(intensity * 1.35).toFixed(2)})`);
+    beam.addColorStop(0.45, `rgba(253, 224, 71, ${(intensity * 0.55).toFixed(2)})`);
+    beam.addColorStop(1, 'rgba(253, 224, 71, 0)');
+    ctx.fillStyle = beam;
+    ctx.beginPath();
+    ctx.moveTo(frontX, ly - 3);
+    ctx.lineTo(frontX + reach, ly - spread);
+    ctx.lineTo(frontX + reach, ly + spread);
+    ctx.lineTo(frontX, ly + 3);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
 export function drawCarTopDown(ctx, config, animTime = 0) {
   const {
     chassisId = 'chassis_buggy',
@@ -1237,6 +1267,16 @@ export function drawCarTopDown(ctx, config, animTime = 0) {
   const frontEdge = carLen / 2;
 
   ctx.save();
+
+  // Švelnus kontakto šešėlis po automobiliu
+  ctx.fillStyle = 'rgba(2, 6, 23, 0.36)';
+  ctx.beginPath();
+  ctx.ellipse(-2, 3, carLen * 0.54, carWid * 0.62, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Priekinių žibintų šviesos kūgiai
+  const lightPositions = isBuggy ? [-7, 7] : isTruck ? [-12.5, 12.5] : [-10, 10];
+  drawHeadlightCones(ctx, frontEdge - 1, lightPositions, isTruck ? 22 : 18, isTruck ? 68 : 62, 0.19);
 
   // ==================== 1. PADANGOS IR PAKABA PAGAL KĖBULO KLASĘ ====================
   const wheelY = isTruck ? 22 : isBuggy ? 20 : 18.5;
@@ -1327,11 +1367,13 @@ export function drawCarTopDown(ctx, config, animTime = 0) {
   drawBumper(ctx, bumperId, bumperLevel, frontEdge, animTime);
 
   // ==================== 3. KĖBULO KLASĖS FORMA (BAGIS vs SPORTINĖ vs ŠARVUOTAS SUNKVEŽIMIS) ====================
+  const metallicBody = createMetallicBodyGradient(ctx, carWid / 2, bodyHex, darkHex);
+
   if (isBuggy) {
     // 1 KLASĖ: LENGVASIS BAGIS (siaurėjantis smėlio bagis su vamzdiniu saugos lanku!)
-    ctx.fillStyle = bodyHex;
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 2.8;
+    ctx.fillStyle = metallicBody;
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 3.2;
     ctx.beginPath();
     ctx.moveTo(-28, -14);
     ctx.lineTo(10, -13);
@@ -1343,14 +1385,64 @@ export function drawCarTopDown(ctx, config, animTime = 0) {
     ctx.fill();
     ctx.stroke();
 
+    // Metalizuotas šviesos blyksnis ant kėbulo
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+    ctx.beginPath();
+    ctx.moveTo(-25, -10);
+    ctx.lineTo(24, -6);
+    ctx.lineTo(24, -1);
+    ctx.lineTo(-25, -4);
+    ctx.closePath();
+    ctx.fill();
+
     // Centrinė lenktynių juosta
     ctx.fillStyle = stripeHex;
     ctx.fillRect(-25, -3, 50, 6);
+
+    // Galinis sportinis aero sparnas (Spoileris)
+    ctx.fillStyle = '#020617';
+    ctx.fillRect(-28, -10, 4, 2);
+    ctx.fillRect(-28, 8, 4, 2);
+    ctx.fillStyle = '#0f172a';
+    ctx.strokeStyle = stripeHex;
+    ctx.lineWidth = 1.4;
+    roundRectPath(ctx, -31, -13.5, 5, 27, 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Priekiniai ralio žibintai
+    ctx.fillStyle = '#fef9c3';
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 1;
+    ctx.fillRect(26, -8.5, 3.5, 4.5);
+    ctx.strokeRect(26, -8.5, 3.5, 4.5);
+    ctx.fillRect(26, 4, 3.5, 4.5);
+    ctx.strokeRect(26, 4, 3.5, 4.5);
 
     // Atvira bagio kabina ir vamzdinis saugos lankas (Roll-Cage)
     ctx.fillStyle = '#0f172a';
     roundRectPath(ctx, -14, -10, 26, 20, 4);
     ctx.fill();
+
+    // Tamsintas aero priekinis stiklas su atspindžiu
+    const visorGrad = ctx.createLinearGradient(5, -8, 12, 8);
+    visorGrad.addColorStop(0, '#0f172a');
+    visorGrad.addColorStop(0.45, '#0369a1');
+    visorGrad.addColorStop(1, '#082f49');
+    ctx.fillStyle = visorGrad;
+    ctx.beginPath();
+    ctx.moveTo(6, -8.5);
+    ctx.lineTo(12, -6.5);
+    ctx.lineTo(12, 6.5);
+    ctx.lineTo(6, 8.5);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(7.5, -5.5);
+    ctx.lineTo(10.5, -1);
+    ctx.stroke();
 
     ctx.strokeStyle = stripeHex;
     ctx.lineWidth = 2.5;
@@ -1366,9 +1458,9 @@ export function drawCarTopDown(ctx, config, animTime = 0) {
     ctx.stroke();
   } else if (isTruck) {
     // 3 KLASĖ: ŠARVUOTAS SUNKVEŽIMIS / DŽIPAS (platus, ilgas, masyvus su šarvuotomis kniedėmis ir krovinių kėbulu!)
-    ctx.fillStyle = bodyHex;
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 3.2;
+    ctx.fillStyle = metallicBody;
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 3.5;
     roundRectPath(ctx, -carLen / 2, -carWid / 2, carLen, carWid, 5);
     ctx.fill();
     ctx.stroke();
@@ -1383,11 +1475,18 @@ export function drawCarTopDown(ctx, config, animTime = 0) {
     ctx.fillRect(6, -6, 28, 4);
     ctx.fillRect(6, 2, 28, 4);
 
-    // Galinė sunkvežimio šarvuota krovinių platforma
+    // Galinė sunkvežimio šarvuota krovinių platforma + tvirtas galinis spoileris ant kabinos
     ctx.fillStyle = '#1e293b';
-    ctx.strokeStyle = '#0f172a';
+    ctx.strokeStyle = '#020617';
     ctx.lineWidth = 2;
     roundRectPath(ctx, -34, -14, 18, 28, 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#020617';
+    ctx.strokeStyle = stripeHex;
+    ctx.lineWidth = 1.3;
+    roundRectPath(ctx, -36, -16, 4.5, 32, 1.5);
     ctx.fill();
     ctx.stroke();
 
@@ -1396,8 +1495,23 @@ export function drawCarTopDown(ctx, config, animTime = 0) {
     roundRectPath(ctx, -14, -15, 26, 30, 4);
     ctx.fill();
 
-    ctx.fillStyle = '#38bdf8';
+    const truckGlassGrad = ctx.createLinearGradient(5, -12, 11, 12);
+    truckGlassGrad.addColorStop(0, '#020617');
+    truckGlassGrad.addColorStop(0.35, '#0284c7');
+    truckGlassGrad.addColorStop(0.7, '#0f172a');
+    truckGlassGrad.addColorStop(1, '#082f49');
+    ctx.fillStyle = truckGlassGrad;
     ctx.fillRect(5, -12, 6, 24);
+    // Įstrižas stiklo blizgesys
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.beginPath();
+    ctx.moveTo(6, -10);
+    ctx.lineTo(10.5, -5);
+    ctx.lineTo(10.5, -1);
+    ctx.lineTo(6, -6);
+    ctx.closePath();
+    ctx.fill();
+
     // Šarvų grotelės ant priekinio stiklo
     ctx.strokeStyle = '#0f172a';
     ctx.lineWidth = 1.8;
@@ -1408,19 +1522,26 @@ export function drawCarTopDown(ctx, config, animTime = 0) {
       ctx.stroke();
     }
 
-    ctx.fillStyle = bodyHex;
+    ctx.fillStyle = metallicBody;
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 1.5;
     roundRectPath(ctx, -11, -12, 15, 24, 3);
     ctx.fill();
+    ctx.stroke();
 
     // Priekiniai galingi prožektoriai
-    ctx.fillStyle = '#fef08a';
-    ctx.fillRect(33, -16, 4, 7);
-    ctx.fillRect(33, 9, 4, 7);
+    ctx.fillStyle = '#fef9c3';
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(33, -16, 4.5, 7);
+    ctx.strokeRect(33, -16, 4.5, 7);
+    ctx.fillRect(33, 9, 4.5, 7);
+    ctx.strokeRect(33, 9, 4.5, 7);
   } else {
     // 2 KLASĖ: SPORTINĖ MAŠINA (aerodinamiškas superbolidas su galiniu spoileriu!)
-    ctx.fillStyle = bodyHex;
-    ctx.strokeStyle = '#0f172a';
-    ctx.lineWidth = 3;
+    ctx.fillStyle = metallicBody;
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 3.3;
     roundRectPath(ctx, -carLen / 2, -carWid / 2, carLen, carWid, 9);
     ctx.fill();
     ctx.stroke();
@@ -1433,34 +1554,73 @@ export function drawCarTopDown(ctx, config, animTime = 0) {
     ctx.fillRect(-29, -4.5, 58, 3.2);
     ctx.fillRect(-29, 1.3, 58, 3.2);
 
-    ctx.fillStyle = '#fef08a';
-    ctx.fillRect(29, -13, 3.5, 6);
-    ctx.fillRect(29, 7, 3.5, 6);
+    // Kapoto metalizuotas šviesos atspindys
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+    roundRectPath(ctx, 11, -9, 16, 18, 4);
+    ctx.fill();
 
-    // Platus anglies pluošto sportinis spoileris gale
+    // LED priekiniai žibintai
+    ctx.fillStyle = '#fef9c3';
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 1;
+    ctx.fillRect(28.5, -13, 4, 6);
+    ctx.strokeRect(28.5, -13, 4, 6);
+    ctx.fillRect(28.5, 7, 4, 6);
+    ctx.strokeRect(28.5, 7, 4, 6);
+
+    // Dvigubas platus anglies pluošto sportinis spoileris gale su šoninėmis plokštėmis
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-29, -11, 5, 3);
+    ctx.fillRect(-29, 8, 5, 3);
+
     ctx.fillStyle = '#020617';
     ctx.strokeStyle = stripeHex;
-    ctx.lineWidth = 1.5;
-    roundRectPath(ctx, -33, -17, 6, 34, 2);
+    ctx.lineWidth = 1.6;
+    roundRectPath(ctx, -34, -18, 6.5, 36, 2);
     ctx.fill();
     ctx.stroke();
+
+    // Spoilerio šoniniai sparneliai (endplates) ir viršutinis blizgesys
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(-33.5, -18.5, 7, 2.5);
+    ctx.fillRect(-33.5, 16, 7, 2.5);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
+    ctx.fillRect(-32.5, -14, 2, 28);
 
     ctx.fillStyle = '#0f172a';
     roundRectPath(ctx, -16, -12.5, 32, 25, 5);
     ctx.fill();
 
-    ctx.fillStyle = '#38bdf8';
+    // Tamsintas panoraminis priekinis stiklas su šviesos atspindžiu
+    const sportGlassGrad = ctx.createLinearGradient(5, -11, 15, 11);
+    sportGlassGrad.addColorStop(0, '#020617');
+    sportGlassGrad.addColorStop(0.35, '#0284c7');
+    sportGlassGrad.addColorStop(0.65, '#38bdf8');
+    sportGlassGrad.addColorStop(1, '#082f49');
+    ctx.fillStyle = sportGlassGrad;
     ctx.beginPath();
     ctx.moveTo(6, -10.5);
-    ctx.lineTo(14, -8.5);
-    ctx.lineTo(14, 8.5);
+    ctx.lineTo(14.5, -8.5);
+    ctx.lineTo(14.5, 8.5);
     ctx.lineTo(6, 10.5);
     ctx.closePath();
     ctx.fill();
+    // Stiklo atspindžio brūkšniai
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(7.5, -7);
+    ctx.lineTo(12.5, -1.5);
+    ctx.moveTo(8, 2);
+    ctx.lineTo(11.5, 5.5);
+    ctx.stroke();
 
-    ctx.fillStyle = bodyHex;
+    ctx.fillStyle = metallicBody;
+    ctx.strokeStyle = '#020617';
+    ctx.lineWidth = 1.4;
     roundRectPath(ctx, -8, -10, 13, 20, 3);
     ctx.fill();
+    ctx.stroke();
   }
 
   if (hpRatio < 0.65) {

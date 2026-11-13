@@ -8,11 +8,12 @@
   <link rel="manifest" href="./manifest.json" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css?v=20261113n" />
 </head>
 <body>
   <div id="app-container">
+    <canvas id="math-celebration-canvas" class="math-celebration-canvas" aria-hidden="true"></canvas>
     <!-- Pagrindinis Žaidimo Canvas -->
     <canvas id="game-canvas" width="1024" height="576"></canvas>
 
@@ -268,8 +269,13 @@
 
         <!-- Kelių užduočių serijos (Chained Math) progreso juosta -->
         <div id="math-chain-banner" class="chain-progress-banner">
-          <span id="math-chain-text">⛓️ Užduočių serija: 0 / 3 įveikta!</span>
-          <div id="math-chain-dots" class="chain-dots"></div>
+          <div class="chain-banner-top">
+            <span id="math-chain-text">⛓️ Užduočių serija: 0 / 3 įveikta!</span>
+            <div id="math-chain-dots" class="chain-dots"></div>
+          </div>
+          <div class="chain-bar-track" aria-hidden="true">
+            <div id="math-chain-bar-fill" class="chain-bar-fill" style="width: 0%;"></div>
+          </div>
         </div>
 
         <!-- „Proto Žvaigždės“ ir Serijos 1 bandymo įspėjimas -->
@@ -395,6 +401,6 @@
     </section>
   </div>
 
-  <script type="module" src="./js/main.js"></script>
+  <script type="module" src="./js/main.js?v=20261113n"></script>
 </body>
 </html>
