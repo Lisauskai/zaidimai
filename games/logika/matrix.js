@@ -93,95 +93,95 @@ export const MATRIX_LEVELS = {
     {
       id: 'mat_g1_1',
       kind: 'matrix',
-      title: '1. Spalvų seka',
-      instruction: 'Pažiūrėk, kaip keičiasi spalvos eilutėse, ir pasirink trūkstamą figūrą vietoj [ ? ]!',
+      title: '1. Forma ir spalva',
+      instruction: 'Keičiasi DU požymiai: kiekvienoje eilutėje ir stulpelyje yra 3 skirtingos formos IR 3 skirtingos spalvos!',
       reward: 1,
       grid: [
-        { shape: 'circle', color: 'cyan' }, { shape: 'circle', color: 'yellow' }, { shape: 'circle', color: 'magenta' },
-        { shape: 'circle', color: 'cyan' }, { shape: 'circle', color: 'yellow' }, { shape: 'circle', color: 'magenta' },
-        { shape: 'circle', color: 'cyan' }, { shape: 'circle', color: 'yellow' }, null
+        { shape: 'circle', color: 'cyan' }, { shape: 'square', color: 'yellow' }, { shape: 'triangle', color: 'magenta' },
+        { shape: 'square', color: 'magenta' }, { shape: 'triangle', color: 'cyan' }, { shape: 'circle', color: 'yellow' },
+        { shape: 'triangle', color: 'yellow' }, { shape: 'circle', color: 'magenta' }, null
       ],
       choices: [
-        { shape: 'circle', color: 'cyan' },
-        { shape: 'circle', color: 'magenta' },
+        { shape: 'square', color: 'cyan' },
         { shape: 'circle', color: 'yellow' },
-        { shape: 'square', color: 'magenta' }
+        { shape: 'triangle', color: 'cyan' },
+        { shape: 'square', color: 'yellow' }
       ],
-      correctIndex: 1
+      correctIndex: 3
     },
     {
       id: 'mat_g1_2',
       kind: 'matrix',
-      title: '2. Figūrų kiekis (1–3)',
-      instruction: 'Suskaičiuok, kiek kvadratų yra kiekviename langelyje iš kairės į dešinę!',
+      title: '2. Forma ir taškelių kiekis',
+      instruction: 'Taškelių viduje daugėja (1 → 2 → 3), o formos nesikartoja! Pasirink figūrą ir spausk „Patikrinti“.',
       reward: 2,
       grid: [
-        { shape: 'square', color: 'cyan', count: 1 }, { shape: 'square', color: 'cyan', count: 2 }, { shape: 'square', color: 'cyan', count: 3 },
-        { shape: 'square', color: 'cyan', count: 1 }, { shape: 'square', color: 'cyan', count: 2 }, { shape: 'square', color: 'cyan', count: 3 },
-        { shape: 'square', color: 'cyan', count: 1 }, { shape: 'square', color: 'cyan', count: 2 }, null
+        { shape: 'square', color: 'cyan', innerDots: 1 }, { shape: 'circle', color: 'cyan', innerDots: 2 }, { shape: 'diamond', color: 'cyan', innerDots: 3 },
+        { shape: 'circle', color: 'cyan', innerDots: 1 }, { shape: 'diamond', color: 'cyan', innerDots: 2 }, { shape: 'square', color: 'cyan', innerDots: 3 },
+        { shape: 'diamond', color: 'cyan', innerDots: 1 }, { shape: 'square', color: 'cyan', innerDots: 2 }, null
       ],
       choices: [
-        { shape: 'square', color: 'cyan', count: 1 },
-        { shape: 'square', color: 'cyan', count: 2 },
-        { shape: 'square', color: 'cyan', count: 3 },
-        { shape: 'circle', color: 'cyan', count: 3 }
-      ],
-      correctIndex: 2
-    },
-    {
-      id: 'mat_g1_3',
-      kind: 'matrix',
-      title: '3. Didėjantys deimantai',
-      instruction: 'Kiekvienoje eilutėje deimantai auga! Koks deimantas tinka į paskutinį langelį?',
-      reward: 2,
-      grid: [
-        { shape: 'diamond', color: 'green', size: 'sm' }, { shape: 'diamond', color: 'green', size: 'md' }, { shape: 'diamond', color: 'green', size: 'lg' },
-        { shape: 'diamond', color: 'green', size: 'sm' }, { shape: 'diamond', color: 'green', size: 'md' }, { shape: 'diamond', color: 'green', size: 'lg' },
-        { shape: 'diamond', color: 'green', size: 'sm' }, { shape: 'diamond', color: 'green', size: 'md' }, null
-      ],
-      choices: [
-        { shape: 'diamond', color: 'green', size: 'sm' },
-        { shape: 'diamond', color: 'green', size: 'lg' },
-        { shape: 'diamond', color: 'green', size: 'md' },
-        { shape: 'triangle', color: 'green', size: 'lg' }
+        { shape: 'circle', color: 'cyan', innerDots: 2 },
+        { shape: 'circle', color: 'cyan', innerDots: 3 },
+        { shape: 'square', color: 'cyan', innerDots: 3 },
+        { shape: 'diamond', color: 'cyan', innerDots: 3 }
       ],
       correctIndex: 1
     },
     {
-      id: 'mat_g1_4',
+      id: 'mat_g1_3',
       kind: 'matrix',
-      title: '4. Trys formos eilutėje',
-      instruction: 'Kiekvienoje eilutėje ir stulpelyje turi būti visos trys figūros: ratas, trikampis ir kvadratas!',
+      title: '3. Dydis ir figūra',
+      instruction: 'Iš kairės į dešinę figūros auga (maža → vidutinė → didelė) ir kartu keičiasi jų forma!',
       reward: 2,
       grid: [
-        { shape: 'circle', color: 'yellow' }, { shape: 'triangle', color: 'yellow' }, { shape: 'square', color: 'yellow' },
-        { shape: 'triangle', color: 'yellow' }, { shape: 'square', color: 'yellow' }, { shape: 'circle', color: 'yellow' },
-        { shape: 'square', color: 'yellow' }, { shape: 'circle', color: 'yellow' }, null
+        { shape: 'circle', color: 'green', size: 'sm' }, { shape: 'triangle', color: 'green', size: 'md' }, { shape: 'star', color: 'green', size: 'lg' },
+        { shape: 'triangle', color: 'green', size: 'sm' }, { shape: 'star', color: 'green', size: 'md' }, { shape: 'circle', color: 'green', size: 'lg' },
+        { shape: 'star', color: 'green', size: 'sm' }, { shape: 'circle', color: 'green', size: 'md' }, null
       ],
       choices: [
-        { shape: 'triangle', color: 'yellow' },
-        { shape: 'square', color: 'yellow' },
-        { shape: 'circle', color: 'yellow' },
-        { shape: 'diamond', color: 'yellow' }
+        { shape: 'triangle', color: 'green', size: 'md' },
+        { shape: 'star', color: 'green', size: 'lg' },
+        { shape: 'triangle', color: 'green', size: 'lg' },
+        { shape: 'circle', color: 'green', size: 'lg' }
+      ],
+      correctIndex: 2
+    },
+    {
+      id: 'mat_g1_4',
+      kind: 'matrix',
+      title: '4. Rodyklės posūkis ir spalva',
+      instruction: 'Rodyklė kas žingsnį pasisuka 90° pagal laikrodžio rodyklę ir kartu keičia spalvą!',
+      reward: 2,
+      grid: [
+        { shape: 'arrow', color: 'cyan', rot: 0 }, { shape: 'arrow', color: 'yellow', rot: 90 }, { shape: 'arrow', color: 'orange', rot: 180 },
+        { shape: 'arrow', color: 'orange', rot: 90 }, { shape: 'arrow', color: 'cyan', rot: 180 }, { shape: 'arrow', color: 'yellow', rot: 270 },
+        { shape: 'arrow', color: 'yellow', rot: 180 }, { shape: 'arrow', color: 'orange', rot: 270 }, null
+      ],
+      choices: [
+        { shape: 'arrow', color: 'cyan', rot: 0 },
+        { shape: 'arrow', color: 'cyan', rot: 90 },
+        { shape: 'arrow', color: 'yellow', rot: 0 },
+        { shape: 'arrow', color: 'orange', rot: 0 }
       ],
       correctIndex: 0
     },
     {
       id: 'mat_g1_5',
       kind: 'matrix',
-      title: '5. Žvaigždžių šifras',
-      instruction: 'Kokios spalvos žvaigždutės trūksta paskutiniame langelyje?',
+      title: '5. Dvigubas žvaigždžių ir taškų šifras',
+      instruction: 'Paskutinė 1 klasės matrica! Suderink teisingą figūrą, jos spalvą ir taškelių kiekį viduje.',
       reward: 3,
       grid: [
-        { shape: 'star', color: 'cyan' }, { shape: 'star', color: 'green' }, { shape: 'star', color: 'orange' },
-        { shape: 'star', color: 'green' }, { shape: 'star', color: 'orange' }, { shape: 'star', color: 'cyan' },
-        { shape: 'star', color: 'orange' }, { shape: 'star', color: 'cyan' }, null
+        { shape: 'circle', color: 'cyan', innerDots: 1 }, { shape: 'square', color: 'yellow', innerDots: 2 }, { shape: 'triangle', color: 'magenta', innerDots: 3 },
+        { shape: 'square', color: 'magenta', innerDots: 2 }, { shape: 'triangle', color: 'cyan', innerDots: 3 }, { shape: 'circle', color: 'yellow', innerDots: 1 },
+        { shape: 'triangle', color: 'yellow', innerDots: 3 }, { shape: 'circle', color: 'magenta', innerDots: 1 }, null
       ],
       choices: [
-        { shape: 'star', color: 'cyan' },
-        { shape: 'star', color: 'orange' },
-        { shape: 'star', color: 'green' },
-        { shape: 'diamond', color: 'green' }
+        { shape: 'square', color: 'yellow', innerDots: 2 },
+        { shape: 'square', color: 'cyan', innerDots: 3 },
+        { shape: 'square', color: 'cyan', innerDots: 2 },
+        { shape: 'triangle', color: 'cyan', innerDots: 2 }
       ],
       correctIndex: 2
     }

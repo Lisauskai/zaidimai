@@ -34,88 +34,95 @@ export const ALGO_LEVELS = {
   grade1: [
     {
       id: 'alg_g1_1',
-      title: '1. Tiesiai į bateriją',
+      title: '1. Raktas nuo durelių',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Sudėk komandas į eilę ir paspausk „Paleisti programą“, kad robotas pasiektų 🔋!',
+      instruction: 'Užvažiuok ant ⚡ jungiklio, paspausk ⚡ Aktyvuoti ir tik tada eik pro atsidariusias 🔒 dureles iki 🔋 (7 komandos)!',
       reward: 1,
       size: 5,
-      maxSlots: 6,
+      maxSlots: 8,
       allowLoop: false,
-      allowAct: false,
-      start: { r: 2, c: 0, dir: 'R' },
-      finish: { r: 2, c: 4 },
-      switches: [],
-      grid: withTiles(5, '#', [
-        [2, 0, 0], [2, 1, 0], [2, 2, 0], [2, 3, 0], [2, 4, 0],
-        [1, 0, 0], [3, 0, 0], [1, 4, 0], [3, 4, 0]
+      allowAct: true,
+      start: { r: 3, c: 0, dir: 'R' },
+      finish: { r: 0, c: 2 },
+      switches: [{ r: 3, c: 2 }],
+      gates: [{ r: 2, c: 2 }],
+      grid: withTiles(5, 0, [
+        [2, 0, '#'], [2, 1, '#'], [2, 3, '#'], [2, 4, '#'],
+        [0, 0, '#'], [1, 0, '#'], [4, 4, '#']
       ])
     },
     {
       id: 'alg_g1_2',
-      title: '2. Pirmasis posūkis',
+      title: '2. Posūkis pro šliuzą',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Eik pirmyn, pasisuk dešinėn (↱) ir užbaik trasą tiesiai iki baterijos!',
-      reward: 1,
+      instruction: 'Pravažiuok aukštyn iki ⚡, paspausk ⚡ Aktyvuoti, pasisuk dešinėn (↱) ir keliauk pro atidarytas dureles iki 🔋!',
+      reward: 2,
       size: 5,
-      maxSlots: 6,
+      maxSlots: 8,
       allowLoop: false,
-      allowAct: false,
+      allowAct: true,
       start: { r: 4, c: 1, dir: 'U' },
-      finish: { r: 2, c: 3 },
-      switches: [],
+      finish: { r: 2, c: 4 },
+      switches: [{ r: 2, c: 1 }],
+      gates: [{ r: 2, c: 2 }],
       grid: withTiles(5, 0, [
-        [4, 2, '#'], [3, 2, '#'], [3, 3, '#'], [1, 1, '#'], [1, 2, '#'], [1, 3, '#'], [0, 0, '#'], [4, 4, '#']
+        [0, 2, '#'], [1, 2, '#'], [3, 2, '#'], [4, 2, '#'],
+        [0, 0, '#'], [4, 4, '#']
       ])
     },
     {
       id: 'alg_g1_3',
-      title: '3. Lazerių koridorius',
+      title: '3. Lazerių vartai',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Aplenk sienas naudodamas posūkius kairėn (↰) ir dešinėn (↱).',
-      reward: 1,
+      instruction: 'Pirma nuvažiuok įjungti ⚡ jungiklio, tada pasuk aukštyn per atsidariusias 🔒 dureles link baterijos!',
+      reward: 2,
       size: 5,
-      maxSlots: 6,
+      maxSlots: 9,
       allowLoop: false,
-      allowAct: false,
+      allowAct: true,
       start: { r: 4, c: 0, dir: 'R' },
-      finish: { r: 2, c: 2 },
-      switches: [],
+      finish: { r: 2, c: 3 },
+      switches: [{ r: 4, c: 2 }],
+      gates: [{ r: 2, c: 2 }],
       grid: withTiles(5, 0, [
-        [4, 2, '#'], [3, 2, '#'], [3, 0, '#'], [1, 1, '#'], [1, 2, '#'], [2, 0, '#'], [0, 4, '#']
+        [3, 0, '#'], [3, 1, '#'], [1, 1, '#'], [1, 2, '#'], [1, 3, '#'], [3, 4, '#']
       ])
     },
     {
       id: 'alg_g1_4',
-      title: '4. Zigzagas aplink bokštus',
+      title: '4. Koridorius aplink sienas',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Suplanuok 6 žingsnių maršrutą aplink tamsias sienas!',
+      instruction: 'Suplanuok 9 komandų programą: įjunk ⚡ kairėje, atverk šliuzą centre ir pasuk žemyn prie 🔋!',
       reward: 2,
       size: 5,
-      maxSlots: 6,
+      maxSlots: 9,
       allowLoop: false,
-      allowAct: false,
-      start: { r: 0, c: 0, dir: 'R' },
-      finish: { r: 2, c: 2 },
-      switches: [],
+      allowAct: true,
+      start: { r: 0, c: 0, dir: 'D' },
+      finish: { r: 3, c: 3 },
+      switches: [{ r: 2, c: 0 }],
+      gates: [{ r: 2, c: 2 }],
       grid: withTiles(5, 0, [
-        [0, 2, '#'], [1, 0, '#'], [1, 2, '#'], [3, 1, '#'], [4, 0, '#'], [3, 3, '#']
+        [0, 1, '#'], [1, 1, '#'], [1, 2, '#'], [1, 3, '#'], [3, 1, '#'], [4, 2, '#']
       ])
     },
     {
       id: 'alg_g1_5',
-      title: '5. Išmanusis posūkis',
+      title: '5. Slaptasis reaktorius',
       badge: '🧑‍💻 ALGORITMŲ TRASA • 1 KL.',
-      instruction: 'Robotas žiūri į kairę! Atidžiai susek jo kryptį ir nuvesk iki 🔋.',
-      reward: 2,
+      instruction: 'Robotas žiūri į kairę! Aktyvuok ⚡, eik tiesiai pro atsidariusias dureles ir paskutiniame žingsnyje pasuk į 🔋!',
+      reward: 3,
       size: 5,
-      maxSlots: 6,
+      maxSlots: 9,
       allowLoop: false,
-      allowAct: false,
-      start: { r: 3, c: 3, dir: 'L' },
+      allowAct: true,
+      start: { r: 4, c: 4, dir: 'L' },
       finish: { r: 1, c: 1 },
-      switches: [],
+      switches: [{ r: 4, c: 2 }],
+      gates: [{ r: 1, c: 2 }],
       grid: withTiles(5, 0, [
-        [3, 1, '#'], [2, 1, '#'], [2, 3, '#'], [0, 2, '#'], [1, 3, '#'], [4, 4, '#']
+        [0, 2, '#'], [1, 3, '#'], [2, 3, '#'], [3, 3, '#'],
+        [2, 1, '#'], [3, 1, '#'], [0, 0, '#']
       ])
     }
   ],
@@ -411,6 +418,12 @@ export class AlgoEngine {
     return this.level.grid[r][c];
   }
 
+  isGateClosedAt(r, c) {
+    const hasGate = (this.level.gates || []).some((g) => g.r === r && g.c === c);
+    if (!hasGate) return false;
+    return this.litSwitches.size < this.level.switches.length;
+  }
+
   isFinishReachedAndSwitchesLit() {
     const atFinish =
       this.robot.r === this.level.finish.r && this.robot.c === this.level.finish.c;
@@ -439,6 +452,13 @@ export class AlgoEngine {
       if (targetElev === '#') {
         this.crashTile = { r: nr, c: nc };
         return { ok: false, reason: '💥 Robotas atsitrenkė į sieną arba nukrito! Grįžtame į startą.' };
+      }
+      if (this.isGateClosedAt(nr, nc)) {
+        this.crashTile = { r: nr, c: nc };
+        return {
+          ok: false,
+          reason: '🔒 Durelės uždarytos! Pirma užvažiuok ant ⚡ jungiklio ir paspausk ⚡ Aktyvuoti.'
+        };
       }
       if (targetElev !== curElev) {
         this.crashTile = { r: nr, c: nc };
@@ -471,6 +491,13 @@ export class AlgoEngine {
       if (targetElev === '#') {
         this.crashTile = { r: nr, c: nc };
         return { ok: false, reason: '💥 Šuolis į tuštumą! Robotas grįžta į startą.' };
+      }
+      if (this.isGateClosedAt(nr, nc)) {
+        this.crashTile = { r: nr, c: nc };
+        return {
+          ok: false,
+          reason: '🔒 Durelės uždarytos! Pirma įjunk ⚡ jungiklį ir atidaryk kelią.'
+        };
       }
       if (targetElev === curElev + 1 || targetElev < curElev) {
         this.robot.r = nr;
@@ -656,6 +683,51 @@ export class AlgoEngine {
           ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
           ctx.lineWidth = 2.5;
           ctx.strokeRect(x + 7, tileTopY + 7, cellSize - 14, cellSize - 14);
+        }
+
+        // Uždarytos / atidarytos durelės 🔒
+        const isGate = (this.level.gates || []).some((g) => g.r === r && g.c === c);
+        if (isGate) {
+          const isClosed = this.litSwitches.size < this.level.switches.length;
+          ctx.save();
+          if (isClosed) {
+            ctx.fillStyle = 'rgba(220, 38, 38, 0.28)';
+            ctx.beginPath();
+            ctx.roundRect(x + 5, tileTopY + 5, cellSize - 10, cellSize - 10, 7);
+            ctx.fill();
+            ctx.strokeStyle = '#f87171';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Apsauginiai virbai
+            ctx.strokeStyle = 'rgba(251, 146, 60, 0.85)';
+            ctx.lineWidth = 3;
+            for (let b = 1; b <= 3; b++) {
+              const bx = x + 6 + ((cellSize - 12) * b) / 4;
+              ctx.beginPath();
+              ctx.moveTo(bx, tileTopY + 8);
+              ctx.lineTo(bx, tileTopY + cellSize - 8);
+              ctx.stroke();
+            }
+
+            ctx.font = `${Math.floor(cellSize * 0.36)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🔒', x + cellSize / 2, tileTopY + cellSize / 2 + 1);
+          } else {
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 2.5;
+            ctx.setLineDash([5, 4]);
+            ctx.beginPath();
+            ctx.roundRect(x + 7, tileTopY + 7, cellSize - 14, cellSize - 14, 6);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.font = `${Math.floor(cellSize * 0.3)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🔓', x + cellSize / 2, tileTopY + cellSize / 2 + 1);
+          }
+          ctx.restore();
         }
 
         // Šviečiantis jungiklis ⚡

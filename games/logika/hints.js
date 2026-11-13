@@ -100,9 +100,9 @@ export function getParMoves(levelId) {
 const PIN_PULL_ORDERS = {
   pp_g1_1: ['p2', 'p1'],
   pp_g1_2: ['p1', 'p2'],
-  pp_g1_3: ['p3', 'p1', 'p2'],
-  pp_g1_4: ['p1', 'p2', 'p3'],
-  pp_g1_5: ['p3', 'p2', 'p1'],
+  pp_g1_3: ['p1', 'p3', 'p2'],
+  pp_g1_4: ['p4', 'p1', 'p2'],
+  pp_g1_5: ['p1', 'p4', 'p3', 'p2'],
   pp_g3_1: ['p3', 'p2', 'p1', 'p4'],
   pp_g3_2: ['p1', 'p2', 'p3'],
   pp_g3_3: ['p2', 'p1', 'p4', 'p5'],
@@ -111,24 +111,35 @@ const PIN_PULL_ORDERS = {
 };
 
 const LASER_SOLUTIONS = {
-  las_g1_1: [{ id: 'm1', r: 1, c: 4, type: '\\' }],
+  las_g1_1: [
+    { id: 'm1', r: 2, c: 2, type: '/' },
+    { id: 'm2', r: 0, c: 2, type: '/' }
+  ],
   las_g1_2: [
-    { id: 'm1', r: 0, c: 1, type: '/' },
-    { id: 'm2', r: 0, c: 4, type: '\\' }
+    { id: 'm1', r: 1, c: 0, type: '\\' },
+    { id: 'm2', r: 1, c: 4, type: '\\' },
+    { id: 'm3', r: 4, c: 4, type: '/' }
   ],
   las_g1_3: [
-    { id: 'm1', r: 0, c: 2, type: '\\' },
-    { id: 'm2', r: 3, c: 2, type: '\\' }
+    { id: 'm1', r: 4, c: 2, type: '/' },
+    { id: 'm2', r: 2, c: 2, type: '/' },
+    { id: 'm3', r: 2, c: 4, type: '/' },
+    { id: 'm4', r: 0, c: 4, type: '\\' }
   ],
   las_g1_4: [
-    { id: 'm1', r: 1, c: 0, type: '/' },
-    { id: 'm2', r: 1, c: 5, type: '\\' },
-    { id: 'm3', r: 4, c: 5, type: '/' }
+    { id: 'm1', r: 4, c: 4, type: '/' },
+    { id: 'm2', r: 4, c: 0, type: '\\' },
+    { id: 'm3', r: 0, c: 0, type: '/' },
+    { id: 'm4', r: 0, c: 3, type: '\\' },
+    { id: 'm5', r: 2, c: 3, type: '/' }
   ],
   las_g1_5: [
-    { id: 'm1', r: 0, c: 1, type: '/' },
-    { id: 'm2', r: 4, c: 1, type: '\\' },
-    { id: 'm3', r: 4, c: 5, type: '/' }
+    { id: 'm1', r: 0, c: 4, type: '\\' },
+    { id: 'm2', r: 4, c: 4, type: '/' },
+    { id: 'm3', r: 4, c: 0, type: '\\' },
+    { id: 'm4', r: 2, c: 0, type: '/' },
+    { id: 'm5', r: 2, c: 1, type: '\\' },
+    { id: 'm6', r: 3, c: 1, type: '\\' }
   ],
   las_g3_1: [
     { id: 's1', r: 3, c: 2, type: '/' },

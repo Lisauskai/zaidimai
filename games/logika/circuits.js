@@ -57,10 +57,11 @@ export const CIRCUIT_LEVELS = {
     {
       id: 'cir_g1_1',
       title: '1. Pirmieji bėgiai',
-      instruction: 'Pasuk bėgių detales, surink ⭐ žvaigždutę ir paspausk „🚂 Paleisti!“, kad traukinukas pasiektų 🏁!',
+      instruction: 'Pasuk bėgių detales akimis suplanavęs ėjimus (maks. 11), surink ⭐ ir spausk „🚂 Paleisti!“.',
       reward: 1,
       rows: 4,
       cols: 4,
+      maxMoves: 11,
       requireAllStars: true,
       tiles: makeGrid(4, 4, {
         '0,0': { kind: 'S', dir: 1, locked: true },
@@ -75,10 +76,11 @@ export const CIRCUIT_LEVELS = {
     {
       id: 'cir_g1_2',
       title: '2. Kelias į viršų',
-      instruction: 'Sujunk bėgius nuo 🚂 iki 🏁 taip, kad traukinukas pravažiuotų pro ⭐ žvaigždutę!',
+      instruction: 'Sujunk bėgius nuo 🚂 iki 🏁 pro ⭐ žvaigždutę per daugiausiai 10 pasukimų!',
       reward: 2,
       rows: 4,
       cols: 4,
+      maxMoves: 10,
       requireAllStars: true,
       tiles: makeGrid(4, 4, {
         '3,0': { kind: 'S', dir: 0, locked: true },
@@ -93,10 +95,11 @@ export const CIRCUIT_LEVELS = {
     {
       id: 'cir_g1_3',
       title: '3. Dvi žvaigždutės',
-      instruction: 'Aplenkiant kampus surink ABIDVI ⭐ žvaigždutes ir pasiek finišą 🏁!',
+      instruction: 'Aplenkiant kampus surink ABIDVI ⭐ žvaigždutes ir pasiek finišą 🏁 (maks. 17 pasukimų)!',
       reward: 2,
       rows: 4,
       cols: 4,
+      maxMoves: 17,
       requireAllStars: true,
       tiles: makeGrid(4, 4, {
         '0,0': { kind: 'S', dir: 2, locked: true },
@@ -114,10 +117,11 @@ export const CIRCUIT_LEVELS = {
     {
       id: 'cir_g1_4',
       title: '4. Kalnų vingiai',
-      instruction: 'Pasuk detales taip, kad traukinukas pakiltų į viršų, nusileistų žemyn ir surinktų 2 ⭐!',
+      instruction: 'Pasuk detales (maks. 17 ėjimų), kad traukinukas surinktų 2 ⭐ ir pasiektų 🏁!',
       reward: 2,
       rows: 4,
       cols: 4,
+      maxMoves: 17,
       requireAllStars: true,
       tiles: makeGrid(4, 4, {
         '1,0': { kind: 'S', dir: 1, locked: true },
@@ -135,10 +139,11 @@ export const CIRCUIT_LEVELS = {
     {
       id: 'cir_g1_5',
       title: '5. Atgalinis ekspresas',
-      instruction: 'Nutiesti kelią iš apatinio dešinio kampo į viršutinį kairį surenkant abi ⭐!',
+      instruction: 'Nutiesk kelią į viršutinį kairį kampą surenkant abi ⭐ (maks. 20 pasukimų)!',
       reward: 3,
       rows: 4,
       cols: 4,
+      maxMoves: 20,
       requireAllStars: true,
       tiles: makeGrid(4, 4, {
         '3,3': { kind: 'S', dir: 3, locked: true },
@@ -163,6 +168,7 @@ export const CIRCUIT_LEVELS = {
       reward: 1,
       rows: 6,
       cols: 6,
+      maxMoves: 22,
       requireAllStars: true,
       tiles: makeGrid(6, 6, {
         '2,0': { kind: 'S', dir: 1, locked: true },
@@ -191,6 +197,7 @@ export const CIRCUIT_LEVELS = {
       reward: 2,
       rows: 6,
       cols: 6,
+      maxMoves: 18,
       requireAllStars: true,
       tiles: makeGrid(6, 6, {
         '0,3': { kind: 'S', dir: 2, locked: true },
@@ -216,6 +223,7 @@ export const CIRCUIT_LEVELS = {
       reward: 2,
       rows: 6,
       cols: 6,
+      maxMoves: 23,
       requireAllStars: true,
       tiles: makeGrid(6, 6, {
         '5,1': { kind: 'S', dir: 0, locked: true },
@@ -244,6 +252,7 @@ export const CIRCUIT_LEVELS = {
       reward: 2,
       rows: 6,
       cols: 6,
+      maxMoves: 26,
       requireAllStars: true,
       tiles: makeGrid(6, 6, {
         '0,0': { kind: 'S', dir: 1, locked: true },
@@ -273,6 +282,7 @@ export const CIRCUIT_LEVELS = {
       reward: 3,
       rows: 6,
       cols: 6,
+      maxMoves: 28,
       requireAllStars: true,
       tiles: makeGrid(6, 6, {
         '3,0': { kind: 'S', dir: 1, locked: true },
@@ -468,23 +478,38 @@ export class CircuitEngine {
       targetAngle: (t.rot || 0) * (Math.PI / 2)
     }));
     this.trainAnim = null;
+    this.movesUsed = 0;
+    this.maxMoves = this.level.maxMoves || 25;
+    this.outOfMoves = false;
     this.recompute();
   }
 
   recompute() {
     this.analysis = analyzeCircuit(this.level, this.tiles);
+    const readyToWin = !!this.analysis.winPath;
+    if (!readyToWin && this.movesUsed >= this.maxMoves && !this.outOfMoves) {
+      this.outOfMoves = true;
+    }
+    const movesLeft = Math.max(0, this.maxMoves - this.movesUsed);
     if (this.callbacks.onStatusChange) {
       this.callbacks.onStatusChange({
-        readyToWin: !!this.analysis.winPath,
+        readyToWin,
         totalStars: this.analysis.totalStars,
         collectedStars: 0,
+        movesUsed: this.movesUsed,
+        maxMoves: this.maxMoves,
+        movesLeft,
+        outOfMoves: this.outOfMoves,
         running: !!this.trainAnim
       });
+    }
+    if (this.outOfMoves && this.callbacks.onOutOfMoves) {
+      this.callbacks.onOutOfMoves();
     }
   }
 
   handlePointerDown(mx, my) {
-    if (this.trainAnim) return; // Kol važiuoja traukinukas, neleidžiame sukioti
+    if (this.trainAnim || this.outOfMoves || this.movesUsed >= this.maxMoves) return; // Kol važiuoja traukinukas arba baigėsi ėjimai, neleidžiame sukioti
     const c = Math.floor((mx - this.originX) / this.cellSize);
     const r = Math.floor((my - this.originY) / this.cellSize);
     if (r < 0 || r >= this.level.rows || c < 0 || c >= this.level.cols) return;
@@ -501,6 +526,7 @@ export class CircuitEngine {
     this.hintCell = null;
     tile.rot = ((tile.rot || 0) + 1) % 4;
     tile.targetAngle += Math.PI / 2;
+    this.movesUsed++;
     this.recompute();
     if (this.callbacks.onMove) this.callbacks.onMove();
   }
@@ -511,6 +537,7 @@ export class CircuitEngine {
 
   launchTrain() {
     this.recompute();
+    if (this.outOfMoves) return;
     const an = this.analysis;
     let chosenPath = an.longestPath;
     let won = false;
@@ -541,6 +568,10 @@ export class CircuitEngine {
         readyToWin: won,
         totalStars: an.totalStars,
         collectedStars: 0,
+        movesUsed: this.movesUsed,
+        maxMoves: this.maxMoves,
+        movesLeft: Math.max(0, this.maxMoves - this.movesUsed),
+        outOfMoves: this.outOfMoves,
         running: true
       });
     }
@@ -598,6 +629,10 @@ export class CircuitEngine {
                 readyToWin: anim.won,
                 totalStars: this.analysis.totalStars,
                 collectedStars: anim.collectedStars.size,
+                movesUsed: this.movesUsed,
+                maxMoves: this.maxMoves,
+                movesLeft: Math.max(0, this.maxMoves - this.movesUsed),
+                outOfMoves: this.outOfMoves,
                 running: true
               });
             }

@@ -6,107 +6,113 @@ export const LASER_LEVELS = {
   grade1: [
     {
       id: 'las_g1_1',
-      title: '1. Pirmasis atspindys',
-      instruction: 'Paspausk ant geltono veidrodžio, kad pasuktum jį 90° ir nukreiptum lazerį į 💎 kristalą!',
+      title: '1. Spindulys aplink sieną',
+      instruction: 'Atsek kelią akimis prieš spausdamas! Pasuk veidrodžius (/ arba \\), kad lazeris apeitų sienas (maks. 4 pasukimai).',
       reward: 1,
-      cols: 6,
+      cols: 5,
       rows: 5,
+      maxMoves: 4,
       movable: false,
-      emitter: { r: 1, c: 0, dir: 'R' },
-      targets: [{ r: 4, c: 4 }],
+      emitter: { r: 2, c: 0, dir: 'R' },
+      targets: [{ r: 0, c: 3 }],
       walls: [
-        [2, 0],
-        [2, 1],
-        [2, 2]
+        [2, 3],
+        [1, 1]
       ],
       pieces: [
-        { id: 'm1', kind: 'mirror', r: 1, c: 4, type: '/' }
+        { id: 'm1', kind: 'mirror', r: 2, c: 2, type: '\\' },
+        { id: 'm2', kind: 'mirror', r: 0, c: 2, type: '\\' },
+        { id: 'm3', kind: 'mirror', r: 4, c: 2, type: '/' }
       ]
     },
     {
       id: 'las_g1_2',
-      title: '2. Du kampai per laboratoriją',
-      instruction: 'Pasuk abu veidrodžius (/ arba \\), kad šviesos spindulys apeitų užtvarą ir pasiektų kristalą.',
+      title: '2. Dviguba kliūtis',
+      instruction: 'Suderink 3 veidrodžius 5×5 tinklelyje, kad lazeris aplenktų sienas ir pasiektų 💎 kristalą (maks. 5 ėjimai)!',
       reward: 2,
-      cols: 6,
+      cols: 5,
       rows: 5,
+      maxMoves: 5,
       movable: false,
-      emitter: { r: 4, c: 1, dir: 'U' },
-      targets: [{ r: 4, c: 4 }],
+      emitter: { r: 0, c: 0, dir: 'D' },
+      targets: [{ r: 4, c: 2 }],
       walls: [
-        [2, 2],
-        [2, 3],
-        [3, 2],
-        [3, 3]
+        [2, 0],
+        [3, 2]
       ],
       pieces: [
-        { id: 'm1', kind: 'mirror', r: 0, c: 1, type: '\\' },
-        { id: 'm2', kind: 'mirror', r: 0, c: 4, type: '/' }
+        { id: 'm1', kind: 'mirror', r: 1, c: 0, type: '/' },
+        { id: 'm2', kind: 'mirror', r: 1, c: 4, type: '/' },
+        { id: 'm3', kind: 'mirror', r: 4, c: 4, type: '\\' }
       ]
     },
     {
       id: 'las_g1_3',
-      title: '3. Slaptasis koridorius',
-      instruction: 'Nukreipk lazerį žemyn pro koridorių tarp sienų tiesiai į apatinį dešinį kampą!',
+      title: '3. Sienų koridorius',
+      instruction: 'Pravesk spindulį pro keturis veidrodžius tarp sienų į viršų (maks. 7 pasukimai)!',
       reward: 2,
-      cols: 7,
+      cols: 5,
       rows: 5,
+      maxMoves: 7,
       movable: false,
-      emitter: { r: 0, c: 0, dir: 'R' },
-      targets: [{ r: 3, c: 6 }],
+      emitter: { r: 4, c: 0, dir: 'R' },
+      targets: [{ r: 0, c: 1 }],
       walls: [
-        [0, 3],
-        [1, 3],
-        [2, 1],
-        [2, 3]
+        [4, 3],
+        [1, 2]
       ],
       pieces: [
-        { id: 'm1', kind: 'mirror', r: 0, c: 2, type: '/' },
-        { id: 'm2', kind: 'mirror', r: 3, c: 2, type: '/' }
+        { id: 'm1', kind: 'mirror', r: 4, c: 2, type: '\\' },
+        { id: 'm2', kind: 'mirror', r: 2, c: 2, type: '\\' },
+        { id: 'm3', kind: 'mirror', r: 2, c: 4, type: '\\' },
+        { id: 'm4', kind: 'mirror', r: 0, c: 4, type: '/' }
       ]
     },
     {
       id: 'las_g1_4',
-      title: '4. Trys atspindžiai',
-      instruction: 'Suderink tris veidrodžius iš eilės, kad spindulys apkeliautų sieną ir sužibtų kristalas!',
+      title: '4. Laboratorijos skydas',
+      instruction: 'Kristalą iš dviejų pusių saugo sienos! Apeik jas išoriniame rate su ribotais ėjimais (maks. 6).',
       reward: 2,
-      cols: 7,
-      rows: 6,
+      cols: 5,
+      rows: 5,
+      maxMoves: 6,
       movable: false,
-      emitter: { r: 5, c: 0, dir: 'U' },
-      targets: [{ r: 4, c: 2 }],
+      emitter: { r: 0, c: 4, dir: 'D' },
+      targets: [{ r: 2, c: 2 }],
       walls: [
-        [2, 2],
-        [3, 1],
-        [3, 2],
-        [3, 3]
+        [1, 2],
+        [2, 1]
       ],
       pieces: [
-        { id: 'm1', kind: 'mirror', r: 1, c: 0, type: '\\' },
-        { id: 'm2', kind: 'mirror', r: 1, c: 5, type: '/' },
-        { id: 'm3', kind: 'mirror', r: 4, c: 5, type: '\\' }
+        { id: 'm1', kind: 'mirror', r: 4, c: 4, type: '\\' },
+        { id: 'm2', kind: 'mirror', r: 4, c: 0, type: '/' },
+        { id: 'm3', kind: 'mirror', r: 0, c: 0, type: '/' },
+        { id: 'm4', kind: 'mirror', r: 0, c: 3, type: '/' },
+        { id: 'm5', kind: 'mirror', r: 2, c: 3, type: '\\' }
       ]
     },
     {
       id: 'las_g1_5',
-      title: '5. Veidrodžių grandinė',
-      instruction: 'Paskutinė 1 klasės užduotis! Pasuk visus 3 veidrodžius, kad lazeris įžiebtų centrinį kristalą.',
+      title: '5. Veidrodinis labirintas',
+      instruction: 'Paskutinis 1 klasės iššūkis! Sukurk didįjį atspindžių žiedą aplink sienas per daugiausiai 8 pasukimus.',
       reward: 3,
-      cols: 7,
-      rows: 6,
+      cols: 5,
+      rows: 5,
+      maxMoves: 8,
       movable: false,
-      emitter: { r: 0, c: 6, dir: 'L' },
-      targets: [{ r: 2, c: 5 }],
+      emitter: { r: 0, c: 0, dir: 'R' },
+      targets: [{ r: 3, c: 3 }],
       walls: [
-        [1, 5],
         [2, 2],
-        [2, 3],
-        [3, 3]
+        [1, 1]
       ],
       pieces: [
-        { id: 'm1', kind: 'mirror', r: 0, c: 1, type: '\\' },
-        { id: 'm2', kind: 'mirror', r: 4, c: 1, type: '/' },
-        { id: 'm3', kind: 'mirror', r: 4, c: 5, type: '\\' }
+        { id: 'm1', kind: 'mirror', r: 0, c: 4, type: '\\' },
+        { id: 'm2', kind: 'mirror', r: 4, c: 4, type: '\\' },
+        { id: 'm3', kind: 'mirror', r: 4, c: 0, type: '/' },
+        { id: 'm4', kind: 'mirror', r: 2, c: 0, type: '\\' },
+        { id: 'm5', kind: 'mirror', r: 2, c: 1, type: '/' },
+        { id: 'm6', kind: 'mirror', r: 3, c: 1, type: '/' }
       ]
     }
   ],
@@ -118,6 +124,7 @@ export const LASER_LEVELS = {
       reward: 1,
       cols: 7,
       rows: 6,
+      maxMoves: 7,
       movable: true,
       emitter: { r: 3, c: 0, dir: 'R' },
       targets: [
@@ -141,6 +148,7 @@ export const LASER_LEVELS = {
       reward: 2,
       cols: 7,
       rows: 6,
+      maxMoves: 6,
       movable: true,
       emitter: { r: 0, c: 1, dir: 'D' },
       targets: [
@@ -166,6 +174,7 @@ export const LASER_LEVELS = {
       reward: 2,
       cols: 8,
       rows: 6,
+      maxMoves: 12,
       movable: true,
       emitter: { r: 5, c: 0, dir: 'R' },
       targets: [
@@ -194,6 +203,7 @@ export const LASER_LEVELS = {
       reward: 2,
       cols: 8,
       rows: 6,
+      maxMoves: 12,
       movable: true,
       emitter: { r: 0, c: 7, dir: 'L' },
       targets: [
@@ -223,6 +233,7 @@ export const LASER_LEVELS = {
       reward: 3,
       cols: 8,
       rows: 6,
+      maxMoves: 10,
       movable: true,
       emitter: { r: 2, c: 0, dir: 'R' },
       targets: [
@@ -399,6 +410,9 @@ export class LaserMirrorsEngine {
     this.dragState = null;
     this.hint = null;
     this.wonNotified = false;
+    this.movesUsed = 0;
+    this.maxMoves = this.level.maxMoves || 10;
+    this.outOfMoves = false;
     this.recomputeBeam();
   }
 
@@ -416,15 +430,26 @@ export class LaserMirrorsEngine {
     this.trace = traceOptics(this.level, this.pieces);
     const totalTargets = this.level.targets.length;
     const litTargets = this.trace.hitTargets.size;
+    const movesLeft = Math.max(0, this.maxMoves - this.movesUsed);
+    const wonNow = this.trace.won && !this.wonNotified;
+    if (this.trace.won && !this.wonNotified) {
+      this.wonNotified = true;
+    } else if (!this.trace.won && this.movesUsed >= this.maxMoves && !this.outOfMoves) {
+      this.outOfMoves = true;
+    }
     if (this.callbacks.onStatusChange) {
       this.callbacks.onStatusChange({
         litTargets,
         totalTargets,
-        won: this.trace.won && !this.wonNotified
+        movesUsed: this.movesUsed,
+        maxMoves: this.maxMoves,
+        movesLeft,
+        outOfMoves: this.outOfMoves,
+        won: wonNow
       });
     }
-    if (this.trace.won && !this.wonNotified) {
-      this.wonNotified = true;
+    if (this.outOfMoves && this.callbacks.onOutOfMoves) {
+      this.callbacks.onOutOfMoves();
     }
   }
 
@@ -449,26 +474,29 @@ export class LaserMirrorsEngine {
   }
 
   rotatePiece(piece) {
+    if (this.outOfMoves || this.wonNotified) return;
     piece.type = piece.type === '/' ? '\\' : '/';
+    this.movesUsed++;
     this.hint = null;
-    this.wonNotified = false;
     this.recomputeBeam();
     if (this.callbacks.onMove) this.callbacks.onMove('rotate', this.trace.hitTargets.size);
   }
 
   movePiece(piece, r, c) {
+    if (this.outOfMoves || this.wonNotified) return false;
     if (!this.level.movable) return false;
     if (!this.isCellEmptyForPiece(r, c)) return false;
     piece.r = r;
     piece.c = c;
+    this.movesUsed++;
     this.hint = null;
-    this.wonNotified = false;
     this.recomputeBeam();
     if (this.callbacks.onMove) this.callbacks.onMove('move', this.trace.hitTargets.size);
     return true;
   }
 
   handlePointerDown(mx, my) {
+    if (this.outOfMoves || this.wonNotified) return;
     const cell = this.cellAtCoords(mx, my);
     if (!cell) {
       this.selectedPieceId = null;

@@ -14,7 +14,8 @@ const COLORS = {
   green: '#4ade80',
   purple: '#c084fc',
   orange: '#fb923c',
-  gray: '#94a3b8'
+  gray: '#94a3b8',
+  water: '#38bdf8'
 };
 
 function spawnBalls(cx, cy, cols, count, kind, color) {
@@ -31,7 +32,7 @@ function spawnBalls(cx, cy, cols, count, kind, color) {
       vy: 0,
       r: BALL_RADIUS,
       kind,
-      color: kind === 'gray' ? COLORS.gray : color,
+      color: kind === 'gray' ? COLORS.gray : kind === 'water' ? COLORS.water : color,
       inGoal: false,
       removed: false
     });
@@ -93,93 +94,108 @@ export const PINPULL_LEVELS = {
     },
     {
       id: 'pp_g1_3',
-      title: '3. Trys aukštai',
-      instruction: 'Kaiščiai: 3. Atidaryk aukštus iš APAČIOS į viršų (#3 → #2 → #1), kad tarpinės lėkštės nepersipildytų!',
+      title: '3. Ugnies lava ir vanduo',
+      instruction: 'Kaiščiai: 3. Pirma užgesink raudoną lavą vandeniu (#1) ir atidaryk kolbą (#3), tik tada leisk žalius (#2)!',
       reward: 2,
       requiredGoal: 6,
       walls: [
-        // 1 aukštas (viršus)
-        { x1: 258, y1: 25, x2: 268, y2: 96 },
-        { x1: 382, y1: 25, x2: 372, y2: 96 },
-        // 2 aukštas (žema dešinė sienelė!)
-        { x1: 268, y1: 112, x2: 268, y2: 168 },
-        { x1: 268, y1: 168, x2: 292, y2: 178 },
-        { x1: 372, y1: 158, x2: 372, y2: 168 },
-        { x1: 372, y1: 168, x2: 348, y2: 178 },
-        // 3 aukštas (žema kairė sienelė!)
-        { x1: 268, y1: 238, x2: 268, y2: 250 },
-        { x1: 268, y1: 250, x2: 292, y2: 260 },
-        { x1: 372, y1: 195, x2: 372, y2: 250 },
-        { x1: 372, y1: 250, x2: 348, y2: 260 },
-        // Piltuvėlis į kolbą
-        { x1: 268, y1: 285, x2: 290, y2: 345 },
-        { x1: 372, y1: 285, x2: 350, y2: 345 }
+        // Žaliųjų kamera (viršus kairė)
+        { x1: 80, y1: 25, x2: 80, y2: 88 },
+        { x1: 185, y1: 25, x2: 185, y2: 88 },
+        // Vandens kamera (viršus centras)
+        { x1: 225, y1: 25, x2: 225, y2: 88 },
+        { x1: 315, y1: 25, x2: 315, y2: 88 },
+        // Latakas nuo žaliųjų link lavos tilto
+        { x1: 76, y1: 120, x2: 186, y2: 222 },
+        { x1: 186, y1: 205, x2: 186, y2: 254 },
+        // Piltuvėlis į tikslo kolbą (su išpylimo lūpa dešinėje jei #3 uždarytas)
+        { x1: 346, y1: 280, x2: 372, y2: 310 },
+        { x1: 495, y1: 286, x2: 495, y2: 308 },
+        { x1: 368, y1: 320, x2: 368, y2: 345 },
+        { x1: 490, y1: 320, x2: 490, y2: 345 }
       ],
       pins: [
-        { id: 'p1', label: '#1', x1: 262, y1: 100, x2: 378, y2: 100, dirX: -1, dirY: 0 },
-        { id: 'p2', label: '#2', x1: 276, y1: 181, x2: 364, y2: 181, dirX: 1, dirY: 0 },
-        { id: 'p3', label: '#3', x1: 276, y1: 263, x2: 364, y2: 263, dirX: -1, dirY: 0 }
+        { id: 'p1', label: '#1 (Vanduo)', x1: 220, y1: 92, x2: 320, y2: 92, dirX: 1, dirY: 0 },
+        { id: 'p2', label: '#2 (Žali)', x1: 75, y1: 92, x2: 190, y2: 92, dirX: -1, dirY: 0 },
+        { id: 'p3', label: '#3 (Kolba)', x1: 368, y1: 314, x2: 494, y2: 314, dirX: 1, dirY: 0 }
       ],
-      goal: { x: 265, y: 345, w: 110, h: 92 },
-      trap: null,
-      makeBalls: () => spawnBalls(320, 44, 3, 6, 'colored', COLORS.green)
+      goal: { x: 368, y: 345, w: 122, h: 92 },
+      trap: { x: 190, y: 248, w: 152, h: 78, lava: true, bridgeSlope: 28 },
+      makeBalls: () => [
+        ...spawnBalls(270, 46, 2, 4, 'water', COLORS.water),
+        ...spawnBalls(132, 42, 3, 6, 'colored', COLORS.green)
+      ]
     },
     {
       id: 'pp_g1_4',
-      title: '4. Dvigubas srautas',
-      instruction: 'Kaiščiai: 3. Nuleisk #1 per tiltą (#3) į dešinę, o tada išlaisvink dešiniąją kamerą (#2)!',
+      title: '4. Tiltas virš lavos',
+      instruction: 'Kaiščiai: 4. NEIŠTRAUK tilto (#3)! Pirma atverk kolbą (#4), o tada leisk #1 ir #2 virš lavos duobės.',
       reward: 2,
       requiredGoal: 6,
       walls: [
-        // Kairė kamera
-        { x1: 110, y1: 35, x2: 110, y2: 115 },
-        { x1: 215, y1: 35, x2: 215, y2: 115 },
-        // Dešinė kamera virš kolbos
-        { x1: 375, y1: 45, x2: 375, y2: 125 },
-        { x1: 485, y1: 45, x2: 485, y2: 125 },
-        // Centrinis kreipiklis į kolbą
-        { x1: 320, y1: 260, x2: 360, y2: 345 },
-        { x1: 495, y1: 205, x2: 465, y2: 345 }
+        // Kairė kamera (oranžiniai)
+        { x1: 105, y1: 30, x2: 105, y2: 108 },
+        { x1: 205, y1: 30, x2: 205, y2: 108 },
+        // Dešinė kamera (žydri)
+        { x1: 370, y1: 30, x2: 370, y2: 108 },
+        { x1: 475, y1: 30, x2: 475, y2: 108 },
+        // Kairė išpylimo apsauga link lavos jei #4 uždarytas
+        { x1: 320, y1: 266, x2: 355, y2: 278 },
+        { x1: 292, y1: 284, x2: 198, y2: 345 },
+        // Dešinė siena link kolbos
+        { x1: 486, y1: 195, x2: 476, y2: 345 },
+        { x1: 352, y1: 288, x2: 355, y2: 345 }
       ],
       pins: [
-        { id: 'p1', label: '#1', x1: 105, y1: 119, x2: 220, y2: 119, dirX: -1, dirY: 0 },
-        { id: 'p2', label: '#2', x1: 370, y1: 129, x2: 490, y2: 129, dirX: 1, dirY: 0 },
-        { id: 'p3', label: '#3', x1: 95, y1: 185, x2: 318, y2: 256, dirX: -1, dirY: -0.3 }
+        { id: 'p1', label: '#1', x1: 100, y1: 112, x2: 210, y2: 112, dirX: -1, dirY: 0 },
+        { id: 'p2', label: '#2', x1: 365, y1: 112, x2: 480, y2: 112, dirX: 1, dirY: 0 },
+        { id: 'p3', label: '#3 (Tiltas)', x1: 95, y1: 185, x2: 332, y2: 246, dirX: -1, dirY: -0.25 },
+        { id: 'p4', label: '#4 (Kolba)', x1: 350, y1: 280, x2: 482, y2: 280, dirX: 1, dirY: 0 }
       ],
-      goal: { x: 350, y: 345, w: 130, h: 92 },
-      trap: null,
+      goal: { x: 355, y: 345, w: 122, h: 92 },
+      trap: { x: 80, y: 345, w: 145, h: 92, lava: true },
       makeBalls: () => [
-        ...spawnBalls(162, 60, 2, 3, 'colored', COLORS.orange),
-        ...spawnBalls(430, 70, 2, 3, 'colored', COLORS.cyan)
+        ...spawnBalls(155, 52, 2, 3, 'colored', COLORS.orange),
+        ...spawnBalls(422, 52, 2, 3, 'colored', COLORS.cyan)
       ]
     },
     {
       id: 'pp_g1_5',
-      title: '5. Saugus posūkis',
-      instruction: 'Kaiščiai: 3. Pirma atidaryk apatinę sklendę (#3), tada įstrižą užtvarą (#2) ir galiausiai viršų (#1)!',
+      title: '5. Keturios sklendės ir lava',
+      instruction: 'Kaiščiai: 4. Suplanuok visus 4 žingsnius: atšaldyk lavą (#1), atverk kolbą (#4), vidurinį (#3) ir viršutinį (#2)!',
       reward: 3,
       requiredGoal: 6,
       walls: [
-        // Viršutinė dešinė kamera
-        { x1: 410, y1: 32, x2: 410, y2: 105 },
-        { x1: 525, y1: 32, x2: 525, y2: 105 },
-        // Švelnus posūkis iš dešinės į centrą
-        { x1: 540, y1: 132, x2: 328, y2: 205 },
-        // Tarpinė kišenė su žemu kairiu kraštu (jei #2 uždarytas – išsipils į kairę!)
-        { x1: 230, y1: 192, x2: 230, y2: 214 },
-        { x1: 230, y1: 214, x2: 262, y2: 222 },
-        // Centrinis vamzdis žemyn į kolbą (turi apsaugą kairėje, kad neperšoktų atidarius #2)
-        { x1: 245, y1: 245, x2: 272, y2: 345 },
-        { x1: 375, y1: 230, x2: 360, y2: 345 }
+        // Viršutinė kairė kamera (violetiniai)
+        { x1: 75, y1: 24, x2: 75, y2: 80 },
+        { x1: 175, y1: 24, x2: 175, y2: 80 },
+        // Vidurinė kamera su žemu kairiu kraštu (jei #3 uždarytas – išsipila!)
+        { x1: 72, y1: 132, x2: 72, y2: 156 },
+        { x1: 182, y1: 100, x2: 182, y2: 156 },
+        // Vandens kamera (viršus centras)
+        { x1: 218, y1: 24, x2: 218, y2: 80 },
+        { x1: 312, y1: 24, x2: 312, y2: 80 },
+        // Latakas nuo #3 ant lavos tilto
+        { x1: 68, y1: 186, x2: 192, y2: 232 },
+        { x1: 186, y1: 205, x2: 186, y2: 254 },
+        // Piltuvėlis į kolbą (išpylimas dešinėje jei #4 uždarytas)
+        { x1: 350, y1: 280, x2: 376, y2: 308 },
+        { x1: 500, y1: 286, x2: 500, y2: 308 },
+        { x1: 374, y1: 318, x2: 374, y2: 345 },
+        { x1: 496, y1: 318, x2: 496, y2: 345 }
       ],
       pins: [
-        { id: 'p1', label: '#1', x1: 405, y1: 109, x2: 530, y2: 109, dirX: 1, dirY: 0 },
-        { id: 'p2', label: '#2', x1: 258, y1: 222, x2: 332, y2: 208, dirX: -1, dirY: 0 },
-        { id: 'p3', label: '#3', x1: 258, y1: 280, x2: 368, y2: 280, dirX: 1, dirY: 0 }
+        { id: 'p1', label: '#1 (Vanduo)', x1: 214, y1: 84, x2: 316, y2: 84, dirX: 1, dirY: 0 },
+        { id: 'p2', label: '#2 (Viršus)', x1: 70, y1: 84, x2: 180, y2: 84, dirX: -1, dirY: 0 },
+        { id: 'p3', label: '#3 (Sklendė)', x1: 74, y1: 160, x2: 184, y2: 160, dirX: -1, dirY: 0 },
+        { id: 'p4', label: '#4 (Kolba)', x1: 372, y1: 312, x2: 498, y2: 312, dirX: 1, dirY: 0 }
       ],
-      goal: { x: 255, y: 345, w: 120, h: 92 },
-      trap: null,
-      makeBalls: () => spawnBalls(467, 52, 3, 6, 'colored', COLORS.purple)
+      goal: { x: 374, y: 345, w: 122, h: 92 },
+      trap: { x: 190, y: 248, w: 155, h: 78, lava: true, bridgeSlope: 28 },
+      makeBalls: () => [
+        ...spawnBalls(265, 42, 2, 4, 'water', COLORS.water),
+        ...spawnBalls(125, 40, 3, 6, 'colored', COLORS.purple)
+      ]
     }
   ],
 
@@ -406,6 +422,7 @@ export class PinPullEngine {
     this.failReason = '';
     this.goalCount = 0;
     this.trapCount = 0;
+    this.trapCooled = false;
     this.reportStatus();
   }
 
@@ -535,9 +552,12 @@ export class PinPullEngine {
         this.resolveCircleSegment(b, g.x + g.w, g.y, g.x + g.w, g.y + g.h, 4, 0.2);
         this.resolveCircleSegment(b, g.x, g.y + g.h, g.x + g.w, g.y + g.h, 5, 0.15);
 
-        // Spąstų duobės sienos (atviras viršus!)
+        // Spąstų duobės sienos (arba atšalusio akmens tilto viršus!)
         if (this.level.trap) {
           const t = this.level.trap;
+          if (t.lava && this.trapCooled && t.bridgeSlope) {
+            this.resolveCircleSegment(b, t.x - 4, t.y + 4, t.x + t.w + 4, t.y + t.bridgeSlope, 5, 0.15);
+          }
           this.resolveCircleSegment(b, t.x, t.y, t.x, t.y + t.h, 4, 0.2);
           this.resolveCircleSegment(b, t.x + t.w, t.y, t.x + t.w, t.y + t.h, 4, 0.2);
           this.resolveCircleSegment(b, t.x, t.y + t.h, t.x + t.w, t.y + t.h, 5, 0.1);
@@ -612,8 +632,8 @@ export class PinPullEngine {
     for (const b of this.balls) {
       if (b.removed) continue;
 
-      // Ar įkrito į tikslo kolbą?
-      if (b.x > g.x + 6 && b.x < g.x + g.w - 6 && b.y > g.y + 18 && b.y < g.y + g.h) {
+      // Ar pateko į tikslo kolbą?
+      if (b.kind !== 'water' && b.x > g.x + 6 && b.x < g.x + g.w - 6 && b.y > g.y + 18 && b.y < g.y + g.h) {
         if (b.kind === 'gray') {
           if (this.status === 'playing') {
             this.status = 'failed';
@@ -629,16 +649,31 @@ export class PinPullEngine {
         }
       }
 
-      // Ar pateko į spąstų duobę?
-      if (t && b.x > t.x + 6 && b.x < t.x + t.w - 6 && b.y > t.y + 18 && b.y < t.y + t.h) {
-        if (b.kind === 'gray') {
+      // Ar pateko į spąstų / lavos duobę?
+      const trapHitTop = t && t.lava ? t.y - 4 : t ? t.y + 18 : 0;
+      if (t && b.x > t.x + 2 && b.x < t.x + t.w - 2 && b.y > trapHitTop && b.y < t.y + t.h) {
+        if (t.lava && b.kind === 'water') {
+          b.removed = true;
+          this.trapCooled = true;
+          this.spawnMixSparks(b.x, t.y + 8, '#bae6fd');
+          this.spawnMixSparks(b.x, t.y + 8, '#cbd5e1');
+          continue;
+        }
+        if (t.lava && this.trapCooled) {
+          // Atvėsęs akmuo saugus (jei netyčia užkliuvo kraštas)
+        } else if (b.kind === 'gray') {
           b.removed = true;
           this.trapCount++;
           this.spawnMixSparks(b.x, b.y, '#94a3b8');
           continue;
         } else if (this.status === 'playing') {
           b.removed = true;
-          this.spawnMixSparks(b.x, b.y, '#ef4444');
+          this.spawnMixSparks(b.x, b.y, t.lava ? '#f97316' : '#ef4444');
+          if (t.lava) {
+            this.status = 'failed';
+            this.failReason = '🔥 Oi! Rutuliukai sudegė raudonoje lavoje! Paspausk „Iš naujo“ ir suplanuok kitą kaiščių seką.';
+            this.reportStatus();
+          }
         }
       }
 
@@ -664,7 +699,7 @@ export class PinPullEngine {
         this.status = 'won';
         this.reportStatus();
       } else {
-        const potentialTotal = this.balls.filter((b) => !b.removed).length;
+        const potentialTotal = this.balls.filter((b) => !b.removed && b.kind !== 'water').length;
         if (potentialTotal < this.level.requiredGoal) {
           this.status = 'failed';
           this.failReason = '💥 Per daug spalvotų rutuliukų prarasta! Paspausk „Iš naujo (Reset)“ ir bandyk dar kartą.';
@@ -736,19 +771,65 @@ export class PinPullEngine {
       ctx.stroke();
     }
 
-    // 2. Spąstų duobė (jei yra – 3 klasės lygiuose)
+    // 2. Spąstų / raudonos lavos duobė
     if (this.level.trap) {
       const t = this.level.trap;
       ctx.save();
-      ctx.fillStyle = 'rgba(127, 29, 29, 0.65)';
-      ctx.fillRect(t.x, t.y, t.w, t.h);
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(t.x, t.y, t.w, t.h);
-      ctx.font = '800 13px "Nunito", sans-serif';
-      ctx.fillStyle = '#fecaca';
-      ctx.textAlign = 'center';
-      ctx.fillText('⚠️ SPĄSTŲ DUOBĖ', t.x + t.w / 2, t.y + t.h - 12);
+      if (t.lava && this.trapCooled) {
+        ctx.fillStyle = '#475569';
+        ctx.fillRect(t.x, t.y, t.w, t.h);
+        if (t.bridgeSlope) {
+          ctx.beginPath();
+          ctx.moveTo(t.x, t.y + 4);
+          ctx.lineTo(t.x + t.w, t.y + t.bridgeSlope);
+          ctx.lineTo(t.x + t.w, t.y + t.h);
+          ctx.lineTo(t.x, t.y + t.h);
+          ctx.closePath();
+          ctx.fillStyle = '#64748b';
+          ctx.fill();
+        }
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(t.x, t.y, t.w, t.h);
+        ctx.font = '800 12px "Nunito", sans-serif';
+        ctx.fillStyle = '#e2e8f0';
+        ctx.textAlign = 'center';
+        ctx.fillText('🪨 AKMENS TILTAS', t.x + t.w / 2, t.y + t.h - 14);
+      } else if (t.lava) {
+        const lavaGrad = ctx.createLinearGradient(t.x, t.y, t.x, t.y + t.h);
+        lavaGrad.addColorStop(0, '#f97316');
+        lavaGrad.addColorStop(0.45, '#dc2626');
+        lavaGrad.addColorStop(1, '#7f1d1d');
+        ctx.fillStyle = lavaGrad;
+        ctx.fillRect(t.x, t.y, t.w, t.h);
+        // Burbuliukai
+        const bubblePhase = performance.now() * 0.004;
+        ctx.fillStyle = 'rgba(253, 224, 71, 0.6)';
+        for (let k = 0; k < 4; k++) {
+          const bx = t.x + 22 + k * ((t.w - 44) / 3);
+          const by = t.y + 22 + Math.sin(bubblePhase + k * 1.7) * 7;
+          ctx.beginPath();
+          ctx.arc(bx, by, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.strokeStyle = '#fb923c';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(t.x, t.y, t.w, t.h);
+        ctx.font = '900 12px "Nunito", sans-serif';
+        ctx.fillStyle = '#fef08a';
+        ctx.textAlign = 'center';
+        ctx.fillText('🔥 RAUDONA LAVA', t.x + t.w / 2, t.y + t.h - 12);
+      } else {
+        ctx.fillStyle = 'rgba(127, 29, 29, 0.65)';
+        ctx.fillRect(t.x, t.y, t.w, t.h);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(t.x, t.y, t.w, t.h);
+        ctx.font = '800 13px "Nunito", sans-serif';
+        ctx.fillStyle = '#fecaca';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚠️ SPĄSTŲ DUOBĖ', t.x + t.w / 2, t.y + t.h - 12);
+      }
       ctx.restore();
     }
 

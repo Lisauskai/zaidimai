@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261113g" />
+  <link rel="stylesheet" href="./style.css?v=20261113h" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -122,7 +122,7 @@
               <span class="diff-level-chip">🤖 MANO ROBOTO DIRBTUVĖS</span>
               <h3>Tavo Kosminis Robotas</h3>
             </div>
-            <div class="robot-total-pill" id="robot-total-crystals-pill">💎 0 / 60+</div>
+            <div class="robot-total-pill" id="robot-total-crystals-pill">💎 0 / 140+</div>
           </div>
 
           <p id="robot-next-unlock" class="robot-next-unlock">
@@ -369,8 +369,14 @@
         <!-- RAŠTŲ IR ATMINTIES ŠIFRAS (IQ MATRICOS IR ATMINTIS) ZONA -->
         <div id="matrix-stage" class="matrix-stage hidden">
           <div class="pinpull-controls-bar">
-            <span id="matrix-counter" class="pinpull-counter">🧩 Pasirink trūkstamą figūrą</span>
+            <div class="balance-status-group">
+              <span id="matrix-hearts" class="balance-hearts" title="Likę bandymai">❤️❤️</span>
+              <span id="matrix-counter" class="pinpull-counter">🧩 Pasirink trūkstamą figūrą</span>
+            </div>
             <div class="pinpull-btn-group">
+              <button id="btn-matrix-check" class="balance-check-btn" type="button">
+                ✅ Patikrinti
+              </button>
               <button id="btn-memory-replay" class="sok-undo-btn hidden" type="button">
                 👀 Rodyti seką (3 s)
               </button>
@@ -606,6 +612,6 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js?v=20261113g"></script>
+  <script type="module" src="./game.js?v=20261113h"></script>
 </body>
 </html>

@@ -2535,3 +2535,16 @@ body {
   font-weight: 700;
   line-height: 1.4;
 }
+
+.matrix-choice-btn.is-selected {
+  border-color: #facc15 !important;
+  background: rgba(250, 204, 21, 0.16) !important;
+  box-shadow: 0 0 0 3px #facc15, 0 6px 0 #020617 !important;
+  transform: translateY(-3px) scale(1.03);
+}
+
+.pinpull-counter.is-low-moves {
+  border-color: #ef4444;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.72);
+}

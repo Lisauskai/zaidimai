@@ -15,7 +15,10 @@ export const ROBOT_PARTS = [
   { id: 'magnetArm', name: 'Magnetinis griebtuvas', threshold: 25, icon: '🧲' },
   { id: 'jetpack', name: 'Reaktyvinė kuprinė (Jetpack)', threshold: 35, icon: '🚀' },
   { id: 'antenna', name: 'Kosminė antena', threshold: 45, icon: '📡' },
-  { id: 'shield', name: 'Auksinis energijos skydas', threshold: 60, icon: '🌟' }
+  { id: 'shield', name: 'Auksinis energijos skydas', threshold: 60, icon: '🌟' },
+  { id: 'rover', name: 'Mėnuleigis šalia roboto', threshold: 80, icon: '🚙' },
+  { id: 'satellite', name: 'Palydovas orbitoje', threshold: 110, icon: '🛰️' },
+  { id: 'spaceship', name: 'Auksinis kosminis laivas', threshold: 140, icon: '🛸' }
 ];
 
 export function createDefaultRobotColors() {
@@ -79,6 +82,9 @@ export function renderRobotWorkshopSvg(totalCrystals, robotColors = {}) {
       <rect x="236" y="182" width="60" height="24" rx="8" />
       <line x1="170" y1="36" x2="170" y2="88" />
       <ellipse cx="170" cy="206" rx="148" ry="178" />
+      <rect x="242" y="328" width="74" height="28" rx="8" />
+      <rect x="26" y="36" width="66" height="24" rx="6" />
+      <ellipse cx="282" cy="54" rx="40" ry="16" />
     </g>
   `;
 
@@ -226,6 +232,74 @@ export function renderRobotWorkshopSvg(totalCrystals, robotColors = {}) {
     `;
   }
 
+  // 10. Mėnuleigis šalia roboto (80 💎)
+  let roverSvg = '';
+  if (unlocked.has('rover')) {
+    const col = cOf('rover');
+    roverSvg = `
+      <g ${partAttr('rover')}>
+        <title>Mėnuleigis šalia roboto – spausk spalvai pakeisti</title>
+        <!-- Kamera ir antena ant mėnuleigio -->
+        <line x1="258" y1="326" x2="258" y2="306" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" />
+        <rect x="250" y="298" width="16" height="11" rx="3" fill="${col.glow}" stroke="#020617" stroke-width="2" />
+        <circle cx="258" cy="303" r="3" fill="#020617" />
+        <!-- Saulės baterija -->
+        <polygon points="274,316 312,310 316,322 278,326" fill="#1d4ed8" stroke="#93c5fd" stroke-width="2" />
+        <!-- Korpusas -->
+        <rect x="244" y="324" width="72" height="24" rx="7" fill="${col.fill}" stroke="#020617" stroke-width="3" />
+        <!-- Trys ratai -->
+        <circle cx="255" cy="352" r="9" fill="#334155" stroke="#020617" stroke-width="2.5" />
+        <circle cx="280" cy="352" r="9" fill="#334155" stroke="#020617" stroke-width="2.5" />
+        <circle cx="305" cy="352" r="9" fill="#334155" stroke="#020617" stroke-width="2.5" />
+        <circle cx="255" cy="352" r="3" fill="${col.glow}" />
+        <circle cx="280" cy="352" r="3" fill="${col.glow}" />
+        <circle cx="305" cy="352" r="3" fill="${col.glow}" />
+      </g>
+    `;
+  }
+
+  // 11. Palydovas orbitoje (110 💎)
+  let satelliteSvg = '';
+  if (unlocked.has('satellite')) {
+    const col = cOf('satellite');
+    satelliteSvg = `
+      <g ${partAttr('satellite')}>
+        <title>Palydovas orbitoje – spausk spalvai pakeisti</title>
+        <path d="M18,74 Q58,92 104,68" fill="none" stroke="rgba(56, 189, 248, 0.35)" stroke-width="2" stroke-dasharray="4 4" />
+        <g transform="translate(56, 48) rotate(-18)">
+          <rect x="-34" y="-9" width="22" height="18" rx="3" fill="#2563eb" stroke="#93c5fd" stroke-width="2" />
+          <rect x="12" y="-9" width="22" height="18" rx="3" fill="#2563eb" stroke="#93c5fd" stroke-width="2" />
+          <rect x="-12" y="-12" width="24" height="24" rx="6" fill="${col.fill}" stroke="#020617" stroke-width="2.5" />
+          <circle cx="0" cy="0" r="5" fill="${col.glow}" />
+          <line x1="0" y1="12" x2="0" y2="21" stroke="#cbd5e1" stroke-width="2.5" />
+          <circle cx="0" cy="23" r="3.5" fill="#facc15" />
+        </g>
+      </g>
+    `;
+  }
+
+  // 12. Auksinis kosminis laivas (140 💎)
+  let spaceshipSvg = '';
+  if (unlocked.has('spaceship')) {
+    const col = cOf('spaceship');
+    spaceshipSvg = `
+      <g ${partAttr('spaceship')}>
+        <title>Auksinis kosminis laivas – spausk spalvai pakeisti</title>
+        <!-- Šviesos kūgis po laivu -->
+        <polygon points="262,64 302,64 316,104 248,104" fill="rgba(250, 204, 21, 0.16)" />
+        <!-- Stiklinis kupolas -->
+        <path d="M262,48 Q282,22 302,48 Z" fill="#bae6fd" stroke="#020617" stroke-width="2.5" opacity="0.92" />
+        <!-- Auksinė lėkštė / korpusas -->
+        <ellipse cx="282" cy="54" rx="44" ry="15" fill="#facc15" stroke="#020617" stroke-width="3" />
+        <ellipse cx="282" cy="52" rx="34" ry="8" fill="${col.fill}" opacity="0.75" />
+        <circle cx="255" cy="55" r="3.5" fill="#f97316" />
+        <circle cx="273" cy="59" r="3.5" fill="#22d3ee" />
+        <circle cx="291" cy="59" r="3.5" fill="#4ade80" />
+        <circle cx="309" cy="55" r="3.5" fill="#f97316" />
+      </g>
+    `;
+  }
+
   return `
     <svg id="robot-blueprint-svg" class="robot-blueprint-svg" viewBox="0 0 340 404" role="img" aria-label="Kosminis robotas">
       <defs>
@@ -236,6 +310,8 @@ export function renderRobotWorkshopSvg(totalCrystals, robotColors = {}) {
       <rect x="0" y="0" width="340" height="404" rx="16" fill="#020617" />
       <rect x="0" y="0" width="340" height="404" rx="16" fill="url(#robot-grid-pat)" />
       ${blueprintSilhouettes}
+      ${satelliteSvg}
+      ${spaceshipSvg}
       ${jetpackSvg}
       ${legsSvg}
       ${laserArmSvg}
@@ -243,6 +319,7 @@ export function renderRobotWorkshopSvg(totalCrystals, robotColors = {}) {
       ${bodySvg}
       ${antennaSvg}
       ${headSvg}
+      ${roverSvg}
       ${shieldSvg}
     </svg>
   `;

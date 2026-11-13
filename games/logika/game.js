@@ -1,33 +1,33 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113g';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113g';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113g';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113g';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113h';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113h';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113h';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113h';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113g';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113g';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113g';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113g';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113g';
+} from './balance.js?v=20261113h';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113h';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113h';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113h';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113h';
 import {
   MathCrossEngine,
   MATHCROSS_LEVELS,
   MATHCROSS_CANVAS_W,
   MATHCROSS_CANVAS_H
-} from './mathcross.js?v=20261113g';
+} from './mathcross.js?v=20261113h';
 import {
   BridgesEngine,
   BRIDGES_LEVELS,
   BRIDGES_CANVAS_W,
   BRIDGES_CANVAS_H
-} from './bridges.js?v=20261113g';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113g';
+} from './bridges.js?v=20261113h';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113h';
 import {
   isSoundEnabled,
   toggleSound,
@@ -51,8 +51,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113g';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113g';
+} from './sound.js?v=20261113h';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113h';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -61,7 +61,7 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113g';
+} from './robot.js?v=20261113h';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -232,10 +232,14 @@ let switchStates = [];
 let pinEngine = null;
 let sokobanGame = null;
 let laserEngine = null;
+let laserResetTimer = null;
 let circuitEngine = null;
+let circuitResetTimer = null;
 let balanceEngine = null;
 let balanceResetTimer = null;
 let memoryCtrl = null;
+let matrixResetTimer = null;
+let onMatrixCheckClick = null;
 let algoEngine = null;
 let gearsEngine = null;
 let gravityEngine = null;
@@ -474,7 +478,7 @@ function renderRobotWorkshop(totalCrystals) {
     if (nextPart) {
       nextEl.textContent = `Kita detalė: ${nextPart.icon} ${nextPart.name} (${totalCrystals} / ${nextPart.threshold} 💎). Paspausk ant atrakintos detalės spalvai keisti!`;
     } else {
-      nextEl.textContent = '🎉 ŠAUNU! Visos 8 kosminio roboto detalės atrakintos! Paspausk ant bet kurios detalės spalvai keisti.';
+      nextEl.textContent = `🎉 ŠAUNU! Visos ${ROBOT_PARTS.length} kosminio roboto detalės ir priedai atrakinti! Paspausk ant bet kurios detalės spalvai keisti.`;
     }
   }
 
@@ -898,6 +902,10 @@ function destroyPinEngine() {
 }
 
 function destroyLaserEngine() {
+  if (laserResetTimer) {
+    clearTimeout(laserResetTimer);
+    laserResetTimer = null;
+  }
   if (laserEngine) {
     laserEngine.destroy();
     laserEngine = null;
@@ -905,6 +913,10 @@ function destroyLaserEngine() {
 }
 
 function destroyCircuitEngine() {
+  if (circuitResetTimer) {
+    clearTimeout(circuitResetTimer);
+    circuitResetTimer = null;
+  }
   if (circuitEngine) {
     circuitEngine.destroy();
     circuitEngine = null;
@@ -923,6 +935,11 @@ function destroyBalanceEngine() {
 }
 
 function destroyMemoryCtrl() {
+  if (matrixResetTimer) {
+    clearTimeout(matrixResetTimer);
+    matrixResetTimer = null;
+  }
+  onMatrixCheckClick = null;
   if (memoryCtrl) {
     memoryCtrl.destroy();
     memoryCtrl = null;
@@ -1457,6 +1474,11 @@ function startLaserLevel(level, totalInMode) {
   const toolBtn = document.getElementById('btn-laser-tool');
   const splitterLegend = document.getElementById('laser-legend-splitter');
 
+  if (laserResetTimer) {
+    clearTimeout(laserResetTimer);
+    laserResetTimer = null;
+  }
+
   laserMoveToolActive = false;
   if (toolBtn) {
     toolBtn.classList.toggle('hidden', !level.movable);
@@ -1464,6 +1486,9 @@ function startLaserLevel(level, totalInMode) {
   }
   if (splitterLegend) {
     splitterLegend.classList.toggle('hidden', !level.movable);
+  }
+  if (counterEl) {
+    counterEl.classList.remove('is-low-moves');
   }
 
   let prevLitTargets = 0;
@@ -1476,9 +1501,11 @@ function startLaserLevel(level, totalInMode) {
       prevLitTargets = litCount;
       recordPlayerMove();
     },
-    onStatusChange: ({ litTargets, totalTargets, won }) => {
+    onStatusChange: ({ litTargets, totalTargets, movesLeft, maxMoves, won }) => {
       if (counterEl) {
-        counterEl.textContent = `💎 Apšviesta kristalų: ${litTargets} / ${totalTargets}`;
+        const leftText = typeof movesLeft === 'number' ? ` • 🔄 Liko ėjimų: ${movesLeft} / ${maxMoves}` : '';
+        counterEl.textContent = `💎 Kristalai: ${litTargets} / ${totalTargets}${leftText}`;
+        counterEl.classList.toggle('is-low-moves', typeof movesLeft === 'number' && movesLeft <= 2 && !won);
       }
       if (won) {
         markLevelSolved(level);
@@ -1486,6 +1513,25 @@ function startLaserLevel(level, totalInMode) {
           nextBtn.classList.remove('hidden');
         }
       }
+    },
+    onOutOfMoves: () => {
+      playWrongBuzz();
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (feedbackEl) {
+        feedbackEl.textContent =
+          '⚡ Baigėsi lazerio energija (ėjimų limitas)! Prieš spaudžiant, susek kelią akimis – lygis persikrauna...';
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
+      if (laserResetTimer) clearTimeout(laserResetTimer);
+      laserResetTimer = setTimeout(() => {
+        laserResetTimer = null;
+        if (laserEngine) {
+          prevLitTargets = 0;
+          laserEngine.reset();
+          resetAttemptState();
+        }
+      }, 1250);
     }
   });
   laserEngine.startLoop();
@@ -1505,11 +1551,19 @@ function startCircuitLevel(level, totalInMode) {
   const nextBtn = document.getElementById('btn-circuit-next');
   const g3Legend = document.getElementById('circuit-legend-g3');
 
+  if (circuitResetTimer) {
+    clearTimeout(circuitResetTimer);
+    circuitResetTimer = null;
+  }
+
   if (g3Legend) {
     g3Legend.classList.toggle('hidden', currentDifficulty !== 'grade3');
   }
   if (launchBtn) {
     launchBtn.disabled = false;
+  }
+  if (counterEl) {
+    counterEl.classList.remove('is-low-moves');
   }
 
   circuitEngine = new CircuitEngine(circuitCanvas, level, {
@@ -1517,15 +1571,37 @@ function startCircuitLevel(level, totalInMode) {
       playTrackClick();
       recordPlayerMove();
     },
-    onStatusChange: ({ readyToWin, totalStars, collectedStars, running }) => {
+    onStatusChange: ({ readyToWin, totalStars, collectedStars, movesLeft, maxMoves, running }) => {
       if (counterEl) {
+        const movesTxt = typeof movesLeft === 'number' ? ` • 🔄 Ėjimai: ${movesLeft}/${maxMoves}` : '';
         counterEl.textContent = running
           ? `🚂 Važiuoja... ⭐ ${collectedStars} / ${totalStars}`
-          : `⭐ Žvaigždutės: ${collectedStars} / ${totalStars}${readyToWin ? ' • ✅ Kelias sujungtas!' : ''}`;
+          : `⭐ ${collectedStars} / ${totalStars}${readyToWin ? ' • ✅ Kelias sujungtas!' : movesTxt}`;
+        counterEl.classList.toggle('is-low-moves', !running && !readyToWin && typeof movesLeft === 'number' && movesLeft <= 2);
       }
       if (launchBtn) {
         launchBtn.disabled = !!running;
       }
+    },
+    onOutOfMoves: () => {
+      playWrongBuzz();
+      if (launchBtn) launchBtn.disabled = true;
+      const feedbackEl = document.getElementById('puzzle-feedback');
+      if (feedbackEl) {
+        feedbackEl.textContent =
+          '⚡ Baigėsi pasukimų energija! Pirma suplanuok trasą akimis – bėgiai grįžta į pradžią...';
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
+      if (circuitResetTimer) clearTimeout(circuitResetTimer);
+      circuitResetTimer = setTimeout(() => {
+        circuitResetTimer = null;
+        if (circuitEngine) {
+          circuitEngine.reset();
+          if (launchBtn) launchBtn.disabled = false;
+          resetAttemptState();
+        }
+      }, 1250);
     },
     onRunResult: ({ won, reason, starsCollected, totalStars }) => {
       if (launchBtn) {
@@ -1533,6 +1609,7 @@ function startCircuitLevel(level, totalInMode) {
       }
       if (won) {
         if (counterEl) {
+          counterEl.classList.remove('is-low-moves');
           counterEl.textContent = `⭐ Žvaigždutės: ${starsCollected} / ${totalStars} • 🎉 Pasiekta 🏁!`;
         }
         markLevelSolved(level);
@@ -1712,13 +1789,24 @@ function startMatrixLevel(level, totalInMode) {
   const boardEl = document.getElementById('matrix-board');
   const choicesEl = document.getElementById('matrix-choices');
   const counterEl = document.getElementById('matrix-counter');
+  const heartsEl = document.getElementById('matrix-hearts');
+  const checkBtn = document.getElementById('btn-matrix-check');
   const replayBtn = document.getElementById('btn-memory-replay');
   const nextBtn = document.getElementById('btn-matrix-next');
+
+  if (matrixResetTimer) {
+    clearTimeout(matrixResetTimer);
+    matrixResetTimer = null;
+  }
+  onMatrixCheckClick = null;
 
   boardEl.innerHTML = '';
   choicesEl.innerHTML = '';
   choicesEl.classList.toggle('hidden', level.kind === 'memory');
   replayBtn?.classList.toggle('hidden', level.kind !== 'memory');
+  heartsEl?.classList.toggle('hidden', level.kind === 'memory');
+  checkBtn?.classList.toggle('hidden', level.kind === 'memory');
+  if (checkBtn) checkBtn.disabled = false;
 
   if (level.kind === 'memory') {
     memoryCtrl = new MemoryCodeController(boardEl, level, {
@@ -1763,9 +1851,21 @@ function startMatrixLevel(level, totalInMode) {
     return;
   }
 
-  // IQ Matrica (3x3)
+  // IQ Matrica (3x3) su pasirinkimu, „Patikrinti“ mygtuku ir 2 širdelėmis
+  const maxHearts = 2;
+  let hearts = maxHearts;
+  let selectedIdx = null;
+  let solved = false;
+  let lockedOut = false;
+
+  const updateMatrixHeartsUI = () => {
+    if (!heartsEl) return;
+    heartsEl.textContent = `${'❤️'.repeat(Math.max(0, hearts))}${'🖤'.repeat(Math.max(0, maxHearts - hearts))}`;
+  };
+  updateMatrixHeartsUI();
+
   if (counterEl) {
-    counterEl.textContent = '🧩 Pasirink figūrą vietoj [ ? ]';
+    counterEl.textContent = '🧩 Pasirink figūrą ir spausk „✅ Patikrinti“';
   }
   boardEl.style.gridTemplateColumns = 'repeat(3, auto)';
 
@@ -1783,7 +1883,7 @@ function startMatrixLevel(level, totalInMode) {
     boardEl.appendChild(cell);
   });
 
-  let solved = false;
+  const choiceBtns = [];
   level.choices.forEach((choiceSpec, idx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -1791,32 +1891,78 @@ function startMatrixLevel(level, totalInMode) {
     btn.dataset.choiceIndex = String(idx);
     btn.innerHTML = renderShapeSvg(choiceSpec);
     btn.addEventListener('click', () => {
-      if (solved) return;
-      recordPlayerMove();
+      if (solved || lockedOut) return;
+      selectedIdx = idx;
+      choiceBtns.forEach((b, bIdx) => b.classList.toggle('is-selected', bIdx === idx));
       const feedbackEl = document.getElementById('puzzle-feedback');
-      if (idx === level.correctIndex) {
-        solved = true;
-        btn.classList.add('correct');
-        if (missingCellEl) {
-          missingCellEl.classList.remove('missing');
-          missingCellEl.classList.add('solved-cell');
-          missingCellEl.innerHTML = renderShapeSvg(choiceSpec);
-        }
-        if (counterEl) counterEl.textContent = '✅ Teisingas atsakymas!';
-        markLevelSolved(level);
-        if (nextBtn && activeLevelIndex < totalInMode - 1) {
-          nextBtn.classList.remove('hidden');
-        }
-      } else {
-        playWrongBuzz();
-        btn.classList.add('wrong');
-        feedbackEl.textContent = '❌ Ne visai! Atidžiai palygink kiekvieną eilutę ir stulpelį.';
+      if (feedbackEl) {
+        feedbackEl.className = 'puzzle-feedback hidden';
+        feedbackEl.textContent = '';
+      }
+    });
+    choiceBtns.push(btn);
+    choicesEl.appendChild(btn);
+  });
+
+  onMatrixCheckClick = () => {
+    if (solved || lockedOut) return;
+    const feedbackEl = document.getElementById('puzzle-feedback');
+    if (selectedIdx === null) {
+      playWrongBuzz();
+      if (feedbackEl) {
+        feedbackEl.textContent = '⚠️ Pirmiausia pasirink vieną iš 4 figūrų apačioje!';
         feedbackEl.className = 'puzzle-feedback error';
         feedbackEl.classList.remove('hidden');
       }
-    });
-    choicesEl.appendChild(btn);
-  });
+      return;
+    }
+
+    recordPlayerMove();
+    const chosenBtn = choiceBtns[selectedIdx];
+    const choiceSpec = level.choices[selectedIdx];
+
+    if (selectedIdx === level.correctIndex) {
+      solved = true;
+      chosenBtn?.classList.remove('is-selected');
+      chosenBtn?.classList.add('correct');
+      if (checkBtn) checkBtn.disabled = true;
+      if (missingCellEl) {
+        missingCellEl.classList.remove('missing');
+        missingCellEl.classList.add('solved-cell');
+        missingCellEl.innerHTML = renderShapeSvg(choiceSpec);
+      }
+      if (counterEl) counterEl.textContent = '✅ Teisingas atsakymas!';
+      markLevelSolved(level);
+      if (nextBtn && activeLevelIndex < totalInMode - 1) {
+        nextBtn.classList.remove('hidden');
+      }
+    } else {
+      playWrongBuzz();
+      hearts = Math.max(0, hearts - 1);
+      updateMatrixHeartsUI();
+      chosenBtn?.classList.remove('is-selected');
+      chosenBtn?.classList.add('wrong');
+      selectedIdx = null;
+      if (hearts <= 0) {
+        lockedOut = true;
+        if (checkBtn) checkBtn.disabled = true;
+        if (feedbackEl) {
+          feedbackEl.textContent = '💔 Energija baigėsi! Atidžiai išnagrinėk eilutes iš naujo – matrica perkraunama...';
+          feedbackEl.className = 'puzzle-feedback error';
+          feedbackEl.classList.remove('hidden');
+        }
+        if (matrixResetTimer) clearTimeout(matrixResetTimer);
+        matrixResetTimer = setTimeout(() => {
+          matrixResetTimer = null;
+          loadActiveLevel();
+        }, 1250);
+      } else if (feedbackEl) {
+        feedbackEl.textContent = '❌ Ne visai! Liko 1 širdelė – dar kartą patikrink eilutes ir stulpelius.';
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
+    }
+  };
 }
 
 // ==================== 7. ALGORITMŲ TRASA RENDERIS IR VALDYMAS ====================
@@ -2776,6 +2922,10 @@ document.getElementById('btn-laser-tool')?.addEventListener('click', () => {
 
 document.getElementById('btn-laser-reset')?.addEventListener('click', () => {
   if (!laserEngine) return;
+  if (laserResetTimer) {
+    clearTimeout(laserResetTimer);
+    laserResetTimer = null;
+  }
   const feedbackEl = document.getElementById('puzzle-feedback');
   feedbackEl.className = 'puzzle-feedback hidden';
   feedbackEl.textContent = '';
@@ -2846,6 +2996,10 @@ document.getElementById('btn-circuit-launch')?.addEventListener('click', () => {
 
 document.getElementById('btn-circuit-reset')?.addEventListener('click', () => {
   if (!circuitEngine) return;
+  if (circuitResetTimer) {
+    clearTimeout(circuitResetTimer);
+    circuitResetTimer = null;
+  }
   const feedbackEl = document.getElementById('puzzle-feedback');
   feedbackEl.className = 'puzzle-feedback hidden';
   feedbackEl.textContent = '';
@@ -2936,7 +3090,17 @@ document.getElementById('btn-memory-replay')?.addEventListener('click', () => {
   memoryCtrl.startShowcase();
 });
 
+document.getElementById('btn-matrix-check')?.addEventListener('click', () => {
+  if (typeof onMatrixCheckClick === 'function') {
+    onMatrixCheckClick();
+  }
+});
+
 document.getElementById('btn-matrix-reset')?.addEventListener('click', () => {
+  if (matrixResetTimer) {
+    clearTimeout(matrixResetTimer);
+    matrixResetTimer = null;
+  }
   const feedbackEl = document.getElementById('puzzle-feedback');
   feedbackEl.className = 'puzzle-feedback hidden';
   feedbackEl.textContent = '';
