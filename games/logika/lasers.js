@@ -453,7 +453,7 @@ export class LaserMirrorsEngine {
     this.hint = null;
     this.wonNotified = false;
     this.recomputeBeam();
-    if (this.callbacks.onMove) this.callbacks.onMove();
+    if (this.callbacks.onMove) this.callbacks.onMove('rotate', this.trace.hitTargets.size);
   }
 
   movePiece(piece, r, c) {
@@ -464,7 +464,7 @@ export class LaserMirrorsEngine {
     this.hint = null;
     this.wonNotified = false;
     this.recomputeBeam();
-    if (this.callbacks.onMove) this.callbacks.onMove();
+    if (this.callbacks.onMove) this.callbacks.onMove('move', this.trace.hitTargets.size);
     return true;
   }
 

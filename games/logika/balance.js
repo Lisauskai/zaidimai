@@ -213,7 +213,7 @@ export class BalanceScaleEngine {
     this.angularVel += 0.14; // Lengvas smūgis ant dešinės lėkštės
     this.settledTime = 0;
     this.notifyStatus();
-    if (this.callbacks.onMove) this.callbacks.onMove();
+    if (this.callbacks.onMove) this.callbacks.onMove('add');
     return true;
   }
 
@@ -225,7 +225,7 @@ export class BalanceScaleEngine {
     this.angularVel -= 0.1;
     this.settledTime = 0;
     this.notifyStatus();
-    if (this.callbacks.onMove) this.callbacks.onMove();
+    if (this.callbacks.onMove) this.callbacks.onMove('remove');
     return true;
   }
 

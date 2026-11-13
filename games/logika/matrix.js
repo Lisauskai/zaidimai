@@ -338,6 +338,7 @@ export class MemoryCodeController {
         this.activeFlashIndex = cellIdx;
         this.activeFlashStep = stepIdx + 1;
         this.renderBoard();
+        this.callbacks.onFlash?.(stepIdx);
       }, stepIdx * stepDuration);
       this.timers.push(tId);
     });
@@ -360,6 +361,7 @@ export class MemoryCodeController {
 
     if (cellIdx === expected) {
       this.userInput.push(cellIdx);
+      this.callbacks.onMatchedStep?.(this.userInput.length - 1);
       if (this.userInput.length === this.level.sequence.length) {
         this.phase = 'won';
         this.renderBoard();

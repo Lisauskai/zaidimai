@@ -14,6 +14,25 @@ import {
 import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js';
 import { getParMoves, computeFirstHint } from './hints.js';
 import {
+  isSoundEnabled,
+  toggleSound,
+  playPinPull,
+  playBallClink,
+  playRobotStep,
+  playCubePush,
+  playMirrorClick,
+  playLaserHum,
+  playTrackClick,
+  playTrainLaunch,
+  playBalancePop,
+  playBalanceBell,
+  playMemoryTone,
+  playHintChime,
+  playWrongBuzz,
+  playVictoryFanfare
+} from './sound.js';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js';
+import {
   ROBOT_PARTS,
   createDefaultRobotColors,
   normalizeRobotColors,
@@ -208,8 +227,11 @@ let currentLevelSolvedNow = false;
 const startScreen = document.getElementById('start-screen');
 const labScreen = document.getElementById('lab-screen');
 const topDiffPill = document.getElementById('top-difficulty-pill');
+const btnSoundToggle = document.getElementById('btn-sound-toggle');
 const btnLabHint = document.getElementById('btn-lab-hint');
 const puzzleMovesPill = document.getElementById('puzzle-moves-pill');
+const confettiCanvas = document.getElementById('confetti-canvas');
+const victoryModal = document.getElementById('victory-modal');
 const uiActiveRank = document.getElementById('ui-active-rank');
 const uiTotalCrystals = document.getElementById('ui-total-crystals');
 const pinCanvas = document.getElementById('pinpull-canvas');
@@ -368,6 +390,7 @@ export function selectDifficulty(difficulty) {
 
 function showDifficultyScreen() {
   stopLevelTimer();
+  hideVictoryOverlay();
   clearAllHints();
   destroyPinEngine();
   destroyLaserEngine();
@@ -506,6 +529,65 @@ function markLevelSolved(level) {
 
   feedbackEl.className = 'puzzle-feedback success';
   feedbackEl.classList.remove('hidden');
+
+  playVictoryFanfare();
+  showVictoryOverlay({
+    level,
+    earnedStars,
+    rewardEarned: alreadySolved ? 0 : level.reward,
+    improvedStars,
+    par
+  });
+}
+
+function syncSoundToggleUI() {
+  if (!btnSoundToggle) return;
+  const enabled = isSoundEnabled();
+  btnSoundToggle.classList.toggle('muted', !enabled);
+  btnSoundToggle.textContent = enabled ? '🔊 Garsas' : '🔇 Be garso';
+  btnSoundToggle.setAttribute('aria-pressed', String(enabled));
+}
+
+function hideVictoryOverlay() {
+  victoryModal?.classList.add('hidden');
+  confettiCanvas?.classList.add('hidden');
+  stopVictoryConfetti(confettiCanvas);
+}
+
+function showVictoryOverlay({ level, earnedStars, rewardEarned, improvedStars, par }) {
+  if (!victoryModal) return;
+  const titleEl = document.getElementById('victory-title');
+  const levelNameEl = document.getElementById('victory-level-name');
+  const starsEl = document.getElementById('victory-stars');
+  const summaryEl = document.getElementById('victory-summary');
+
+  if (titleEl) {
+    titleEl.textContent = improvedStars ? 'REKORDAS PAGERINTAS!' : 'LYGIS ĮVEIKTAS!';
+  }
+  if (levelNameEl) {
+    levelNameEl.textContent = level.title;
+  }
+  if (starsEl) {
+    starsEl.textContent = '⭐'.repeat(earnedStars);
+  }
+  if (summaryEl) {
+    const parts = [];
+    if (rewardEarned > 0) parts.push(`Gavai +${rewardEarned} 💎 Proto kristalų`);
+    if (currentDifficulty === 'grade3' && par) {
+      parts.push(
+        earnedStars === 3
+          ? `Puikus efektyvumas: ${currentMoves} / ${par} ėj.!`
+          : `Ėjimai: ${currentMoves} (norint ⭐⭐⭐ reikia ≤ ${par} ėj.)`
+      );
+    } else if (rewardEarned === 0) {
+      parts.push('Puikiai pakartotas lygis!');
+    }
+    summaryEl.textContent = parts.join(' • ');
+  }
+
+  victoryModal.classList.remove('hidden');
+  confettiCanvas?.classList.remove('hidden');
+  launchVictoryConfetti(confettiCanvas);
 }
 
 function destroyPinEngine() {
@@ -688,6 +770,7 @@ function applyFirstHint() {
 
   hintUsedInLevel = true;
   syncHintButtonUI();
+  playHintChime();
 
   const feedbackEl = document.getElementById('puzzle-feedback');
   feedbackEl.textContent = hint.message;
@@ -697,6 +780,7 @@ function applyFirstHint() {
 
 function loadActiveLevel() {
   stopLevelTimer();
+  hideVictoryOverlay();
   clearAllHints();
   currentMoves = 0;
   hintUsedInLevel = false;
@@ -824,7 +908,11 @@ function startPinPullLevel(level, totalInMode) {
 
   pinEngine = new PinPullEngine(pinCanvas, level, {
     onPinPull: () => {
+      playPinPull();
       recordPlayerMove();
+    },
+    onBallClink: () => {
+      playBallClink();
     },
     onTick: ({ goalCount, requiredGoal }) => {
       if (counterEl) {
@@ -841,6 +929,7 @@ function startPinPullLevel(level, totalInMode) {
           nextBtn.classList.remove('hidden');
         }
       } else if (status === 'failed') {
+        playWrongBuzz();
         const feedbackEl = document.getElementById('puzzle-feedback');
         feedbackEl.textContent = failReason || '💥 Bandyk dar kartą! Paspausk „Iš naujo (Reset)“.';
         feedbackEl.className = 'puzzle-feedback error';
@@ -891,8 +980,14 @@ function startLaserLevel(level, totalInMode) {
     splitterLegend.classList.toggle('hidden', !level.movable);
   }
 
+  let prevLitTargets = 0;
   laserEngine = new LaserMirrorsEngine(laserCanvas, level, {
-    onMove: () => {
+    onMove: (_kind, litCount = 0) => {
+      playMirrorClick();
+      if (litCount > prevLitTargets) {
+        playLaserHum();
+      }
+      prevLitTargets = litCount;
       recordPlayerMove();
     },
     onStatusChange: ({ litTargets, totalTargets, won }) => {
@@ -933,6 +1028,7 @@ function startCircuitLevel(level, totalInMode) {
 
   circuitEngine = new CircuitEngine(circuitCanvas, level, {
     onMove: () => {
+      playTrackClick();
       recordPlayerMove();
     },
     onStatusChange: ({ readyToWin, totalStars, collectedStars, running }) => {
@@ -958,6 +1054,7 @@ function startCircuitLevel(level, totalInMode) {
           nextBtn.classList.remove('hidden');
         }
       } else {
+        playWrongBuzz();
         const feedbackEl = document.getElementById('puzzle-feedback');
         feedbackEl.textContent = reason || '⚠️ Kelias nesujungtas! Pakoreguok bėgius ir bandyk dar kartą.';
         feedbackEl.className = 'puzzle-feedback error';
@@ -1022,11 +1119,17 @@ function startBalanceLevel(level, totalInMode) {
   renderBalanceHints(level);
   renderBalanceTray(level);
 
+  let prevBalanced = false;
   balanceEngine = new BalanceScaleEngine(balanceCanvas, level, {
-    onMove: () => {
+    onMove: (action) => {
+      playBalancePop(action === 'remove');
       recordPlayerMove();
     },
     onStatusChange: ({ rightCount, balanced, won }) => {
+      if (balanced && !prevBalanced) {
+        playBalanceBell();
+      }
+      prevBalanced = !!balanced;
       if (counterEl) {
         counterEl.textContent = won
           ? `🟢 Pusiausvyra pasiekta! (${rightCount} vnt.)`
@@ -1066,6 +1169,12 @@ function startMatrixLevel(level, totalInMode) {
       onMove: () => {
         recordPlayerMove();
       },
+      onFlash: (stepIdx) => {
+        playMemoryTone(stepIdx);
+      },
+      onMatchedStep: (stepIdx) => {
+        playMemoryTone(stepIdx);
+      },
       onStatusChange: ({ phase, progress: cur, total }) => {
         if (counterEl) {
           counterEl.textContent =
@@ -1088,6 +1197,7 @@ function startMatrixLevel(level, totalInMode) {
         }
       },
       onFail: () => {
+        playWrongBuzz();
         const feedbackEl = document.getElementById('puzzle-feedback');
         feedbackEl.textContent = '❌ Nepataikei eilės tvarkos! Paspausk „👀 Rodyti seką (3 s)“ ir pamėgink dar kartą.';
         feedbackEl.className = 'puzzle-feedback error';
@@ -1142,6 +1252,7 @@ function startMatrixLevel(level, totalInMode) {
           nextBtn.classList.remove('hidden');
         }
       } else {
+        playWrongBuzz();
         btn.classList.add('wrong');
         feedbackEl.textContent = '❌ Ne visai! Atidžiai palygink kiekvieną eilutę ir stulpelį.';
         feedbackEl.className = 'puzzle-feedback error';
@@ -1172,6 +1283,11 @@ function handleSokobanMove(dr, dc) {
   const moved = sokobanGame.move(dr, dc);
   if (!moved) return;
 
+  if (sokobanGame.lastMovePushed) {
+    playCubePush();
+  } else {
+    playRobotStep();
+  }
   recordPlayerMove();
   renderSokobanBoard();
 
@@ -1328,6 +1444,7 @@ function renderLaserStage(stage, level) {
           cell.title = 'Paspausk, kad pasuktum veidrodį';
           cell.addEventListener('click', () => {
             mirrorStates[mIdx].type = mirrorStates[mIdx].type === '/' ? '\\' : '/';
+            playMirrorClick();
             recordPlayerMove();
             renderLaserStage(stage, level);
           });
@@ -1366,6 +1483,7 @@ function renderSwitchesStage(stage, level) {
     btn.textContent = `${switchStates[idx] ? '🟢 ĮJUNGTA' : '⚪ IŠJUNGTA'} (+${val} V)`;
     btn.addEventListener('click', () => {
       switchStates[idx] = !switchStates[idx];
+      playLaserHum();
       recordPlayerMove();
       renderSwitchesStage(stage, level);
     });
@@ -1400,6 +1518,7 @@ function renderSequenceStage(stage, level) {
       if (choice === level.answer) {
         markLevelSolved(level);
       } else {
+        playWrongBuzz();
         feedbackEl.textContent = `❌ ${choice} netinka – pabandyk pažiūrėti, kaip skaičiai keičiasi iš eilės!`;
         feedbackEl.className = 'puzzle-feedback error';
         feedbackEl.classList.remove('hidden');
@@ -1576,6 +1695,7 @@ if (laserCanvas) {
 
 document.getElementById('btn-circuit-launch')?.addEventListener('click', () => {
   if (!circuitEngine) return;
+  playTrainLaunch();
   const feedbackEl = document.getElementById('puzzle-feedback');
   feedbackEl.className = 'puzzle-feedback hidden';
   feedbackEl.textContent = '';
@@ -1664,4 +1784,42 @@ document.getElementById('btn-matrix-next')?.addEventListener('click', () => {
   }
 });
 
+btnSoundToggle?.addEventListener('click', () => {
+  toggleSound();
+  syncSoundToggleUI();
+});
+
+const MODE_SEQUENCE = ['pinpull', 'sokoban', 'laser', 'circuit', 'balance', 'matrix', 'mini'];
+
+document.getElementById('btn-victory-next')?.addEventListener('click', () => {
+  hideVictoryOverlay();
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  } else {
+    const curModeIdx = MODE_SEQUENCE.indexOf(currentMode);
+    const nextMode = MODE_SEQUENCE[(curModeIdx + 1) % MODE_SEQUENCE.length];
+    switchLabMode(nextMode);
+  }
+});
+
+document.getElementById('btn-victory-all')?.addEventListener('click', () => {
+  hideVictoryOverlay();
+  const strip = document.getElementById('levels-strip');
+  if (strip) {
+    strip.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    strip.classList.add('flash-focus');
+    setTimeout(() => strip.classList.remove('flash-focus'), 1200);
+  }
+});
+
+victoryModal?.addEventListener('click', (e) => {
+  if (e.target === victoryModal) {
+    hideVictoryOverlay();
+  }
+});
+
+syncSoundToggleUI();
 updateSummaryUI();

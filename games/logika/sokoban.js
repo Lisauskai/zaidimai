@@ -279,10 +279,12 @@ export class SokobanGame {
       this.cubes[hitCubeIdx] = { r: cr, c: cc };
       this.robot = { r: nr, c: nc };
       this.moves++;
+      this.lastMovePushed = true;
     } else {
       this.saveSnapshot();
       this.robot = { r: nr, c: nc };
       this.moves++;
+      this.lastMovePushed = false;
     }
 
     if (this.areAllTargetsCovered() && this.robot.r === this.exit.r && this.robot.c === this.exit.c) {

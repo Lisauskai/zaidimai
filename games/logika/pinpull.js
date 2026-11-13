@@ -569,6 +569,9 @@ export class PinPullEngine {
             const rvy = b.vy - a.vy;
             const velAlongNormal = rvx * nx + rvy * ny;
             if (velAlongNormal < 0) {
+              if (velAlongNormal < -1.15) {
+                this.callbacks.onBallClink?.();
+              }
               const jImp = -(1 + 0.35) * velAlongNormal * 0.5;
               a.vx -= jImp * nx;
               a.vy -= jImp * ny;
@@ -618,6 +621,9 @@ export class PinPullEngine {
             this.reportStatus();
           }
         } else {
+          if (!b.inGoal) {
+            this.callbacks.onBallClink?.();
+          }
           b.inGoal = true;
           coloredInGoal++;
         }

@@ -27,6 +27,9 @@
     </div>
 
     <div class="top-bar-right">
+      <button id="btn-sound-toggle" class="sound-toggle-btn" type="button" title="Įjungti arba išjungti garso efektus">
+        🔊 Garsas
+      </button>
       <button id="btn-lab-hint" class="hint-lamp-btn hidden" type="button" title="Parodyti pirmojo žingsnio užuominą">
         💡 Užuomina
       </button>
@@ -353,6 +356,26 @@
       </div>
     </section>
   </main>
+
+  <!-- PERGALĖS EKRANAS IR KONFETI -->
+  <canvas id="confetti-canvas" class="confetti-canvas hidden" aria-hidden="true"></canvas>
+  <div id="victory-modal" class="victory-modal hidden" role="dialog" aria-modal="true" aria-labelledby="victory-title">
+    <div class="victory-card">
+      <div class="victory-trophy" aria-hidden="true">🏆</div>
+      <h2 id="victory-title" class="victory-title">LYGIS ĮVEIKTAS!</h2>
+      <p id="victory-level-name" class="victory-level-name">1. Lygis</p>
+      <div id="victory-stars" class="victory-stars" aria-label="Gautos žvaigždutės">⭐⭐⭐</div>
+      <p id="victory-summary" class="victory-summary">+1 💎 Proto kristalas</p>
+      <div class="victory-actions">
+        <button id="btn-victory-next" class="victory-btn victory-btn-primary" type="button">
+          Kitas lygis →
+        </button>
+        <button id="btn-victory-all" class="victory-btn victory-btn-secondary" type="button">
+          Visi lygiai
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="./game.js"></script>
 </body>
