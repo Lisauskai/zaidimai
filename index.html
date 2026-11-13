@@ -3,157 +3,362 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0ea5e9" />
+  <meta name="theme-color" content="#060b1e" />
   <title>Lino ir Luko Žaidimų Portalas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Nunito:wght@700;800;900&family=Press+Start+2P&family=Russo+One&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css?v=20261113m" />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css?v=20261113n" />
 </head>
 <body>
-  <!-- Kvadratiniai Minecraft/Roblox stiliaus debesėliai fone -->
-  <div class="voxel-cloud cloud-1"></div>
-  <div class="voxel-cloud cloud-2"></div>
-  <div class="voxel-cloud cloud-3"></div>
+  <!-- Gyvas kosminis dalelių tinklo fonas -->
+  <canvas id="cosmic-bg-canvas" aria-hidden="true"></canvas>
+  <div class="cosmic-nebula nebula-1" aria-hidden="true"></div>
+  <div class="cosmic-nebula nebula-2" aria-hidden="true"></div>
+  <div class="cosmic-nebula nebula-3" aria-hidden="true"></div>
 
   <div class="portal-wrapper">
-    <!-- ==================== PORTALO ANTRAŠTĖ (3D BLOKELIS) ==================== -->
-    <header class="portal-header">
-      <div class="portal-logo-badge" aria-hidden="true">🧱🎮</div>
-      <h1>LINO IR LUKO ŽAIDIMŲ PORTALAS</h1>
-      <p class="portal-subtitle">
-        PASIRINK SAVO PASAULĮ, STATYK REKORDUS IR NUGALĖK IŠŠŪKIUS!
-      </p>
+    <!-- ==================== PORTALO ANTRAŠTĖ ==================== -->
+    <header class="portal-header glass-panel">
+      <div class="portal-top-badge">
+        <span class="pulse-dot"></span>
+        <span>BOSAS.EU • ŽAIDIMŲ ARENA</span>
+      </div>
+
+      <div class="portal-brand-row">
+        <div class="portal-logo-badge" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="44" height="44" fill="none">
+            <defs>
+              <linearGradient id="logoGrad" x1="8" y1="12" x2="56" y2="52" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#38bdf8" />
+                <stop offset="55%" stop-color="#818cf8" />
+                <stop offset="100%" stop-color="#c084fc" />
+              </linearGradient>
+            </defs>
+            <rect x="6" y="18" width="52" height="30" rx="15" fill="url(#logoGrad)" fill-opacity="0.24" stroke="url(#logoGrad)" stroke-width="2.5"/>
+            <path d="M21 27v12M15 33h12" stroke="#38bdf8" stroke-width="3.2" stroke-linecap="round"/>
+            <circle cx="42" cy="29" r="3" fill="#f472b6"/>
+            <circle cx="49" cy="35" r="3" fill="#34d399"/>
+            <circle cx="37" cy="35" r="2.6" fill="#fbbf24"/>
+          </svg>
+        </div>
+        <div>
+          <h1>LINO IR LUKO ŽAIDIMŲ PORTALAS</h1>
+          <p class="portal-subtitle">
+            Pasirink savo nuotykių pasaulį, rink kristalus bei monetas ir gerink rekordus!
+          </p>
+        </div>
+      </div>
 
       <!-- Gyva Lino ir Luko progreso juosta iš localStorage -->
       <div id="portal-heroes-bar" class="portal-heroes-bar">
         <div class="hero-stat-pill pill-linas">
-          <span class="hero-dot">👦</span>
-          <span><strong>Linas (1 kl.):</strong> <span id="hub-linas-stats">Lygis 1 • 0 🪙</span></span>
+          <span class="hero-avatar" aria-hidden="true">1</span>
+          <div class="hero-stat-text">
+            <span class="hero-name">Linas (1 kl.)</span>
+            <span id="hub-linas-stats" class="hero-metrics">Lygis 1/50 • 0 🪙 • 0 💎 • ⏳ 20:00</span>
+          </div>
         </div>
         <div class="hero-stat-pill pill-lukas">
-          <span class="hero-dot">🧑</span>
-          <span><strong>Lukas (3 kl.):</strong> <span id="hub-lukas-stats">Lygis 1 • 0 🪙</span></span>
+          <span class="hero-avatar" aria-hidden="true">3</span>
+          <div class="hero-stat-text">
+            <span class="hero-name">Lukas (3 kl.)</span>
+            <span id="hub-lukas-stats" class="hero-metrics">Lygis 1/50 • 0 🪙 • 0 💎 • ⏳ 20:00</span>
+          </div>
         </div>
       </div>
     </header>
 
-    <!-- ==================== 3 AKTYVIŲ ŽAIDIMŲ BLOKELIAI ==================== -->
+    <!-- ==================== 3 ŽAIDIMŲ GLASSMORPHISM KORTELĖS ==================== -->
     <main class="games-grid-section">
       <div class="section-heading">
-        <h2>🟩 PASIRINK ŽAIDIMĄ</h2>
-        <span class="games-count-badge">3 AKTYVŪS PASAULIAI</span>
+        <div class="section-title-wrap">
+          <span class="section-kicker">ŽAIDIMŲ KATALOGAS</span>
+          <h2>Pasirink pasaulį</h2>
+        </div>
+        <span class="games-count-badge">3 AKTYVŪS ŽAIDIMAI</span>
       </div>
 
       <div class="games-grid">
-        <!-- 1 KORTELĖ: MATEMATIKOS RPG (Žalias/žemės blokelio fonas su kardo ir skydo ikona) -->
-        <article class="game-tile block-tile-rpg" onclick="window.location.href='./games/math-rpg/index.html'">
-          <div class="tile-art art-grass-dirt">
-            <!-- Viršutinis žolės pikseliuotas sluoksnis -->
-            <div class="grass-top-strip"></div>
-
+        <!-- 1 KORTELĖ: LENKTYNĖS -->
+        <article class="game-tile card-racing" data-tilt onclick="window.location.href='./games/lenktynes/index.html'">
+          <div class="card-glare" aria-hidden="true"></div>
+          <div class="tile-art art-racing">
             <div class="tile-top-row">
-              <span class="tile-status-badge badge-green">⭐ 5 PASAULIAI • 50 LYGIŲ</span>
-              <span class="tile-block-id">#01</span>
+              <span class="tile-status-badge badge-racing">TURBO TRASOS</span>
+              <span id="badge-progress-racing" class="corner-progress-badge" hidden></span>
             </div>
 
-            <div class="tile-icon-cluster">
-              <span class="sub-icon">🛡️</span>
-              <span class="main-icon">⚔️</span>
-              <span class="sub-icon">🐉</span>
+            <!-- Unikali detali SVG iliustracija: sportinis bolidas su ugnies pėdsaku -->
+            <div class="svg-stage" aria-hidden="true">
+              <svg class="card-svg" viewBox="0 0 320 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="fireOuter" x1="18" y1="92" x2="115" y2="92" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#f97316" stop-opacity="0"/>
+                    <stop offset="45%" stop-color="#fb923c" stop-opacity="0.9"/>
+                    <stop offset="100%" stop-color="#fde047"/>
+                  </linearGradient>
+                  <linearGradient id="fireCore" x1="48" y1="92" x2="112" y2="92" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#38bdf8" stop-opacity="0"/>
+                    <stop offset="60%" stop-color="#fef08a"/>
+                    <stop offset="100%" stop-color="#ffffff"/>
+                  </linearGradient>
+                  <linearGradient id="carBody" x1="95" y1="54" x2="288" y2="110" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#fb923c"/>
+                    <stop offset="45%" stop-color="#f97316"/>
+                    <stop offset="100%" stop-color="#dc2626"/>
+                  </linearGradient>
+                  <linearGradient id="canopyGlass" x1="158" y1="52" x2="218" y2="82" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#7dd3fc"/>
+                    <stop offset="100%" stop-color="#0284c7"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Greičio juostos ir kelio švytėjimas -->
+                <ellipse cx="184" cy="126" rx="110" ry="10" fill="#f97316" fill-opacity="0.2"/>
+                <line x1="22" y1="42" x2="96" y2="42" stroke="#fdba74" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round"/>
+                <line x1="10" y1="56" x2="72" y2="56" stroke="#fb923c" stroke-opacity="0.35" stroke-width="2" stroke-linecap="round"/>
+                <line x1="34" y1="126" x2="106" y2="126" stroke="#38bdf8" stroke-opacity="0.35" stroke-width="2" stroke-linecap="round"/>
+
+                <!-- Ugnies / nitro pėdsakas -->
+                <path d="M18 92 C48 76, 78 74, 114 84 L112 103 C76 112, 46 108, 18 92 Z" fill="url(#fireOuter)"/>
+                <path d="M44 92 C66 84, 86 84, 112 88 L112 98 C86 102, 66 101, 44 92 Z" fill="url(#fireCore)"/>
+                <circle cx="52" cy="79" r="2.2" fill="#fde047"/>
+                <circle cx="34" cy="101" r="1.8" fill="#fb923c"/>
+                <circle cx="68" cy="109" r="2" fill="#38bdf8"/>
+
+                <!-- Galinis spoileris -->
+                <path d="M92 64 L118 64 L126 83 L103 83 Z" fill="#0f172a" stroke="#fb923c" stroke-width="2"/>
+                <rect x="86" y="57" width="36" height="8" rx="3" fill="#f97316" stroke="#fde047" stroke-width="1.5"/>
+
+                <!-- Pagrindinis sportinio bolido kėbulas -->
+                <path d="M104 96 L112 76 L154 71 C166 56, 198 53, 218 68 L266 77 C284 80, 294 89, 294 99 C294 105, 286 109, 274 109 L114 109 C106 109, 102 103, 104 96 Z" fill="url(#carBody)" stroke="#fed7aa" stroke-width="1.8"/>
+                <!-- Neoninis šoninis dryžis -->
+                <path d="M122 93 L276 93 C281 93, 286 96, 286 99 L120 99 Z" fill="#fde047" fill-opacity="0.9"/>
+                <!-- Stiklo kabina -->
+                <path d="M161 72 C170 60, 196 59, 212 71 L202 77 L161 77 Z" fill="url(#canopyGlass)" stroke="#e0f2fe" stroke-width="1.4"/>
+                <!-- Priekinis sparnas ir žibintas -->
+                <path d="M276 89 L292 93 L284 98 L272 95 Z" fill="#fef08a"/>
+                <ellipse cx="295" cy="95" rx="10" ry="4" fill="#fde047" fill-opacity="0.5"/>
+
+                <!-- Galinis ratas -->
+                <circle cx="142" cy="107" r="20" fill="#090d16" stroke="#38bdf8" stroke-width="3"/>
+                <circle cx="142" cy="107" r="11" fill="#1e293b" stroke="#fb923c" stroke-width="2"/>
+                <circle cx="142" cy="107" r="4" fill="#fde047"/>
+
+                <!-- Priekinis ratas -->
+                <circle cx="248" cy="107" r="19" fill="#090d16" stroke="#38bdf8" stroke-width="3"/>
+                <circle cx="248" cy="107" r="10.5" fill="#1e293b" stroke="#fb923c" stroke-width="2"/>
+                <circle cx="248" cy="107" r="4" fill="#fde047"/>
+              </svg>
             </div>
 
             <div class="art-tags">
-              <span>🧱 Nuotykių RPG</span>
-              <span>⚔️ Kardai ir Bumerangai</span>
-              <span>👑 Bosų kovos</span>
+              <span>Nitro greitis</span>
+              <span>Garažo tiuningas</span>
+              <span>Čempiono taurė</span>
             </div>
           </div>
 
           <div class="tile-body">
-            <h3>Matematikos RPG</h3>
-            <p class="tile-desc">
-              Tyrinėk 5 unikalius pasaulius, atrask slaptus lobių kambarius, derink Mados Sielų šarvus ir įveik galingus Pasaulių Bosus!
-            </p>
+            <div>
+              <h3>Lenktynės</h3>
+              <p class="tile-desc">
+                Sėsk prie sportinio bolido vairo, tobulink variklį bei ginklus garaže ir finišuok pirmas!
+              </p>
+            </div>
             <div class="tile-footer">
-              <a href="./games/math-rpg/index.html" class="play-btn btn-plastic-green">
-                ▶ ŽAISTI
+              <a href="./games/lenktynes/index.html" class="play-btn btn-racing">
+                <span>Žaisti dabar</span>
+                <span class="btn-arrow" aria-hidden="true">→</span>
               </a>
             </div>
           </div>
         </article>
 
-        <!-- 2 KORTELĖ: LENKTYNĖS (Asfalto / lenktynių vėliavos langelių fonas su sportinio automobilio ikona) -->
-        <article class="game-tile block-tile-racing" onclick="window.location.href='./games/lenktynes/index.html'">
-          <div class="tile-art art-asphalt-checkered">
-            <!-- Lenktynių vėliavos langelių juosta viršuje -->
-            <div class="checkered-top-strip"></div>
-            <!-- Asfalto kelio juostos -->
-            <div class="road-lane-line"></div>
-
+        <!-- 2 KORTELĖ: MATEMATIKOS RPG -->
+        <article class="game-tile card-math" data-tilt onclick="window.location.href='./games/math-rpg/index.html'">
+          <div class="card-glare" aria-hidden="true"></div>
+          <div class="tile-art art-math">
             <div class="tile-top-row">
-              <span class="tile-status-badge badge-orange">🔥 NAUJAS ŽAIDIMAS</span>
-              <span class="tile-block-id">#02</span>
+              <span class="tile-status-badge badge-math">5 PASAULIAI • 50 LYGIŲ</span>
+              <span id="badge-progress-math" class="corner-progress-badge" hidden></span>
             </div>
 
-            <div class="tile-icon-cluster">
-              <span class="sub-icon">🏁</span>
-              <span class="main-icon">🏎️</span>
-              <span class="sub-icon">⚡</span>
+            <!-- Unikali detali SVG iliustracija: švytinti matematikos formulė su kristalais -->
+            <div class="svg-stage" aria-hidden="true">
+              <svg class="card-svg" viewBox="0 0 320 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="crystalMain" x1="160" y1="22" x2="160" y2="128" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#6ee7b7"/>
+                    <stop offset="50%" stop-color="#10b981"/>
+                    <stop offset="100%" stop-color="#047857"/>
+                  </linearGradient>
+                  <linearGradient id="crystalLeft" x1="88" y1="54" x2="108" y2="122" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#67e8f9"/>
+                    <stop offset="100%" stop-color="#0284c7"/>
+                  </linearGradient>
+                  <linearGradient id="crystalRight" x1="220" y1="48" x2="238" y2="120" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#a7f3d0"/>
+                    <stop offset="100%" stop-color="#059669"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Orbitiniai magiški žiedai -->
+                <ellipse cx="160" cy="82" rx="108" ry="34" transform="rotate(-12 160 82)" stroke="#34d399" stroke-opacity="0.35" stroke-width="1.8" stroke-dasharray="6 5"/>
+                <ellipse cx="160" cy="82" rx="94" ry="28" transform="rotate(14 160 82)" stroke="#22d3ee" stroke-opacity="0.32" stroke-width="1.6"/>
+                <ellipse cx="160" cy="128" rx="84" ry="9" fill="#10b981" fill-opacity="0.22"/>
+
+                <!-- Kairysis kristalas -->
+                <polygon points="94,54 112,72 108,118 82,114 78,74" fill="url(#crystalLeft)" stroke="#a5f3fc" stroke-width="1.6"/>
+                <polygon points="94,54 96,116 82,114 78,74" fill="#ffffff" fill-opacity="0.18"/>
+
+                <!-- Dešinysis kristalas -->
+                <polygon points="228,48 246,72 240,118 212,114 212,68" fill="url(#crystalRight)" stroke="#a7f3d0" stroke-width="1.6"/>
+                <polygon points="228,48 228,116 240,118 246,72" fill="#064e3b" fill-opacity="0.28"/>
+
+                <!-- Pagrindinis centro kristalas -->
+                <polygon points="160,20 194,52 186,120 160,130 134,120 126,52" fill="url(#crystalMain)" stroke="#a7f3d0" stroke-width="2"/>
+                <polygon points="160,20 160,130 134,120 126,52" fill="#ffffff" fill-opacity="0.2"/>
+                <polygon points="160,20 176,56 160,130 144,56" fill="#ecfdf5" fill-opacity="0.16"/>
+
+                <!-- Švytinti matematikos formulės plokštelė -->
+                <rect x="104" y="64" width="112" height="36" rx="12" fill="#061626" fill-opacity="0.88" stroke="#34d399" stroke-width="2"/>
+                <text x="160" y="88" text-anchor="middle" fill="#6ee7b7" font-family="Fredoka, Outfit, sans-serif" font-size="18" font-weight="700" letter-spacing="1">7 × 8 = 56</text>
+
+                <!-- Skriejantys simboliai ir kibirkštys -->
+                <circle cx="52" cy="48" r="15" fill="#064e3b" fill-opacity="0.7" stroke="#34d399" stroke-width="1.5"/>
+                <text x="52" y="54" text-anchor="middle" fill="#a7f3d0" font-family="Fredoka, sans-serif" font-size="18" font-weight="700">+</text>
+
+                <circle cx="268" cy="46" r="15" fill="#0c4a6e" fill-opacity="0.7" stroke="#22d3ee" stroke-width="1.5"/>
+                <text x="268" y="52" text-anchor="middle" fill="#a5f3fc" font-family="Fredoka, sans-serif" font-size="18" font-weight="700">÷</text>
+
+                <circle cx="62" cy="116" r="3" fill="#fde047"/>
+                <circle cx="258" cy="114" r="3" fill="#34d399"/>
+                <path d="M160 8 L162.5 14 L168 16.5 L162.5 19 L160 25 L157.5 19 L152 16.5 L157.5 14 Z" fill="#fde047"/>
+              </svg>
             </div>
 
             <div class="art-tags">
-              <span>🏁 Turbo trasos</span>
-              <span>🔧 Bolidų tiuningas</span>
-              <span>🏆 Čempiono taurė</span>
+              <span>Nuotykių RPG</span>
+              <span>Šarvai ir ginklai</span>
+              <span>Bosų kovos</span>
             </div>
           </div>
 
           <div class="tile-body">
-            <h3>Lenktynės</h3>
-            <p class="tile-desc">
-              Sėsk prie sportinio bolido vairo, spausk nitro greitintuvą ant asfalto, aplenk varžovus ir kisk finišo vėliavą pirmas!
-            </p>
+            <div>
+              <h3>Matematikos RPG</h3>
+              <p class="tile-desc">
+                Tyrinėk 5 pasaulius, spręsk uždavinius kovose, atrask slaptus lobius ir nugalėk Bosus!
+              </p>
+            </div>
             <div class="tile-footer">
-              <a href="./games/lenktynes/index.html" class="play-btn btn-plastic-orange">
-                ▶ ŽAISTI
+              <a href="./games/math-rpg/index.html" class="play-btn btn-math">
+                <span>Žaisti dabar</span>
+                <span class="btn-arrow" aria-hidden="true">→</span>
               </a>
             </div>
           </div>
         </article>
 
-        <!-- 3 KORTELĖ: PROTO LABORATORIJA (Lazerių, grandinių ir Proto kristalų fonas) -->
-        <article class="game-tile block-tile-lab" onclick="window.location.href='./games/logika/index.html'">
-          <div class="tile-art art-science-lab">
-            <div class="lab-top-strip"></div>
-            <div class="lab-laser-beam"></div>
-
+        <!-- 3 KORTELĖ: PROTO LABORATORIJA -->
+        <article class="game-tile card-lab" data-tilt onclick="window.location.href='./games/logika/index.html'">
+          <div class="card-glare" aria-hidden="true"></div>
+          <div class="tile-art art-lab">
             <div class="tile-top-row">
-              <span class="tile-status-badge badge-purple">💎 NAUJA LABORATORIJA</span>
-              <span class="tile-block-id">#03</span>
+              <span class="tile-status-badge badge-lab">12 ZONŲ • 240 LYGIŲ</span>
+              <span id="badge-progress-lab" class="corner-progress-badge" hidden></span>
             </div>
 
-            <div class="tile-icon-cluster">
-              <span class="sub-icon">🔦</span>
-              <span class="main-icon">🧠</span>
-              <span class="sub-icon">⚙️</span>
+            <!-- Unikali detali SVG iliustracija: futuristinis robotas su krumpliaračiais -->
+            <div class="svg-stage" aria-hidden="true">
+              <svg class="card-svg" viewBox="0 0 320 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="robotBody" x1="160" y1="42" x2="160" y2="132" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#c4b5fd"/>
+                    <stop offset="55%" stop-color="#6366f1"/>
+                    <stop offset="100%" stop-color="#312e81"/>
+                  </linearGradient>
+                  <linearGradient id="gearGold" x1="56" y1="54" x2="102" y2="100" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#fde047"/>
+                    <stop offset="100%" stop-color="#f59e0b"/>
+                  </linearGradient>
+                  <linearGradient id="gearCyan" x1="216" y1="60" x2="262" y2="106" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#67e8f9"/>
+                    <stop offset="100%" stop-color="#06b6d4"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Lazerio spindulys ir šešėlis -->
+                <ellipse cx="160" cy="133" rx="88" ry="9" fill="#8b5cf6" fill-opacity="0.28"/>
+                <line x1="28" y1="112" x2="292" y2="42" stroke="#22d3ee" stroke-opacity="0.24" stroke-width="2" stroke-dasharray="5 5"/>
+
+                <!-- Kairysis krumpliaratis -->
+                <g transform="translate(82 78)">
+                  <circle cx="0" cy="0" r="24" fill="#1e1b4b" fill-opacity="0.8" stroke="url(#gearGold)" stroke-width="3.5" stroke-dasharray="8 5.2"/>
+                  <circle cx="0" cy="0" r="14" fill="#0f172a" stroke="#fbbf24" stroke-width="2"/>
+                  <circle cx="0" cy="0" r="5.5" fill="#fde047"/>
+                </g>
+
+                <!-- Dešinysis krumpliaratis -->
+                <g transform="translate(238 82)">
+                  <circle cx="0" cy="0" r="22" fill="#1e1b4b" fill-opacity="0.8" stroke="url(#gearCyan)" stroke-width="3.5" stroke-dasharray="7.5 4.8"/>
+                  <circle cx="0" cy="0" r="12.5" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                  <circle cx="0" cy="0" r="5" fill="#67e8f9"/>
+                </g>
+
+                <!-- Mažas viršutinis krumpliaratis -->
+                <g transform="translate(222 40)">
+                  <circle cx="0" cy="0" r="12" fill="#312e81" stroke="#f472b6" stroke-width="2.5" stroke-dasharray="4.5 3"/>
+                  <circle cx="0" cy="0" r="4.5" fill="#fbcfe8"/>
+                </g>
+
+                <!-- Roboto antena -->
+                <line x1="160" y1="22" x2="160" y2="40" stroke="#a5f3fc" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="160" cy="18" r="6" fill="#22d3ee" stroke="#ecfeff" stroke-width="1.8"/>
+                <circle cx="160" cy="18" r="12" fill="#22d3ee" fill-opacity="0.22"/>
+
+                <!-- Roboto galva -->
+                <rect x="122" y="38" width="76" height="48" rx="16" fill="url(#robotBody)" stroke="#ddd6fe" stroke-width="2"/>
+                <!-- Ausinės -->
+                <rect x="114" y="51" width="9" height="22" rx="4" fill="#22d3ee"/>
+                <rect x="197" y="51" width="9" height="22" rx="4" fill="#22d3ee"/>
+                <!-- Ekranas / vizorius -->
+                <rect x="131" y="47" width="58" height="28" rx="10" fill="#090d1f" stroke="#38bdf8" stroke-width="1.6"/>
+                <!-- Švytinčios akys ir šypsena -->
+                <circle cx="146" cy="59" r="5.2" fill="#38bdf8"/>
+                <circle cx="147.5" cy="57.5" r="1.8" fill="#ffffff"/>
+                <circle cx="174" cy="59" r="5.2" fill="#38bdf8"/>
+                <circle cx="175.5" cy="57.5" r="1.8" fill="#ffffff"/>
+                <path d="M152 68 Q160 73 168 68" stroke="#34d399" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+
+                <!-- Roboto kūnas ir energijos šerdis -->
+                <rect x="128" y="90" width="64" height="38" rx="12" fill="#1e1b4b" stroke="#a78bfa" stroke-width="2"/>
+                <polygon points="160,96 171,109 160,122 149,109" fill="#22d3ee" stroke="#a5f3fc" stroke-width="1.6"/>
+                <circle cx="139" cy="109" r="3" fill="#f472b6"/>
+                <circle cx="181" cy="109" r="3" fill="#34d399"/>
+              </svg>
             </div>
 
             <div class="art-tags">
-              <span>💎 Proto kristalai</span>
-              <span>🔦 Lazerių veidrodžiai</span>
-              <span>🧩 1–3 klasei</span>
+              <span>Lazerių veidrodžiai</span>
+              <span>Krumpliaračiai</span>
+              <span>Išradimų lentyna</span>
             </div>
           </div>
 
           <div class="tile-body">
-            <h3>Proto Laboratorija</h3>
-            <p class="tile-desc">
-              Loginiai galvosūkiai, lazeriai ir išradimai 1–3 klasei
-            </p>
+            <div>
+              <h3>Proto Laboratorija</h3>
+              <p class="tile-desc">
+                12 logikos zonų su lazeriais, grandinėmis, svarstyklėmis, kolbomis ir išradimų lentyna!
+              </p>
+            </div>
             <div class="tile-footer">
-              <a href="./games/logika/index.html" class="play-btn btn-plastic-purple">
-                ▶ ŽAISTI
+              <a href="./games/logika/index.html" class="play-btn btn-lab">
+                <span>Žaisti dabar</span>
+                <span class="btn-arrow" aria-hidden="true">→</span>
               </a>
             </div>
           </div>
@@ -161,15 +366,16 @@
       </div>
     </main>
 
-    <!-- ==================== PORAŠTĖ (ŽOLĖS IR ŽEMĖS BLOKELIS) ==================== -->
-    <footer class="portal-footer">
-      <p>🧱 LINO IR LUKO ŽAIDIMŲ PORTALAS • VISI REKORDAI IR LOBIAI SAUGOMI ŠIAME ĮRENGINYJE</p>
+    <!-- ==================== PORAŠTĖ ==================== -->
+    <footer class="portal-footer glass-panel">
+      <p>LINO IR LUKO ŽAIDIMŲ PORTALAS • VISI REKORDAI IR PASIEKIMAI SAUGOMI ŠIAME ĮRENGINYJE</p>
     </footer>
   </div>
 
-  <!-- Užkrauname Lino ir Luko statistiką iš bendro localStorage -->
+  <!-- Gyvas kosminis dalelių tinklas, 3D kortelių posvyris ir localStorage pasiekimai -->
   <script>
     (function () {
+      // 1. Nuvalome senus root Service Worker'ius
       try {
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function (regs) {
@@ -180,43 +386,55 @@
             });
           });
         }
+      } catch (e) {}
 
-        function getTodayStr() {
-          const d = new Date();
-          return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        }
+      // 2. Užkrauname statistiką ir kortelių kampų ženkliukus iš localStorage
+      function getTodayStr() {
+        const d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
 
-        function formatRemainingTime(globalKey, fallbackProfile) {
-          const today = getTodayStr();
-          let played = 0;
-          let limit = 1200;
-          try {
-            const rawT = localStorage.getItem(globalKey);
-            if (rawT) {
-              const tObj = JSON.parse(rawT);
-              if (tObj && tObj.lastPlayedDate === today) {
-                played = Math.max(0, Number(tObj.timePlayedTodaySeconds) || 0);
-                limit = Math.max(60, Number(tObj.dailyTimeLimitSeconds) || 1200);
-              }
-            } else if (fallbackProfile && fallbackProfile.lastPlayedDate === today) {
-              played = Math.max(0, Number(fallbackProfile.timePlayedTodaySeconds) || 0);
-              limit = Math.max(60, Number(fallbackProfile.dailyTimeLimitSeconds) || 1200);
+      function formatRemainingTime(globalKey, fallbackProfile) {
+        const today = getTodayStr();
+        let played = 0;
+        let limit = 1200;
+        try {
+          const rawT = localStorage.getItem(globalKey);
+          if (rawT) {
+            const tObj = JSON.parse(rawT);
+            if (tObj && tObj.lastPlayedDate === today) {
+              played = Math.max(0, Number(tObj.timePlayedTodaySeconds) || 0);
+              limit = Math.max(60, Number(tObj.dailyTimeLimitSeconds) || 1200);
             }
-          } catch (e) {}
-          const rem = Math.max(0, limit - played);
-          const mm = String(Math.floor(rem / 60)).padStart(2, '0');
-          const ss = String(rem % 60).padStart(2, '0');
-          return `⏳ ${mm}:${ss}`;
-        }
+          } else if (fallbackProfile && fallbackProfile.lastPlayedDate === today) {
+            played = Math.max(0, Number(fallbackProfile.timePlayedTodaySeconds) || 0);
+            limit = Math.max(60, Number(fallbackProfile.dailyTimeLimitSeconds) || 1200);
+          }
+        } catch (e) {}
+        const rem = Math.max(0, limit - played);
+        const mm = String(Math.floor(rem / 60)).padStart(2, '0');
+        const ss = String(rem % 60).padStart(2, '0');
+        return `⏳ ${mm}:${ss}`;
+      }
 
-        const rawLinas = localStorage.getItem('skaiciu_karalyste_save_linas_v2');
-        const rawLukas = localStorage.getItem('skaiciu_karalyste_save_lukas_v2');
-        const rawLab = localStorage.getItem('proto_lab_progress');
-        const p1 = rawLinas ? JSON.parse(rawLinas) : null;
-        const p2 = rawLukas ? JSON.parse(rawLukas) : null;
-        const labData = rawLab ? JSON.parse(rawLab) : null;
-        const g1Crystals = labData?.grade1?.crystals || 0;
-        const g3Crystals = labData?.grade3?.crystals || 0;
+      function readJson(key) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      try {
+        const p1 = readJson('skaiciu_karalyste_save_linas_v2');
+        const p2 = readJson('skaiciu_karalyste_save_lukas_v2');
+        const race1 = readJson('lenktynes_save_linas');
+        const race2 = readJson('lenktynes_save_lukas');
+        const labData = readJson('proto_lab_progress');
+
+        const g1Crystals = Number(labData?.grade1?.crystals) || 0;
+        const g3Crystals = Number(labData?.grade3?.crystals) || 0;
 
         const el1 = document.getElementById('hub-linas-stats');
         if (el1) {
@@ -233,8 +451,149 @@
             ? `Lygis ${p2.unlockedLevel || 1}/50 • ${(p2.coins || 0).toLocaleString('lt-LT')} 🪙 • ${g3Crystals} 💎 • ${t2}`
             : `Lygis 1/50 • 0 🪙 • ${g3Crystals} 💎 • ${t2}`;
         }
-      } catch (e) {
-        // Ignoruojame localStorage klaidas
+
+        // Kortelių kampų pasiekimų ženkliukai (rodomi tik jei localStorage yra įrašų)
+        const racingBadge = document.getElementById('badge-progress-racing');
+        if (racingBadge && (race1 || race2)) {
+          const totalRaceCoins = (Number(race1?.coins) || 0) + (Number(race2?.coins) || 0);
+          const totalRaceWins = (Number(race1?.wins) || 0) + (Number(race2?.wins) || 0);
+          racingBadge.textContent = totalRaceWins > 0
+            ? `🪙 ${totalRaceCoins.toLocaleString('lt-LT')} • 🏆 ${totalRaceWins}`
+            : `🪙 ${totalRaceCoins.toLocaleString('lt-LT')}`;
+          racingBadge.hidden = false;
+        }
+
+        const mathBadge = document.getElementById('badge-progress-math');
+        if (mathBadge && (p1 || p2)) {
+          const totalMathCoins = (Number(p1?.coins) || 0) + (Number(p2?.coins) || 0);
+          const bestLevel = Math.max(Number(p1?.unlockedLevel) || 1, Number(p2?.unlockedLevel) || 1);
+          mathBadge.textContent = `⭐ ${bestLevel}/50 • 🪙 ${totalMathCoins.toLocaleString('lt-LT')}`;
+          mathBadge.hidden = false;
+        }
+
+        const labBadge = document.getElementById('badge-progress-lab');
+        if (labBadge && labData) {
+          const totalCrystals = g1Crystals + g3Crystals;
+          const totalSolved = (Array.isArray(labData?.grade1?.solvedLevels) ? labData.grade1.solvedLevels.length : 0)
+            + (Array.isArray(labData?.grade3?.solvedLevels) ? labData.grade3.solvedLevels.length : 0);
+          if (totalCrystals > 0 || totalSolved > 0) {
+            labBadge.textContent = `💎 ${totalCrystals} • 🧩 ${totalSolved}/240`;
+            labBadge.hidden = false;
+          }
+        }
+      } catch (e) {}
+
+      // 3. Subtilus 3D kortelių posvyris pagal pelės žymeklį
+      const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!prefersReducedMotion) {
+        const cards = document.querySelectorAll('.game-tile[data-tilt]');
+        cards.forEach(function (card) {
+          card.addEventListener('pointermove', function (e) {
+            if (e.pointerType !== 'mouse') return;
+            const rect = card.getBoundingClientRect();
+            const px = (e.clientX - rect.left) / rect.width;
+            const py = (e.clientY - rect.top) / rect.height;
+            const rotY = (px - 0.5) * 11;
+            const rotX = (0.5 - py) * 9;
+            card.style.setProperty('--rx', rotX.toFixed(2) + 'deg');
+            card.style.setProperty('--ry', rotY.toFixed(2) + 'deg');
+            card.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+            card.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+          });
+          card.addEventListener('pointerleave', function () {
+            card.style.setProperty('--rx', '0deg');
+            card.style.setProperty('--ry', '0deg');
+          });
+        });
+      }
+
+      // 4. Lėtai judančių švytinčių dalelių tinklas fone (Canvas)
+      const canvas = document.getElementById('cosmic-bg-canvas');
+      if (canvas && canvas.getContext) {
+        const ctx = canvas.getContext('2d');
+        let w = 0;
+        let h = 0;
+        let particles = [];
+        const palette = ['#38bdf8', '#818cf8', '#34d399', '#f472b6', '#fbbf24'];
+
+        function resizeCanvas() {
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+          w = window.innerWidth;
+          h = window.innerHeight;
+          canvas.width = Math.floor(w * dpr);
+          canvas.height = Math.floor(h * dpr);
+          canvas.style.width = w + 'px';
+          canvas.style.height = h + 'px';
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+          const targetCount = Math.min(58, Math.max(24, Math.floor((w * h) / 28000)));
+          if (particles.length !== targetCount) {
+            particles = Array.from({ length: targetCount }, function (_, idx) {
+              return {
+                x: Math.random() * w,
+                y: Math.random() * h,
+                vx: (Math.random() - 0.5) * 0.28,
+                vy: (Math.random() - 0.5) * 0.28,
+                r: 1.4 + Math.random() * 2.1,
+                color: palette[idx % palette.length],
+                alpha: 0.35 + Math.random() * 0.45
+              };
+            });
+          }
+        }
+
+        function drawParticles(animate) {
+          ctx.clearRect(0, 0, w, h);
+
+          for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            if (animate) {
+              p.x += p.vx;
+              p.y += p.vy;
+              if (p.x < -10) p.x = w + 10;
+              if (p.x > w + 10) p.x = -10;
+              if (p.y < -10) p.y = h + 10;
+              if (p.y > h + 10) p.y = -10;
+            }
+
+            // Švytinčios jungtys tarp artimų dalelių
+            for (let j = i + 1; j < particles.length; j++) {
+              const q = particles[j];
+              const dx = p.x - q.x;
+              const dy = p.y - q.y;
+              const distSq = dx * dx + dy * dy;
+              if (distSq < 18500) {
+                const alpha = (1 - distSq / 18500) * 0.16;
+                ctx.strokeStyle = 'rgba(125, 211, 252, ' + alpha.toFixed(3) + ')';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(q.x, q.y);
+                ctx.stroke();
+              }
+            }
+
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            ctx.fillStyle = p.color;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          if (animate) {
+            requestAnimationFrame(function () {
+              drawParticles(true);
+            });
+          }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawParticles(!prefersReducedMotion);
       }
     })();
   </script>
