@@ -1,5 +1,6 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -53,7 +54,7 @@ export function saveLabProgress(progressObj) {
   }
 }
 
-// ==================== LYGIŲ KONFIGŪRACIJA PAGAL KLASĘ ====================
+// ==================== MINI EKSPERIMENTŲ KONFIGŪRACIJA ====================
 export const LAB_LEVELS = {
   grade1: [
     {
@@ -147,9 +148,11 @@ export const LAB_LEVELS = {
 // ==================== BŪSENA ====================
 let progress = loadLabProgress();
 let currentDifficulty = null;
+let currentMode = 'pinpull'; // 'pinpull' | 'mini'
 let activeLevelIndex = 0;
 let mirrorStates = [];
 let switchStates = [];
+let pinEngine = null;
 
 // ==================== DOM NUORODOS ====================
 const startScreen = document.getElementById('start-screen');
@@ -157,6 +160,9 @@ const labScreen = document.getElementById('lab-screen');
 const topDiffPill = document.getElementById('top-difficulty-pill');
 const uiActiveRank = document.getElementById('ui-active-rank');
 const uiTotalCrystals = document.getElementById('ui-total-crystals');
+const pinCanvas = document.getElementById('pinpull-canvas');
+const pinPullStage = document.getElementById('pinpull-stage');
+const miniStage = document.getElementById('puzzle-stage');
 
 function getDifficultyLabel(diff) {
   return diff === 'grade1'
@@ -164,9 +170,17 @@ function getDifficultyLabel(diff) {
     : '3 klasė (Vyriausiasis inžinierius)';
 }
 
+function getAllLevelsForDiff(diff) {
+  return [...PINPULL_LEVELS[diff], ...LAB_LEVELS[diff]];
+}
+
+function getCurrentModeLevels(diff = currentDifficulty) {
+  return currentMode === 'pinpull' ? PINPULL_LEVELS[diff] : LAB_LEVELS[diff];
+}
+
 function updateSummaryUI() {
-  const g1Levels = LAB_LEVELS.grade1.length;
-  const g3Levels = LAB_LEVELS.grade3.length;
+  const g1Total = getAllLevelsForDiff('grade1').length;
+  const g3Total = getAllLevelsForDiff('grade3').length;
 
   const g1Solved = progress.grade1.solvedLevels.length;
   const g3Solved = progress.grade3.solvedLevels.length;
@@ -179,14 +193,14 @@ function updateSummaryUI() {
   const g3SolvedEl = document.getElementById('g3-solved-text');
   const g3CrysEl = document.getElementById('g3-crystals-text');
 
-  if (g1SolvedEl) g1SolvedEl.textContent = `${g1Solved} / ${g1Levels}`;
+  if (g1SolvedEl) g1SolvedEl.textContent = `${g1Solved} / ${g1Total}`;
   if (g1CrysEl) g1CrysEl.textContent = String(g1Crystals);
-  if (g3SolvedEl) g3SolvedEl.textContent = `${g3Solved} / ${g3Levels}`;
+  if (g3SolvedEl) g3SolvedEl.textContent = `${g3Solved} / ${g3Total}`;
   if (g3CrysEl) g3CrysEl.textContent = String(g3Crystals);
 
   if (currentDifficulty) {
     const activeData = progress[currentDifficulty];
-    const totalLevels = LAB_LEVELS[currentDifficulty].length;
+    const totalLevels = getAllLevelsForDiff(currentDifficulty).length;
     uiTotalCrystals.textContent = String(activeData.crystals);
     uiActiveRank.textContent = currentDifficulty === 'grade1' ? '🔬 1 klasė' : '⚡ 3 klasė';
     document.getElementById('lab-mode-title').textContent = getDifficultyLabel(currentDifficulty);
@@ -207,13 +221,16 @@ export function selectDifficulty(difficulty) {
   labScreen.classList.remove('hidden');
   topDiffPill.classList.remove('hidden');
 
+  currentMode = 'pinpull';
   activeLevelIndex = 0;
+  syncModeTabsUI();
   updateSummaryUI();
   renderLevelsStrip();
   loadActiveLevel();
 }
 
 function showDifficultyScreen() {
+  destroyPinEngine();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -221,9 +238,23 @@ function showDifficultyScreen() {
   updateSummaryUI();
 }
 
+function syncModeTabsUI() {
+  document.getElementById('tab-mode-pinpull')?.classList.toggle('active', currentMode === 'pinpull');
+  document.getElementById('tab-mode-mini')?.classList.toggle('active', currentMode === 'mini');
+}
+
+function switchLabMode(mode) {
+  if (mode !== 'pinpull' && mode !== 'mini') return;
+  currentMode = mode;
+  activeLevelIndex = 0;
+  syncModeTabsUI();
+  renderLevelsStrip();
+  loadActiveLevel();
+}
+
 function renderLevelsStrip() {
   const strip = document.getElementById('levels-strip');
-  const levels = LAB_LEVELS[currentDifficulty];
+  const levels = getCurrentModeLevels();
   const solvedSet = new Set(progress[currentDifficulty].solvedLevels);
 
   strip.innerHTML = '';
@@ -234,7 +265,7 @@ function renderLevelsStrip() {
     btn.className = `level-tab-btn${idx === activeLevelIndex ? ' active' : ''}${isSolved ? ' solved' : ''}`;
     btn.innerHTML = `
       <div class="level-tab-top">
-        <span>${isSolved ? '✅ Atlikta' : '🧩 Užduotis'}</span>
+        <span>${isSolved ? '✅ Atlikta' : currentMode === 'pinpull' ? '🔩 Kaiščiai' : '🧩 Užduotis'}</span>
         <span>+${lvl.reward} 💎</span>
       </div>
       <div class="level-tab-name">${lvl.title}</div>
@@ -259,18 +290,31 @@ function markLevelSolved(level) {
     saveLabProgress(progress);
     updateSummaryUI();
     renderLevelsStrip();
-    feedbackEl.textContent = `🎉 PUIKIAI! Eksperimentas pavyko! Gavai +${level.reward} Proto kristalų (💎)!`;
+    feedbackEl.textContent = `🎉 PUIKIAI! Lygis įveiktas! Gavai +${level.reward} Proto kristalų (💎)!`;
   } else {
-    feedbackEl.textContent = '✅ Eksperimentas sėkmingai atliktas dar kartą!';
+    feedbackEl.textContent = '✅ Lygis sėkmingai įveiktas dar kartą!';
   }
 
   feedbackEl.className = 'puzzle-feedback success';
   feedbackEl.classList.remove('hidden');
 }
 
+function destroyPinEngine() {
+  if (pinEngine) {
+    pinEngine.destroy();
+    pinEngine = null;
+  }
+}
+
 function loadActiveLevel() {
-  const level = LAB_LEVELS[currentDifficulty][activeLevelIndex];
-  document.getElementById('puzzle-type-badge').textContent = level.badge;
+  destroyPinEngine();
+  const levels = getCurrentModeLevels();
+  const level = levels[activeLevelIndex];
+
+  document.getElementById('puzzle-type-badge').textContent =
+    currentMode === 'pinpull'
+      ? `🔩 IŠTRAUK KAIŠTĮ • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
+      : level.badge;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -279,20 +323,69 @@ function loadActiveLevel() {
   feedbackEl.className = 'puzzle-feedback hidden';
   feedbackEl.textContent = '';
 
-  const stage = document.getElementById('puzzle-stage');
-  stage.innerHTML = '';
+  const nextBtn = document.getElementById('btn-pin-next');
+  if (nextBtn) nextBtn.classList.add('hidden');
 
-  if (level.kind === 'laser') {
-    mirrorStates = level.mirrors.map((m) => ({ ...m }));
-    renderLaserStage(stage, level);
-  } else if (level.kind === 'switches') {
-    switchStates = level.values.map(() => false);
-    renderSwitchesStage(stage, level);
-  } else if (level.kind === 'sequence') {
-    renderSequenceStage(stage, level);
+  if (currentMode === 'pinpull') {
+    pinPullStage.classList.remove('hidden');
+    miniStage.classList.add('hidden');
+    startPinPullLevel(level, levels.length);
+  } else {
+    pinPullStage.classList.add('hidden');
+    miniStage.classList.remove('hidden');
+    miniStage.innerHTML = '';
+
+    if (level.kind === 'laser') {
+      mirrorStates = level.mirrors.map((m) => ({ ...m }));
+      renderLaserStage(miniStage, level);
+    } else if (level.kind === 'switches') {
+      switchStates = level.values.map(() => false);
+      renderSwitchesStage(miniStage, level);
+    } else if (level.kind === 'sequence') {
+      renderSequenceStage(miniStage, level);
+    }
   }
 }
 
+function startPinPullLevel(level, totalInMode) {
+  const counterEl = document.getElementById('pinpull-counter');
+  const nextBtn = document.getElementById('btn-pin-next');
+
+  pinEngine = new PinPullEngine(pinCanvas, level, {
+    onTick: ({ goalCount, requiredGoal }) => {
+      if (counterEl) {
+        counterEl.textContent = `🧪 Kolboje: ${goalCount} / ${requiredGoal}`;
+      }
+    },
+    onStatusChange: ({ status, failReason, goalCount, requiredGoal }) => {
+      if (counterEl) {
+        counterEl.textContent = `🧪 Kolboje: ${goalCount} / ${requiredGoal}`;
+      }
+      if (status === 'won') {
+        markLevelSolved(level);
+        if (nextBtn && activeLevelIndex < totalInMode - 1) {
+          nextBtn.classList.remove('hidden');
+        }
+      } else if (status === 'failed') {
+        const feedbackEl = document.getElementById('puzzle-feedback');
+        feedbackEl.textContent = failReason || '💥 Bandyk dar kartą! Paspausk „Iš naujo (Reset)“.';
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      }
+    }
+  });
+  pinEngine.startLoop();
+}
+
+function getCanvasCoords(evt) {
+  const rect = pinCanvas.getBoundingClientRect();
+  return {
+    mx: ((evt.clientX - rect.left) / rect.width) * CANVAS_W,
+    my: ((evt.clientY - rect.top) / rect.height) * CANVAS_H
+  };
+}
+
+// ==================== MINI EKSPERIMENTŲ RENDERIS ====================
 function traceLaserBeam(level, mirrors) {
   const litSet = new Set();
   let { r, c, dir } = level.emitter;
@@ -443,9 +536,44 @@ function renderSequenceStage(stage, level) {
   stage.appendChild(row);
 }
 
-// ==================== INICIALIZACIJA ====================
+// ==================== ĮVYKIŲ VALDYMAS ====================
 document.getElementById('btn-select-grade1')?.addEventListener('click', () => selectDifficulty('grade1'));
 document.getElementById('btn-select-grade3')?.addEventListener('click', () => selectDifficulty('grade3'));
 document.getElementById('btn-back-difficulty')?.addEventListener('click', showDifficultyScreen);
+
+document.getElementById('tab-mode-pinpull')?.addEventListener('click', () => switchLabMode('pinpull'));
+document.getElementById('tab-mode-mini')?.addEventListener('click', () => switchLabMode('mini'));
+
+document.getElementById('btn-pin-reset')?.addEventListener('click', () => {
+  if (!pinEngine) return;
+  const feedbackEl = document.getElementById('puzzle-feedback');
+  feedbackEl.className = 'puzzle-feedback hidden';
+  feedbackEl.textContent = '';
+  document.getElementById('btn-pin-next')?.classList.add('hidden');
+  pinEngine.reset();
+});
+
+document.getElementById('btn-pin-next')?.addEventListener('click', () => {
+  const levels = getCurrentModeLevels();
+  if (activeLevelIndex < levels.length - 1) {
+    activeLevelIndex++;
+    renderLevelsStrip();
+    loadActiveLevel();
+  }
+});
+
+if (pinCanvas) {
+  pinCanvas.addEventListener('pointerdown', (e) => {
+    if (!pinEngine) return;
+    const { mx, my } = getCanvasCoords(e);
+    pinEngine.handlePointerDown(mx, my);
+  });
+
+  pinCanvas.addEventListener('pointermove', (e) => {
+    if (!pinEngine) return;
+    const { mx, my } = getCanvasCoords(e);
+    pinEngine.handlePointerMove(mx, my);
+  });
+}
 
 updateSummaryUI();

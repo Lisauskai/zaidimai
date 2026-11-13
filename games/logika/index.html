@@ -41,14 +41,14 @@
     <section id="start-screen" class="start-screen">
       <div class="hero-lab-card">
         <div class="lab-badge-row">
+          <span class="lab-pill-tag">🔩 IŠTRAUK KAIŠTĮ</span>
           <span class="lab-pill-tag">🔦 LAZERIAI</span>
-          <span class="lab-pill-tag">⚙️ GRANDINĖS</span>
           <span class="lab-pill-tag">💎 PROTO KRISTALAI</span>
         </div>
         <h2>SVEIKAS ATVYKĘS Į PROTO LABORATORIJĄ!</h2>
         <p class="hero-desc">
-          Pasirink savo išradėjo lygį ir pradėk spręsti loginius eksperimentus.
-          Kiekvienos klasės pažanga ir surinkti <strong>Proto kristalai</strong> saugomi atskirai!
+          Pasirink savo išradėjo lygį, ištrauk kaiščius teisinga tvarka ir įvykdyk eksperimentus.
+          Kiekvienos klasės išspręsti lygiai ir surinkti <strong>Proto kristalai</strong> saugomi atskirai!
         </p>
       </div>
 
@@ -61,13 +61,13 @@
           </div>
           <h3>1 klasė (Jaunasis išradėjas)</h3>
           <p class="diff-desc">
-            Aiškūs lazerių atspindžiai, pirmosios jungiklių grandinės ir smagios sekos jaunajam tyrinėtojui.
+            5 „Ištrauk kaištį“ fizikos lygiai (2–3 kaiščiai, spalvoti rutuliukai, tiltai) ir 3 mini eksperimentai.
           </p>
 
           <div class="diff-progress-box">
             <div class="progress-stat">
               <span>✅ Išspręsti lygiai:</span>
-              <strong id="g1-solved-text">0 / 3</strong>
+              <strong id="g1-solved-text">0 / 8</strong>
             </div>
             <div class="progress-stat">
               <span>💎 Proto kristalai:</span>
@@ -88,13 +88,13 @@
           </div>
           <h3>3 klasė (Vyriausiasis inžinierius)</h3>
           <p class="diff-desc">
-            Sudėtingesni kelių veidrodžių lazerių labirintai, tikslios energijos sistemos ir inžineriniai šifrai.
+            5 sudėtingi „Ištrauk kaištį“ lygiai (4–6 kaiščiai, pilki užteršti rutuliukai, spąstų duobės ir maišymas) + 3 mini eksperimentai.
           </p>
 
           <div class="diff-progress-box">
             <div class="progress-stat">
               <span>✅ Išspręsti lygiai:</span>
-              <strong id="g3-solved-text">0 / 3</strong>
+              <strong id="g3-solved-text">0 / 8</strong>
             </div>
             <div class="progress-stat">
               <span>💎 Proto kristalai:</span>
@@ -118,8 +118,17 @@
           </button>
           <div class="active-profile-banner">
             <span id="lab-mode-title">1 klasė (Jaunasis išradėjas)</span>
-            <span id="lab-mode-stats" class="mode-stats-sub">Išspręsta: 0 / 3 • 💎 0</span>
+            <span id="lab-mode-stats" class="mode-stats-sub">Išspręsta: 0 / 8 • 💎 0</span>
           </div>
+        </div>
+
+        <div class="lab-mode-tabs">
+          <button id="tab-mode-pinpull" class="mode-tab-btn active" type="button">
+            🔩 Ištrauk kaištį (5)
+          </button>
+          <button id="tab-mode-mini" class="mode-tab-btn" type="button">
+            🔦 Mini Eksperimentai (3)
+          </button>
         </div>
       </div>
 
@@ -130,14 +139,34 @@
       <div class="puzzle-workspace">
         <div class="puzzle-header">
           <div>
-            <span id="puzzle-type-badge" class="puzzle-type-badge">🔦 LAZERIO KELIAS</span>
-            <h2 id="puzzle-title">Eksperimentas #1</h2>
+            <span id="puzzle-type-badge" class="puzzle-type-badge">🔩 IŠTRAUK KAIŠTĮ (FIZIKA)</span>
+            <h2 id="puzzle-title">Lygis #1</h2>
             <p id="puzzle-instruction" class="puzzle-instruction"></p>
           </div>
-          <div id="puzzle-reward-badge" class="puzzle-reward-badge">+10 💎</div>
+          <div id="puzzle-reward-badge" class="puzzle-reward-badge">+15 💎</div>
         </div>
 
-        <div id="puzzle-stage" class="puzzle-stage"></div>
+        <!-- PIN-PULL CANVAS ZONA -->
+        <div id="pinpull-stage" class="pinpull-stage">
+          <div class="pinpull-controls-bar">
+            <span id="pinpull-counter" class="pinpull-counter">🧪 Kolboje: 0 / 5</span>
+            <div class="pinpull-btn-group">
+              <button id="btn-pin-reset" class="pin-reset-btn" type="button">
+                🔄 Iš naujo (Reset)
+              </button>
+              <button id="btn-pin-next" class="pin-next-btn hidden" type="button">
+                Kitas lygis ▶
+              </button>
+            </div>
+          </div>
+
+          <div class="pinpull-canvas-wrap">
+            <canvas id="pinpull-canvas" width="640" height="460"></canvas>
+          </div>
+        </div>
+
+        <!-- MINI EKSPERIMENTŲ ZONA -->
+        <div id="puzzle-stage" class="puzzle-stage hidden"></div>
 
         <div id="puzzle-feedback" class="puzzle-feedback hidden"></div>
       </div>

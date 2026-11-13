@@ -374,9 +374,123 @@ body {
 
 .levels-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
   gap: 12px;
   margin-bottom: 20px;
+}
+
+.lab-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mode-tab-btn {
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 3px solid var(--outline);
+  background: #1e293b;
+  color: #cbd5e1;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--outline);
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.mode-tab-btn:hover {
+  transform: translateY(-2px);
+  background: #334155;
+}
+
+.mode-tab-btn.active {
+  background: var(--lab-purple);
+  color: #ffffff;
+  border-color: #67e8f9;
+}
+
+.pinpull-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.pinpull-controls-bar {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pinpull-counter {
+  font-family: 'Russo One', sans-serif;
+  font-size: 1.02rem;
+  background: #0f172a;
+  color: #67e8f9;
+  padding: 9px 15px;
+  border-radius: 10px;
+  border: 3px solid var(--outline);
+}
+
+.pinpull-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pin-reset-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 3px solid var(--outline);
+  background: #f97316;
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow:
+    inset 0 3px 0 #fdba74,
+    0 4px 0 var(--outline);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.pin-reset-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.pin-next-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: 3px solid var(--outline);
+  background: var(--lab-green);
+  color: #ffffff;
+  font-family: 'Russo One', sans-serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow:
+    inset 0 3px 0 #86efac,
+    0 4px 0 var(--outline);
+}
+
+.pinpull-canvas-wrap {
+  width: 100%;
+  max-width: 640px;
+  background: #020617;
+  border: 4px solid var(--outline);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 0 var(--outline);
+}
+
+#pinpull-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: manipulation;
 }
 
 .level-tab-btn {
