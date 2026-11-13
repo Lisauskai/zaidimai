@@ -2608,3 +2608,99 @@ body {
   color: #fecaca;
   background: rgba(127, 29, 29, 0.72);
 }
+
+/* Kolbų ir skysčių laboratorija */
+.flask-lab-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.flask-controls-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+.flask-actions-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.flask-launch-btn {
+  background: linear-gradient(135deg, #06b6d4, #0284c7);
+  color: #fff;
+  border: 2px solid #67e8f9;
+  border-radius: 12px;
+  padding: 9px 18px;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 0.96rem;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #0e7490;
+  transition: transform 0.12s ease, filter 0.15s ease;
+}
+
+.flask-launch-btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.flask-launch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.jug-quick-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+  max-width: 600px;
+}
+
+.jug-card-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 2px solid rgba(56, 189, 248, 0.4);
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #e0f2fe;
+}
+
+.jug-mini-btn {
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: #fff;
+}
+
+.jug-mini-btn.fill {
+  background: #0284c7;
+}
+
+.jug-mini-btn.empty {
+  background: #b91c1c;
+}
+
+.jug-mini-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

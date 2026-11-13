@@ -1,4 +1,5 @@
 // ==================== SMART HINT (UŽUOMINOS LEMPUTĖ) IR 3 KLASĖS PAR ĖJIMAI ====================
+import { solveJugFirstMoveBfs, solvePipeFirstValveBfs } from './flasks.js?v=20261113k';
 
 export const OPTIMAL_PAR_MOVES = {
   // 1. Ištrauk kaištį (Pin-Pull)
@@ -63,7 +64,12 @@ export const OPTIMAL_PAR_MOVES = {
   gea_g3_2: 4,
   gea_g3_3: 4,
   gea_g3_4: 5,
-  gea_g3_5: 5,
+  gea_g3_5: 4,
+  gea_g3_6: 3,
+  gea_g3_7: 4,
+  gea_g3_8: 5,
+  gea_g3_9: 4,
+  gea_g3_10: 5,
 
   // 9. Gravitacijos labirintas
   grv_g3_1: 5,
@@ -97,10 +103,17 @@ export const OPTIMAL_PAR_MOVES = {
   br_g3_7: 25,
   br_g3_8: 30,
 
-  // 12. Mini eksperimentai
-  g3_laser_1: 4,
-  g3_switches_1: 4,
-  g3_sequence_1: 1
+  // 12. Kolbų laboratorija
+  flk_g3_1: 6,
+  flk_g3_2: 8,
+  flk_g3_3: 6,
+  flk_g3_4: 8,
+  flk_g3_5: 8,
+  flk_g3_6: 10,
+  flk_g3_7: 6,
+  flk_g3_8: 6,
+  flk_g3_9: 9,
+  flk_g3_10: 14
 };
 
 export function getParMoves(levelId) {
@@ -598,16 +611,26 @@ export function computeFirstHint(mode, level, context = {}) {
 
   if (mode === 'gears') {
     const GEAR_SOLUTIONS = {
-      gea_g1_1: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'M' }],
-      gea_g1_2: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'S' }],
-      gea_g1_3: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'M' }],
-      gea_g1_4: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'L' }, { pegId: 'p3', sizeKey: 'S' }, { pegId: 'p4', sizeKey: 'M' }],
-      gea_g1_5: [{ pegId: 'p1', sizeKey: 'S' }, { pegId: 'p2', sizeKey: 'L' }, { pegId: 'p3', sizeKey: 'M' }, { pegId: 'p4', sizeKey: 'M' }],
-      gea_g3_1: [{ pegId: 'u1', sizeKey: 'L' }, { pegId: 'u2', sizeKey: 'L' }, { pegId: 'u3', sizeKey: 'L' }],
-      gea_g3_2: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'M' }, { pegId: 'p3', sizeKey: 'L' }],
-      gea_g3_3: [{ pegId: 'b1', sizeKey: 'L' }, { pegId: 'b2', sizeKey: 'L' }, { pegId: 'b3', sizeKey: 'L' }],
-      gea_g3_4: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'L' }, { pegId: 'p3', sizeKey: 'M' }, { pegId: 'p4', sizeKey: 'L' }],
-      gea_g3_5: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'M' }, { pegId: 'p4', sizeKey: 'L' }]
+      gea_g1_1: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'S' }],
+      gea_g1_2: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'M' }, { pegId: 'p3', sizeKey: 'S' }],
+      gea_g1_3: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'M' }],
+      gea_g1_4: [{ pegId: 'p1', sizeKey: 'S' }, { pegId: 'p2', sizeKey: 'L' }, { pegId: 'p3', sizeKey: 'S' }, { pegId: 'p4', sizeKey: 'M' }],
+      gea_g1_5: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'M' }, { pegId: 'p3', sizeKey: 'S' }, { pegId: 'p4', sizeKey: 'M' }],
+      gea_g1_6: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'M' }, { pegId: 'p3', sizeKey: 'S' }, { pegId: 'p4', sizeKey: 'L' }],
+      gea_g1_7: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'L' }],
+      gea_g1_8: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'L' }, { pegId: 'p3', sizeKey: 'M' }, { pegId: 'p4', sizeKey: 'L' }],
+      gea_g1_9: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'M' }, { pegId: 'p3', sizeKey: 'S' }, { pegId: 'p4', sizeKey: 'M' }],
+      gea_g1_10: [{ pegId: 'p1', sizeKey: 'S' }, { pegId: 'p2', sizeKey: 'L' }, { pegId: 'p3', sizeKey: 'S' }, { pegId: 'p4', sizeKey: 'M' }, { pegId: 'p5', sizeKey: 'M' }],
+      gea_g3_1: [{ pegId: 'u1', sizeKey: 'L' }, { pegId: 'u2', sizeKey: 'M' }, { pegId: 'u3', sizeKey: 'L' }],
+      gea_g3_2: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'M' }],
+      gea_g3_3: [{ pegId: 'b1', sizeKey: 'S' }, { pegId: 'b2', sizeKey: 'L' }, { pegId: 'b3', sizeKey: 'M' }],
+      gea_g3_4: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'M' }, { pegId: 'p3', sizeKey: 'M' }, { pegId: 'p4', sizeKey: 'L' }],
+      gea_g3_5: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'M' }, { pegId: 'p3', sizeKey: 'S' }],
+      gea_g3_6: [{ pegId: 'p1', sizeKey: 'S' }, { pegId: 'p2', sizeKey: 'L' }],
+      gea_g3_7: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'L' }],
+      gea_g3_8: [{ pegId: 'p1', sizeKey: 'L' }, { pegId: 'p2', sizeKey: 'M' }, { pegId: 'p3', sizeKey: 'S' }, { pegId: 'p4', sizeKey: 'L' }],
+      gea_g3_9: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'L' }],
+      gea_g3_10: [{ pegId: 'p1', sizeKey: 'M' }, { pegId: 'p2', sizeKey: 'S' }, { pegId: 'p3', sizeKey: 'S' }, { pegId: 'p4', sizeKey: 'L' }]
     };
     const sizeLabels = { S: 'Mažą (S)', M: 'Vidutinį (M)', L: 'Didelį (L)' };
     const eng = context.gearsEngine;
@@ -683,41 +706,41 @@ export function computeFirstHint(mode, level, context = {}) {
   }
 
   if (mode === 'mini') {
-    if (level.kind === 'laser') {
-      const states = context.mirrorStates || [];
-      const wanted = level.id === 'g1_laser_1' ? ['\\'] : ['\\', '/'];
-      const idx = states.findIndex((m, i) => m.type !== wanted[i]);
-      if (idx >= 0) {
-        const m = states[idx];
+    if (level.kind === 'pipes') {
+      const eng = context.pipeValveEngine;
+      if (!eng) return null;
+      const step = solvePipeFirstValveBfs(level, eng.valveStates);
+      if (step) {
         return {
           mode,
-          kind: 'mini-laser-mirror',
-          r: m.r,
-          c: m.c,
-          message: '💡 Pirmas žingsnis: pasuk paryškintą geltoną veidrodį!'
+          kind: 'mini-pipe-valve',
+          valveId: step.valveId,
+          message: '💡 Pirmas žingsnis: paspausk paryškintą geltoną sklendę (arba skirstytuvą)!'
         };
       }
-    } else if (level.kind === 'switches') {
-      const needed = level.id === 'g1_switches_1' ? [0, 1, 2] : [2, 3];
-      const states = context.switchStates || [];
-      const wrongOn = states.findIndex((on, i) => on && !needed.includes(i));
-      const targetIdx = wrongOn >= 0 ? wrongOn : needed.find((i) => !states[i]);
-      if (targetIdx !== undefined && targetIdx >= 0) {
-        return {
-          mode,
-          kind: 'mini-switch',
-          switchIndex: targetIdx,
-          message: '💡 Pirmas žingsnis: perjunk paryškintą energijos bloką!'
-        };
-      }
-    } else if (level.kind === 'sequence') {
-      const wrongChoices = (level.choices || []).filter((c) => c !== level.answer).slice(0, 2);
       return {
         mode,
-        kind: 'mini-seq-eliminate',
-        eliminateValues: wrongChoices,
-        message: '💡 Užuomina: du netinkami skaičiai pritemdyti – išrink iš likusių!'
+        kind: 'mini-pipe-launch',
+        message: '💡 Visos sklendės teisingos! Paspausk „🧪 Paleisti srautą!“!'
       };
+    } else if (level.kind === 'jugs') {
+      const eng = context.jugPourEngine;
+      if (!eng) return null;
+      const action = solveJugFirstMoveBfs(level.capacities, eng.amounts, level.targetAmount, level.hasTap);
+      if (action) {
+        const msg =
+          action.type === 'fill'
+            ? `💡 Pirmas žingsnis: pripilk Kolbą #${action.to + 1} (🚰 +Pilti)!`
+            : action.type === 'empty'
+              ? `💡 Pirmas žingsnis: išpilk Kolbą #${action.from + 1} (💧 Išp.)!`
+              : `💡 Pirmas žingsnis: perpilk iš Kolbos #${action.from + 1} į Kolbą #${action.to + 1}!`;
+        return {
+          mode,
+          kind: 'mini-jug-move',
+          action,
+          message: msg
+        };
+      }
     }
   }
 

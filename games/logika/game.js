@@ -1,33 +1,41 @@
 // ==================== PROTO LABORATORIJA (LOGIKOS ŽAIDIMAS 1–3 KL.) ====================
 // Progreso raktas localStorage: 'proto_lab_progress'
-import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113j';
-import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113j';
-import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113j';
-import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113j';
+import { PinPullEngine, PINPULL_LEVELS, CANVAS_W, CANVAS_H } from './pinpull.js?v=20261113k';
+import { SokobanGame, SOKOBAN_LEVELS } from './sokoban.js?v=20261113k';
+import { LaserMirrorsEngine, LASER_LEVELS, LASER_CANVAS_W, LASER_CANVAS_H } from './lasers.js?v=20261113k';
+import { CircuitEngine, CIRCUIT_LEVELS, CIRCUIT_CANVAS_W, CIRCUIT_CANVAS_H } from './circuits.js?v=20261113k';
 import {
   BalanceScaleEngine,
   BALANCE_LEVELS,
   ITEM_CATALOG,
   BALANCE_CANVAS_W,
   BALANCE_CANVAS_H
-} from './balance.js?v=20261113j';
-import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113j';
-import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113j';
-import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113j';
-import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113j';
+} from './balance.js?v=20261113k';
+import { MATRIX_LEVELS, renderShapeSvg, MemoryCodeController } from './matrix.js?v=20261113k';
+import { AlgoEngine, ALGO_LEVELS, CMD_META } from './algo.js?v=20261113k';
+import { GearsEngine, GEARS_LEVELS, GEAR_SIZES, GEARS_CANVAS_W, GEARS_CANVAS_H } from './gears.js?v=20261113k';
+import { GravityMazeEngine, GRAVITY_LEVELS } from './gravity.js?v=20261113k';
 import {
   MathCrossEngine,
   MATHCROSS_LEVELS,
   MATHCROSS_CANVAS_W,
   MATHCROSS_CANVAS_H
-} from './mathcross.js?v=20261113j';
+} from './mathcross.js?v=20261113k';
 import {
   BridgesEngine,
   BRIDGES_LEVELS,
   BRIDGES_CANVAS_W,
   BRIDGES_CANVAS_H
-} from './bridges.js?v=20261113j';
-import { getParMoves, computeFirstHint } from './hints.js?v=20261113j';
+} from './bridges.js?v=20261113k';
+import {
+  PipeValveEngine,
+  JugPourEngine,
+  FLASK_LEVELS,
+  FLASK_CANVAS_W,
+  FLASK_CANVAS_H,
+  RYB_COLORS
+} from './flasks.js?v=20261113k';
+import { getParMoves, computeFirstHint } from './hints.js?v=20261113k';
 import {
   isSoundEnabled,
   toggleSound,
@@ -51,8 +59,8 @@ import {
   playGravitySlide,
   playIceBreak,
   playPortalWarp
-} from './sound.js?v=20261113j';
-import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113j';
+} from './sound.js?v=20261113k';
+import { launchVictoryConfetti, stopVictoryConfetti } from './confetti.js?v=20261113k';
 import {
   ROBOT_PARTS,
   createDefaultRobotColors,
@@ -61,7 +69,7 @@ import {
   cycleRobotPartColor,
   getUnlockedPartIds,
   renderRobotWorkshopSvg
-} from './robot.js?v=20261113j';
+} from './robot.js?v=20261113k';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -131,104 +139,11 @@ export function saveLabProgress(progressObj) {
   }
 }
 
-// ==================== MINI EKSPERIMENTŲ KONFIGŪRACIJA ====================
-export const LAB_LEVELS = {
-  grade1: [
-    {
-      id: 'g1_laser_1',
-      kind: 'laser',
-      badge: '🔦 LAZERIO KELIAS',
-      title: '1. Veidrodžio posūkis',
-      instruction: 'Paspausk ant geltono veidrodžio (/ arba \\), kad lazerio spindulys pataikytų į 💎 kristalą!',
-      reward: 1,
-      cols: 4,
-      rows: 3,
-      emitter: { r: 0, c: 0, dir: 'R' },
-      target: { r: 2, c: 3 },
-      walls: [
-        [1, 0],
-        [1, 1]
-      ],
-      mirrors: [
-        { r: 0, c: 3, type: '/' }
-      ]
-    },
-    {
-      id: 'g1_switches_1',
-      kind: 'switches',
-      badge: '⚙️ ENERGIJOS GRANDINĖ',
-      title: '2. Laboratorijos šviesos',
-      instruction: 'Įjunk tik tuos energijos blokus, kurių suma lygi lygiai 10 V!',
-      reward: 1,
-      targetSum: 10,
-      values: [2, 5, 3, 6]
-    },
-    {
-      id: 'g1_sequence_1',
-      kind: 'sequence',
-      badge: '🔮 KRISTALŲ ŠIFRAS',
-      title: '3. Skaičių banga',
-      instruction: 'Atspėk, koks skaičius turėtų būti vietoj [ ? ] robotuko ekrane:',
-      reward: 2,
-      prompt: '2  →  4  →  6  →  8  →  [ ? ]',
-      answer: 10,
-      choices: [9, 10, 11, 12]
-    }
-  ],
-  grade3: [
-    {
-      id: 'g3_laser_1',
-      kind: 'laser',
-      badge: '🔦 LAZERIŲ LABIRINTAS',
-      title: '1. Dvigubas atspindys',
-      instruction: 'Sudėliok abu veidrodžius (/ arba \\), kad spindulys aplenktų sienas ir pasiektų 💎!',
-      reward: 1,
-      cols: 5,
-      rows: 4,
-      emitter: { r: 0, c: 0, dir: 'R' },
-      target: { r: 3, c: 0 },
-      walls: [
-        [1, 1],
-        [1, 2],
-        [2, 1],
-        [2, 2]
-      ],
-      mirrors: [
-        { r: 0, c: 4, type: '/' },
-        { r: 3, c: 4, type: '\\' }
-      ]
-    },
-    {
-      id: 'g3_switches_1',
-      kind: 'switches',
-      badge: '⚡ REAKTORIAUS GALIA',
-      title: '2. Tikslus krūvis (27 V)',
-      instruction: 'Įjunk tinkamą jungiklių derinį, kad reaktorius pasiektų lygiai 27 V!',
-      reward: 2,
-      targetSum: 27,
-      values: [4, 8, 12, 15, 3]
-    },
-    {
-      id: 'g3_sequence_1',
-      kind: 'sequence',
-      badge: '🧬 INŽINERINIS ŠIFRAS',
-      title: '3. Dvigubėjančios jėgos',
-      instruction: 'Rask dėsningumą ir nustatyk trūkstamą skaičių:',
-      reward: 2,
-      prompt: '3  →  6  →  12  →  24  →  [ ? ]',
-      answer: 48,
-      choices: [36, 42, 48, 54]
-    }
-  ]
-};
-
 // ==================== BŪSENA ====================
 let progress = loadLabProgress();
 let currentDifficulty = null;
-let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'circuit' | 'balance' | 'matrix' | 'mini'
+let currentMode = 'pinpull'; // 'pinpull' | 'sokoban' | 'laser' | 'circuit' | 'balance' | 'matrix' | 'algo' | 'gears' | 'gravity' | 'mathcross' | 'bridges' | 'mini'
 let activeLevelIndex = 0;
-let mirrorStates = [];
-let switchStates = [];
 let pinEngine = null;
 let sokobanGame = null;
 let laserEngine = null;
@@ -245,6 +160,8 @@ let gearsEngine = null;
 let gravityEngine = null;
 let mathCrossEngine = null;
 let bridgesEngine = null;
+let pipeValveEngine = null;
+let jugPourEngine = null;
 let laserMoveToolActive = false;
 let currentSokobanDef = null;
 let currentSokobanTotal = 0;
@@ -309,7 +226,7 @@ function getAllLevelsForDiff(diff) {
     ...GRAVITY_LEVELS[diff],
     ...MATHCROSS_LEVELS[diff],
     ...BRIDGES_LEVELS[diff],
-    ...LAB_LEVELS[diff]
+    ...FLASK_LEVELS[diff]
   ];
 }
 
@@ -390,6 +307,13 @@ const LAB_WORLD_ZONES = [
     desc: 'Dedukciniai salų tinklai (Hashi)',
     icon: '🌉',
     accent: '#38bdf8'
+  },
+  {
+    mode: 'mini',
+    title: '12. Kolbų laboratorija',
+    desc: 'Spalvų sklendės ir perpylimo uždaviniai',
+    icon: '🧪',
+    accent: '#22d3ee'
   }
 ];
 
@@ -405,7 +329,7 @@ function getLevelsForMode(mode, diff = currentDifficulty) {
   if (mode === 'gravity') return GRAVITY_LEVELS[diff];
   if (mode === 'mathcross') return MATHCROSS_LEVELS[diff];
   if (mode === 'bridges') return BRIDGES_LEVELS[diff];
-  return LAB_LEVELS[diff];
+  return FLASK_LEVELS[diff];
 }
 
 function getCurrentModeLevels(diff = currentDifficulty) {
@@ -615,6 +539,7 @@ export function showWorldMapView() {
   destroyGravityEngine();
   destroyMathCrossEngine();
   destroyBridgesEngine();
+  destroyMiniFlaskEngine();
 
   worldMapPanel?.classList.remove('hidden');
   labPuzzleArea?.classList.add('hidden');
@@ -677,6 +602,7 @@ function showDifficultyScreen() {
   destroyGravityEngine();
   destroyMathCrossEngine();
   destroyBridgesEngine();
+  destroyMiniFlaskEngine();
   currentDifficulty = null;
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
@@ -983,6 +909,17 @@ function destroyBridgesEngine() {
   }
 }
 
+function destroyMiniFlaskEngine() {
+  if (pipeValveEngine) {
+    pipeValveEngine.destroy();
+    pipeValveEngine = null;
+  }
+  if (jugPourEngine) {
+    jugPourEngine.destroy();
+    jugPourEngine = null;
+  }
+}
+
 // ==================== UŽUOMINOS LEMPUTĖ IR ĖJIMŲ SKAITIKLIS ====================
 function stopLevelTimer() {
   if (levelTimerId !== null) {
@@ -1054,6 +991,8 @@ function clearAllHints() {
   gearsEngine?.setHint(null);
   gravityEngine?.setHint(null);
   bridgesEngine?.setHintIsland(null);
+  pipeValveEngine?.setHint(null);
+  jugPourEngine?.setHintAction(null);
 }
 
 function recordPlayerMove() {
@@ -1087,8 +1026,8 @@ function applyFirstHint() {
     gravityEngine,
     mathCrossEngine,
     bridgesEngine,
-    mirrorStates,
-    switchStates
+    pipeValveEngine,
+    jugPourEngine
   });
 
   if (!hint) return;
@@ -1123,17 +1062,12 @@ function applyFirstHint() {
       const btn = document.querySelector(`.matrix-choice-btn[data-choice-index="${idx}"]`);
       btn?.classList.add('hint-dimmed');
     });
-  } else if (hint.kind === 'mini-laser-mirror') {
-    const cell = document.querySelector(`[data-laser-cell="${hint.r},${hint.c}"]`);
-    cell?.classList.add('hint-highlight');
-  } else if (hint.kind === 'mini-switch') {
-    const sw = document.querySelector(`[data-switch-index="${hint.switchIndex}"]`);
-    sw?.classList.add('hint-highlight');
-  } else if (hint.kind === 'mini-seq-eliminate') {
-    hint.eliminateValues.forEach((val) => {
-      const btn = document.querySelector(`.lab-choice-btn[data-seq-value="${val}"]`);
-      btn?.classList.add('hint-dimmed');
-    });
+  } else if (hint.kind === 'mini-pipe-valve') {
+    pipeValveEngine?.setHint(hint.valveId);
+  } else if (hint.kind === 'mini-pipe-launch') {
+    document.getElementById('btn-flask-launch')?.classList.add('hint-highlight');
+  } else if (hint.kind === 'mini-jug-move') {
+    jugPourEngine?.setHintAction(hint.action);
   } else if (hint.kind === 'algo-cmd') {
     const btn = document.querySelector(`.algo-cmd-btn[data-algo-cmd="${hint.cmd}"]`);
     btn?.classList.add('hint-btn-pulse');
@@ -1181,6 +1115,7 @@ function loadActiveLevel() {
   destroyGravityEngine();
   destroyMathCrossEngine();
   destroyBridgesEngine();
+  destroyMiniFlaskEngine();
   sokobanGame = null;
   const levels = getCurrentModeLevels();
   const level = levels[activeLevelIndex];
@@ -1208,7 +1143,7 @@ function loadActiveLevel() {
                         ? `🔢 SKAIČIŲ KRYŽIAŽODŽIAI • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
                         : currentMode === 'bridges'
                           ? `🌉 ENERGIJOS TILTAI • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`
-                          : level.badge;
+                          : `🧪 KOLBŲ LABORATORIJA • ${currentDifficulty === 'grade1' ? '1 KLASĖ' : '3 KLASĖ'}`;
   document.getElementById('puzzle-title').textContent = level.title;
   document.getElementById('puzzle-instruction').textContent = level.instruction;
   document.getElementById('puzzle-reward-badge').textContent = `+${level.reward} 💎`;
@@ -1397,16 +1332,7 @@ function loadActiveLevel() {
     bridgesStage?.classList.add('hidden');
     miniStage.classList.remove('hidden');
     miniStage.innerHTML = '';
-
-    if (level.kind === 'laser') {
-      mirrorStates = level.mirrors.map((m) => ({ ...m }));
-      renderLaserStage(miniStage, level);
-    } else if (level.kind === 'switches') {
-      switchStates = level.values.map(() => false);
-      renderSwitchesStage(miniStage, level);
-    } else if (level.kind === 'sequence') {
-      renderSequenceStage(miniStage, level);
-    }
+    renderFlaskLabStage(miniStage, level, levels.length);
   }
 }
 
@@ -2630,164 +2556,201 @@ function renderSokobanBoard() {
   }
 }
 
-// ==================== MINI EKSPERIMENTŲ RENDERIS ====================
-function traceLaserBeam(level, mirrors) {
-  const litSet = new Set();
-  let { r, c, dir } = level.emitter;
-  const dr = { U: -1, D: 1, L: 0, R: 0 };
-  const dc = { U: 0, D: 0, L: -1, R: 1 };
-  const wallSet = new Set(level.walls.map(([wr, wc]) => `${wr},${wc}`));
-  const mirrorMap = new Map(mirrors.map((m) => [`${m.r},${m.c}`, m]));
-
-  let targetHit = false;
-  for (let step = 0; step < 40; step++) {
-    litSet.add(`${r},${c}`);
-    if (r === level.target.r && c === level.target.c) {
-      targetHit = true;
-      break;
-    }
-
-    r += dr[dir];
-    c += dc[dir];
-
-    if (r < 0 || r >= level.rows || c < 0 || c >= level.cols) break;
-    if (wallSet.has(`${r},${c}`)) break;
-
-    const m = mirrorMap.get(`${r},${c}`);
-    if (m) {
-      litSet.add(`${r},${c}`);
-      if (m.type === '/') {
-        dir = dir === 'R' ? 'U' : dir === 'L' ? 'D' : dir === 'U' ? 'R' : 'L';
-      } else {
-        dir = dir === 'R' ? 'D' : dir === 'L' ? 'U' : dir === 'U' ? 'L' : 'R';
-      }
-    }
-  }
-
-  return { litSet, targetHit };
-}
-
-function renderLaserStage(stage, level) {
+// ==================== 12. KOLBŲ IR SKYSČIŲ LABORATORIJA ====================
+function renderFlaskLabStage(stage, level, totalInMode) {
+  destroyMiniFlaskEngine();
   stage.innerHTML = '';
-  const { litSet, targetHit } = traceLaserBeam(level, mirrorStates);
-  const wallSet = new Set(level.walls.map(([wr, wc]) => `${wr},${wc}`));
 
-  const grid = document.createElement('div');
-  grid.className = 'laser-grid';
-  grid.style.gridTemplateColumns = `repeat(${level.cols}, auto)`;
+  const wrap = document.createElement('div');
+  wrap.className = 'flask-lab-wrap';
 
-  for (let r = 0; r < level.rows; r++) {
-    for (let c = 0; c < level.cols; c++) {
-      const cell = document.createElement('div');
-      cell.className = 'laser-cell';
-      const key = `${r},${c}`;
-      if (litSet.has(key)) cell.classList.add('lit');
+  const topBar = document.createElement('div');
+  topBar.className = 'flask-controls-bar';
 
-      if (r === level.emitter.r && c === level.emitter.c) {
-        cell.classList.add('emitter');
-        cell.textContent = '🔦';
-      } else if (r === level.target.r && c === level.target.c) {
-        cell.classList.add('target');
-        if (targetHit) cell.classList.add('hit');
-        cell.textContent = '💎';
-      } else if (wallSet.has(key)) {
-        cell.classList.add('wall');
-        cell.textContent = '🧱';
-      } else {
-        const mIdx = mirrorStates.findIndex((m) => m.r === r && m.c === c);
-        if (mIdx >= 0) {
-          cell.classList.add('mirror');
-          cell.dataset.laserCell = `${r},${c}`;
-          const sym = document.createElement('span');
-          sym.className = 'mirror-symbol';
-          sym.textContent = mirrorStates[mIdx].type;
-          cell.appendChild(sym);
-          cell.title = 'Paspausk, kad pasuktum veidrodį';
-          cell.addEventListener('click', () => {
-            mirrorStates[mIdx].type = mirrorStates[mIdx].type === '/' ? '\\' : '/';
-            playMirrorClick();
-            recordPlayerMove();
-            renderLaserStage(stage, level);
-          });
-        } else if (litSet.has(key)) {
-          cell.textContent = '⚡';
-        }
-      }
+  const counterEl = document.createElement('div');
+  counterEl.id = 'flask-counter';
+  counterEl.className = 'pinpull-counter';
 
-      grid.appendChild(cell);
+  const actions = document.createElement('div');
+  actions.className = 'flask-actions-group';
+
+  const launchBtn = level.kind === 'pipes' ? document.createElement('button') : null;
+  if (launchBtn) {
+    launchBtn.id = 'btn-flask-launch';
+    launchBtn.type = 'button';
+    launchBtn.className = 'flask-launch-btn';
+    launchBtn.textContent = '🧪 Paleisti srautą!';
+    actions.appendChild(launchBtn);
+  }
+
+  const resetBtn = document.createElement('button');
+  resetBtn.id = 'btn-flask-reset';
+  resetBtn.type = 'button';
+  resetBtn.className = 'pin-reset-btn';
+  resetBtn.textContent = '🔄 Iš naujo';
+  actions.appendChild(resetBtn);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.id = 'btn-flask-next';
+  nextBtn.type = 'button';
+  nextBtn.className = 'pin-next-btn hidden';
+  nextBtn.textContent = 'Kitas lygis ▶';
+  nextBtn.addEventListener('click', () => {
+    const levels = getCurrentModeLevels();
+    if (activeLevelIndex < levels.length - 1) {
+      activeLevelIndex++;
+      renderLevelsStrip();
+      loadActiveLevel();
     }
-  }
-
-  stage.appendChild(grid);
-  if (targetHit) {
-    markLevelSolved(level);
-  }
-}
-
-function renderSwitchesStage(stage, level) {
-  stage.innerHTML = '';
-  const sum = level.values.reduce((acc, v, i) => acc + (switchStates[i] ? v : 0), 0);
-
-  const meter = document.createElement('div');
-  meter.className = 'power-meter';
-  meter.textContent = `Dabartinė galia: ${sum} V / Tikslas: ${level.targetSum} V`;
-  stage.appendChild(meter);
-
-  const row = document.createElement('div');
-  row.className = 'switches-row';
-
-  level.values.forEach((val, idx) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = `switch-btn${switchStates[idx] ? ' on' : ''}`;
-    btn.dataset.switchIndex = String(idx);
-    btn.textContent = `${switchStates[idx] ? '🟢 ĮJUNGTA' : '⚪ IŠJUNGTA'} (+${val} V)`;
-    btn.addEventListener('click', () => {
-      switchStates[idx] = !switchStates[idx];
-      playLaserHum();
-      recordPlayerMove();
-      renderSwitchesStage(stage, level);
-    });
-    row.appendChild(btn);
   });
+  actions.appendChild(nextBtn);
 
-  stage.appendChild(row);
-  if (sum === level.targetSum) {
-    markLevelSolved(level);
-  }
-}
+  topBar.appendChild(counterEl);
+  topBar.appendChild(actions);
+  wrap.appendChild(topBar);
 
-function renderSequenceStage(stage, level) {
-  stage.innerHTML = '';
+  const canvasWrap = document.createElement('div');
+  canvasWrap.className = 'pinpull-canvas-wrap';
+  const canvas = document.createElement('canvas');
+  canvas.id = 'flask-canvas';
+  canvas.className = 'pinpull-canvas';
+  canvas.width = FLASK_CANVAS_W;
+  canvas.height = FLASK_CANVAS_H;
+  canvas.setAttribute('aria-label', 'Kolbų laboratorijos lenta');
+  canvasWrap.appendChild(canvas);
+  wrap.appendChild(canvasWrap);
 
-  const seq = document.createElement('div');
-  seq.className = 'sequence-display';
-  seq.textContent = level.prompt;
-  stage.appendChild(seq);
+  const feedbackEl = document.getElementById('puzzle-feedback');
 
-  const row = document.createElement('div');
-  row.className = 'choice-row';
-  level.choices.forEach((choice) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'lab-choice-btn';
-    btn.dataset.seqValue = String(choice);
-    btn.textContent = String(choice);
-    btn.addEventListener('click', () => {
-      recordPlayerMove();
-      const feedbackEl = document.getElementById('puzzle-feedback');
-      if (choice === level.answer) {
+  if (level.kind === 'pipes') {
+    const tgtSpec = RYB_COLORS[level.targetColor];
+    const updatePipeHud = () => {
+      counterEl.textContent = `🎯 Tikslas: ${tgtSpec.dot} ${tgtSpec.label}`;
+      if (launchBtn) launchBtn.disabled = Boolean(pipeValveEngine?.flowing || pipeValveEngine?.won);
+    };
+
+    pipeValveEngine = new PipeValveEngine(canvas, level, {
+      onValveClick: () => {
+        playTrackClick();
+        recordPlayerMove();
+        feedbackEl.className = 'puzzle-feedback hidden';
+        feedbackEl.textContent = '';
+      },
+      onLaunchSound: () => {
+        playLaserHum();
+        recordPlayerMove();
+      },
+      onStateChange: updatePipeHud,
+      onWin: () => {
+        updatePipeHud();
         markLevelSolved(level);
-      } else {
+        if (activeLevelIndex < totalInMode - 1) nextBtn.classList.remove('hidden');
+      },
+      onFail: (res) => {
         playWrongBuzz();
-        feedbackEl.textContent = `❌ ${choice} netinka – pabandyk pažiūrėti, kaip skaičiai keičiasi iš eilės!`;
+        updatePipeHud();
+        if (res?.toxicHit) {
+          feedbackEl.textContent = '☠️ ATSARGIAI! Skystis pateko į nuodingų dujų kamerą — pasuk sklendes ir mėgink dar kartą!';
+        } else {
+          const gotSpec = RYB_COLORS[res?.resultColor || 'EMPTY'];
+          feedbackEl.textContent =
+            res?.resultColor === 'EMPTY'
+              ? '🧪 Skystis nepasiekė tikslo kolbos — patikrink uždarytas sklendes!'
+              : `🧪 Kolboje gavosi ${gotSpec.dot} ${gotSpec.label}, o reikia ${tgtSpec.dot} ${tgtSpec.label}!`;
+        }
         feedbackEl.className = 'puzzle-feedback error';
         feedbackEl.classList.remove('hidden');
       }
     });
-    row.appendChild(btn);
-  });
-  stage.appendChild(row);
+
+    launchBtn?.addEventListener('click', () => {
+      feedbackEl.className = 'puzzle-feedback hidden';
+      feedbackEl.textContent = '';
+      pipeValveEngine?.triggerTest();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      resetAttemptState();
+      feedbackEl.className = 'puzzle-feedback hidden';
+      feedbackEl.textContent = '';
+      nextBtn.classList.add('hidden');
+      pipeValveEngine?.reset();
+    });
+
+    updatePipeHud();
+  } else {
+    const quickBar = document.createElement('div');
+    quickBar.className = 'jug-quick-bar';
+    wrap.appendChild(quickBar);
+
+    const updateJugHud = () => {
+      if (!jugPourEngine) return;
+      counterEl.textContent = `🔄 Ėjimai: ${jugPourEngine.moves} • 🏆 Meistras: ≤ ${level.masterMoves}`;
+      quickBar.innerHTML = '';
+      level.capacities.forEach((cap, idx) => {
+        const card = document.createElement('div');
+        card.className = 'jug-card-ctrl';
+        const curL = jugPourEngine.amounts[idx];
+        const label = document.createElement('span');
+        label.textContent = `#${idx + 1}: ${curL}/${cap} L`;
+        card.appendChild(label);
+
+        if (level.hasTap) {
+          const fillBtn = document.createElement('button');
+          fillBtn.type = 'button';
+          fillBtn.className = 'jug-mini-btn fill';
+          fillBtn.textContent = '🚰 Pripilti';
+          fillBtn.disabled = jugPourEngine.won || curL >= cap;
+          fillBtn.addEventListener('click', () => jugPourEngine?.fillJug(idx));
+
+          const emptyBtn = document.createElement('button');
+          emptyBtn.type = 'button';
+          emptyBtn.className = 'jug-mini-btn empty';
+          emptyBtn.textContent = '💧 Išpilti';
+          emptyBtn.disabled = jugPourEngine.won || curL <= 0;
+          emptyBtn.addEventListener('click', () => jugPourEngine?.emptyJug(idx));
+
+          card.appendChild(fillBtn);
+          card.appendChild(emptyBtn);
+        }
+        quickBar.appendChild(card);
+      });
+    };
+
+    jugPourEngine = new JugPourEngine(canvas, level, {
+      onSelectSound: () => playBalancePop(),
+      onPourSound: () => {
+        playBallClink();
+        recordPlayerMove();
+        feedbackEl.className = 'puzzle-feedback hidden';
+        feedbackEl.textContent = '';
+      },
+      onFeedback: (msg) => {
+        playWrongBuzz();
+        feedbackEl.textContent = msg;
+        feedbackEl.className = 'puzzle-feedback error';
+        feedbackEl.classList.remove('hidden');
+      },
+      onStateChange: updateJugHud,
+      onWin: () => {
+        updateJugHud();
+        markLevelSolved(level);
+        if (activeLevelIndex < totalInMode - 1) nextBtn.classList.remove('hidden');
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      resetAttemptState();
+      feedbackEl.className = 'puzzle-feedback hidden';
+      feedbackEl.textContent = '';
+      nextBtn.classList.add('hidden');
+      jugPourEngine?.reset();
+    });
+
+    updateJugHud();
+  }
+
+  stage.appendChild(wrap);
 }
 
 // ==================== ĮVYKIŲ VALDYMAS ====================
