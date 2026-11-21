@@ -907,6 +907,33 @@ body.in-battle-mode .td-container {
   color: #f8fafc;
 }
 
+.bonus-zone-tooltip {
+  position: absolute;
+  z-index: 24;
+  pointer-events: none;
+  max-width: 270px;
+  padding: 10px 13px;
+  border-radius: 13px;
+  background: rgba(15, 23, 42, 0.94);
+  border: 1.5px solid rgba(253, 224, 71, 0.72);
+  color: #f8fafc;
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.55);
+  font-size: 0.85rem;
+  line-height: 1.38;
+}
+
+.bonus-zone-tooltip-title {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #fde047;
+  margin-bottom: 3px;
+}
+
+.bonus-zone-tooltip-desc {
+  color: #e2e8f0;
+}
+
 .wave-preview-list {
   display: flex;
   flex-direction: column;

@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121n';
+} from '../../../shared/playtime-timer.js?v=20261121o';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -27,9 +27,9 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121n';
-import { TDEngine } from './engine.js?v=20261121n';
-import { audioManager } from './audio.js?v=20261121n';
+} from './balance.js?v=20261121o';
+import { TDEngine } from './engine.js?v=20261121o';
+import { audioManager } from './audio.js?v=20261121o';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];
@@ -137,6 +137,7 @@ const encyclopediaModal = document.getElementById('encyclopedia-modal');
 const encyclopediaContent = document.getElementById('encyclopedia-content');
 const btnEncyTabTowers = document.getElementById('btn-ency-tab-towers');
 const btnEncyTabEnemies = document.getElementById('btn-ency-tab-enemies');
+const btnEncyTabWorld = document.getElementById('btn-ency-tab-world');
 
 const campaignZonesBar = document.getElementById('campaign-zones-bar');
 const campaignNodesLayer = document.getElementById('campaign-nodes-layer');
@@ -173,6 +174,7 @@ const btnRallyPoint = document.getElementById('btn-rally-point');
 const wavePreviewCard = document.getElementById('wave-preview-card');
 const wavePreviewHeadline = document.getElementById('wave-preview-headline');
 const wavePreviewList = document.getElementById('wave-preview-list');
+const bonusZoneTooltip = document.getElementById('bonus-zone-tooltip');
 const resultOverlay = document.getElementById('battle-result-overlay');
 
 const btnSpeedToggle = document.getElementById('btn-speed-toggle');
@@ -232,6 +234,7 @@ function recordEnemyEncounter(enemyId) {
 engine = new TDEngine(canvas, {
   onStateChange: () => syncBattleUI(),
   onSelectionChange: () => syncSelectionUI(),
+  onBonusZoneChange: (zone) => renderBonusZoneTooltip(zone),
   onWavePreviewChange: (preview) => renderWavePreviewCard(preview),
   onGameResult: (result) => handleGameResult(result),
   onEnemyEncountered: (enemyId) => recordEnemyEncounter(enemyId)
@@ -315,6 +318,40 @@ function positionFloatingMenu(menuEl, padX, padY) {
 function closePadMenus() {
   padBuildMenu?.classList.add('hidden');
   towerInspectorMenu?.classList.add('hidden');
+}
+
+function renderBonusZoneTooltip(zone) {
+  if (!bonusZoneTooltip || !canvasFrame || !canvas) return;
+  if (!zone) {
+    bonusZoneTooltip.classList.add('hidden');
+    return;
+  }
+
+  const claimedNote = zone.kind === 'gold' && zone.claimed ? ' (Jau paimta šioje kovoje ✓)' : '';
+  bonusZoneTooltip.innerHTML = '';
+  const titleDiv = document.createElement('div');
+  titleDiv.className = 'bonus-zone-tooltip-title';
+  titleDiv.textContent = `${zone.title}${claimedNote}`;
+  const descDiv = document.createElement('div');
+  descDiv.className = 'bonus-zone-tooltip-desc';
+  descDiv.textContent = zone.description;
+  bonusZoneTooltip.appendChild(titleDiv);
+  bonusZoneTooltip.appendChild(descDiv);
+  bonusZoneTooltip.classList.remove('hidden');
+
+  const frameRect = canvasFrame.getBoundingClientRect();
+  if (frameRect.width) {
+    const scaleX = frameRect.width / canvas.width;
+    const scaleY = frameRect.height / canvas.height;
+    const px = zone.x * scaleX;
+    const py = zone.y * scaleY;
+    const tipW = 248;
+    const tipH = 78;
+    const left = Math.max(10, Math.min(frameRect.width - tipW - 10, px - tipW / 2));
+    const top = py > tipH + 28 ? py - tipH - 22 : Math.min(frameRect.height - tipH - 10, py + 32);
+    bonusZoneTooltip.style.left = `${Math.round(left)}px`;
+    bonusZoneTooltip.style.top = `${Math.round(top)}px`;
+  }
 }
 
 function renderWavePreviewCard(preview) {
@@ -1158,12 +1195,77 @@ function getEncounteredSetForEncyclopedia() {
 }
 
 function renderEncyclopediaTab(tab = 'towers') {
-  encyActiveTab = tab === 'enemies' ? 'enemies' : 'towers';
+  encyActiveTab = tab === 'enemies' ? 'enemies' : tab === 'world' ? 'world' : 'towers';
   btnEncyTabTowers?.classList.toggle('active', encyActiveTab === 'towers');
   btnEncyTabEnemies?.classList.toggle('active', encyActiveTab === 'enemies');
+  btnEncyTabWorld?.classList.toggle('active', encyActiveTab === 'world');
   if (!encyclopediaContent) return;
 
   encyclopediaContent.innerHTML = '';
+
+  if (encyActiveTab === 'world') {
+    const worldEntries = [
+      {
+        icon: '🔨',
+        title: 'Statybos aikštelė (Plaktukas)',
+        meta: 'Šviesi akmeninė / bazės plokštė prie kelio',
+        desc: 'Tai paruošta pamatų vieta Tavo bokšteliui. Paspausk ant jos, kad atsidarytum statybos ratą ir matytum tikslų šūvio spindulį.',
+        tip: '💡 Statyk bokštelius posūkiuose ir šalia bonusinių taškų!'
+      },
+      {
+        icon: '🪙',
+        title: 'Derlinga / Lobio zona (+🪙)',
+        meta: 'Auksinis žiedas su kibirkštėlėmis ant žemės',
+        desc: 'Pastatyk bent vieną bokštelį švytinčiame zonos spindulyje ir iškart gauk +15 🪙 papildomų monetų kovos pradžiai!',
+        tip: '💡 Vieną kartą per lygį – idealu brangesniam startiniam bokšteliui!'
+      },
+      {
+        icon: '⚡',
+        title: 'Galios / Akustikos zona (+⚡)',
+        meta: 'Žydras energijos kristalas ant žemės',
+        desc: 'Visi bokšteliai, pastatyti netoli šios zonos, gauna nuolatinį +8% šaudymo greičio pagreitinimą visos kovos metu.',
+        tip: '💡 Derink su „Dagilėlio“ bokšteliu – greičio bonusai sumuojasi!'
+      },
+      {
+        icon: '▶',
+        title: 'Priešų įėjimo vartai ir bangos ženklas',
+        meta: 'Kelio pradžia su rodykle',
+        desc: 'Čia į žemėlapį įžengia priešų būriai. Užvedus arba paspaudus ant šaukiančio bangos ženkliuko pamatysi, kokie priešai ateis!',
+        tip: '💡 Skubėdamas kviesti kitą bangą anksčiau laiko gausi papildomų monetų!'
+      },
+      {
+        icon: '🏰',
+        title: 'Bubių Tvirtovė (Finišas)',
+        meta: '2.5D bokštas su plevėsuojančia vėliava',
+        desc: 'Paskutinė gynybos linija! Kiekvienas prasiveržęs priešas atima širdeles ir priverčia tvirtovę suvirpėti.',
+        tip: '💡 Jei priešai prasiveržia – pastatyk Vejapjovių Barakus ar Katapultą netoli finišo.'
+      },
+      {
+        icon: '✨',
+        title: 'Bokštų auros (+⚡ / +🔭)',
+        meta: '„Dagilėlio“ ir Saulės Stoties palaikymas',
+        desc: '„Dagilėlio“ garso bokštas pagreitina kaimynus (+15–30% ⚡), o Saulės Baterijų Stotis praplečia gretimų bokštų nuotolį (+12–15% 🔭).',
+        tip: '💡 Kaimynystėje stovintys bokštai veikia kur kas stipriau nei po vieną!'
+      }
+    ];
+    worldEntries.forEach((item) => {
+      const card = document.createElement('article');
+      card.className = 'ency-card';
+      card.innerHTML = `
+        <div class="ency-card-head">
+          <span class="ency-icon">${item.icon}</span>
+          <div>
+            <h4>${item.title}</h4>
+            <div class="ency-meta">${item.meta}</div>
+          </div>
+        </div>
+        <p class="ency-desc">${item.desc}</p>
+        <div class="ency-tip">${item.tip}</div>
+      `;
+      encyclopediaContent.appendChild(card);
+    });
+    return;
+  }
 
   if (encyActiveTab === 'towers') {
     TOWER_LIST.forEach((towerDef) => {
@@ -1445,6 +1547,7 @@ btnOpenEncyclopediaCamp?.addEventListener('click', () => openEncyclopediaModal('
 document.getElementById('btn-close-ency-modal')?.addEventListener('click', closeFeatureModals);
 btnEncyTabTowers?.addEventListener('click', () => renderEncyclopediaTab('towers'));
 btnEncyTabEnemies?.addEventListener('click', () => renderEncyclopediaTab('enemies'));
+btnEncyTabWorld?.addEventListener('click', () => renderEncyclopediaTab('world'));
 
 canvas?.addEventListener('pointermove', (event) => {
   if (!activeProfile || event.pointerType !== 'mouse') return;
@@ -1456,6 +1559,7 @@ canvas?.addEventListener('pointermove', (event) => {
 });
 
 canvas?.addEventListener('pointerleave', () => {
+  engine.clearCanvasHover();
   if (!engine.pinnedWavePreview) {
     renderWavePreviewCard(null);
   }

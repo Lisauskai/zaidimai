@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261121n" />
+  <link rel="stylesheet" href="./style.css?v=20261121o" />
 </head>
 <body>
   <div class="td-bg-glow" aria-hidden="true"></div>
@@ -236,6 +236,9 @@
             <div id="wave-preview-list" class="wave-preview-list"></div>
           </div>
 
+          <!-- Bonusinės zonos paaiškinimas užvedus pelę arba bakstelėjus -->
+          <div id="bonus-zone-tooltip" class="bonus-zone-tooltip hidden" role="status"></div>
+
           <!-- Kompaktiškas radialinis statybos meniu ant tuščios aikštelės -->
           <div id="pad-build-menu" class="floating-pad-menu hidden" role="dialog" aria-label="Bokštelio statyba">
             <div class="floating-menu-head">
@@ -355,6 +358,7 @@
         <div class="ency-tabs">
           <button id="btn-ency-tab-towers" class="ency-tab-btn active" type="button">🏰 Bokšteliai (6)</button>
           <button id="btn-ency-tab-enemies" class="ency-tab-btn" type="button">👾 Priešai ir Bosai (15)</button>
+          <button id="btn-ency-tab-world" class="ency-tab-btn" type="button">🗺️ Žemėlapis ir bonusai</button>
         </div>
       </div>
       <div id="encyclopedia-content" class="encyclopedia-grid"></div>
@@ -387,6 +391,6 @@
     </div>
   </div>
 
-  <script type="module" src="./js/main.js?v=20261121n"></script>
+  <script type="module" src="./js/main.js?v=20261121o"></script>
 </body>
 </html>

@@ -20,16 +20,16 @@ import {
   selectTargetByPriority,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './balance.js?v=20261121n';
+} from './balance.js?v=20261121o';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121n';
-import { renderBattleScene } from './renderer.js?v=20261121n';
-import { audioManager } from './audio.js?v=20261121n';
+} from './towers.js?v=20261121o';
+import { renderBattleScene, getMapBonusZones } from './renderer.js?v=20261121o';
+import { audioManager } from './audio.js?v=20261121o';
 
 let nextEnemyUid = 1;
 
@@ -175,6 +175,12 @@ export class TDEngine {
     this.shakeIntensity = 0;
     this.shakeOffsetX = 0;
     this.shakeOffsetY = 0;
+    this.fortressHitTimer = 0;
+
+    this.bonusZones = [];
+    this.hoveredPadIndex = null;
+    this.hoveredBonusZoneId = null;
+    this.selectedBonusZoneId = null;
 
     this.selectedPadIndex = null;
     this.previewTowerType = 'solar_laser';
@@ -251,6 +257,12 @@ export class TDEngine {
     this.shakeIntensity = 0;
     this.shakeOffsetX = 0;
     this.shakeOffsetY = 0;
+    this.fortressHitTimer = 0;
+
+    this.bonusZones = getMapBonusZones(this.map, this.pathSplines).map((z) => ({ ...z, claimed: false }));
+    this.hoveredPadIndex = null;
+    this.hoveredBonusZoneId = null;
+    this.selectedBonusZoneId = null;
 
     this.selectedPadIndex = null;
     this.previewTowerType = 'solar_laser';
@@ -261,6 +273,7 @@ export class TDEngine {
     this.gameResult = null;
 
     this.refreshNextWavePreview();
+    this.notifyBonusZoneChange();
     this.notifyStateChange();
   }
 
@@ -329,12 +342,16 @@ export class TDEngine {
     } else {
       this.selectedPadIndex = padIndex;
     }
+    this.selectedBonusZoneId = null;
+    this.notifyBonusZoneChange();
     this.notifySelectionChange();
   }
 
   clearSelection() {
     this.selectedPadIndex = null;
     this.placingRallyPadIndex = null;
+    this.selectedBonusZoneId = null;
+    this.notifyBonusZoneChange();
     this.notifySelectionChange();
   }
 
@@ -379,7 +396,49 @@ export class TDEngine {
     return null;
   }
 
+  getBonusZoneAtPoint(canvasX, canvasY) {
+    for (const bz of this.bonusZones || []) {
+      if (Math.hypot(bz.x - canvasX, bz.y - canvasY) <= 28) {
+        return bz;
+      }
+    }
+    return null;
+  }
+
+  getActiveBonusZone() {
+    const activeId = this.selectedBonusZoneId || this.hoveredBonusZoneId;
+    if (!activeId) return null;
+    return (this.bonusZones || []).find((bz) => bz.id === activeId) || null;
+  }
+
+  clearCanvasHover() {
+    this.hoveredPadIndex = null;
+    if (this.hoveredBonusZoneId !== null) {
+      this.hoveredBonusZoneId = null;
+      this.notifyBonusZoneChange();
+    }
+  }
+
   handleCanvasHover(canvasX, canvasY) {
+    let nextHoveredPad = null;
+    let minPadDist = Infinity;
+    for (let i = 0; i < (this.map.pads || []).length; i += 1) {
+      const pad = this.map.pads[i];
+      const dist = Math.hypot(pad.x - canvasX, pad.y - canvasY);
+      if (dist <= 28 && dist < minPadDist) {
+        minPadDist = dist;
+        nextHoveredPad = i;
+      }
+    }
+    this.hoveredPadIndex = nextHoveredPad;
+
+    const bz = nextHoveredPad === null ? this.getBonusZoneAtPoint(canvasX, canvasY) : null;
+    const nextBzId = bz ? bz.id : null;
+    if (nextBzId !== this.hoveredBonusZoneId) {
+      this.hoveredBonusZoneId = nextBzId;
+      this.notifyBonusZoneChange();
+    }
+
     if (this.pinnedWavePreview) return;
     const badge = this.getWaveBadgeAtPoint(canvasX, canvasY);
     if (typeof this.callbacks.onWavePreviewChange === 'function') {
@@ -424,6 +483,16 @@ export class TDEngine {
     }
 
     if (closestIdx === -1) {
+      const bz = this.getBonusZoneAtPoint(canvasX, canvasY);
+      if (bz) {
+        const togglingOff = this.selectedBonusZoneId === bz.id;
+        this.selectedPadIndex = null;
+        this.placingRallyPadIndex = null;
+        this.selectedBonusZoneId = togglingOff ? null : bz.id;
+        this.notifySelectionChange();
+        this.notifyBonusZoneChange();
+        return { type: 'bonus_zone', zone: this.selectedBonusZoneId ? bz : null };
+      }
       this.clearSelection();
       return { type: 'none' };
     }
@@ -527,6 +596,24 @@ export class TDEngine {
 
     this.initTowerSubEntities(tower);
     this.towers.push(tower);
+
+    for (const bz of this.bonusZones || []) {
+      if (
+        bz.kind === 'gold' &&
+        !bz.claimed &&
+        Math.hypot(bz.x - pad.x, bz.y - pad.y) <= (bz.effectRadius || 86)
+      ) {
+        bz.claimed = true;
+        const bonusCoins = bz.rewardCoins || 15;
+        this.coins += bonusCoins;
+        this.spawnParticles(bz.x, bz.y, { count: 14, color: '#fde047', speedMax: 85 });
+        this.addFloatingText(bz.x, bz.y - 24, `+${bonusCoins} 🪙 Derlinga vieta!`, '#fef08a');
+        if (this.selectedBonusZoneId === bz.id || this.hoveredBonusZoneId === bz.id) {
+          this.notifyBonusZoneChange();
+        }
+      }
+    }
+
     this.recomputeTowerAuras();
     this.spawnParticles(pad.x, pad.y, { count: 12, color: stats.color, speedMax: 75 });
     this.addFloatingText(pad.x, pad.y - 26, `-${stats.cost} 🪙`, '#fde047');
@@ -777,6 +864,12 @@ export class TDEngine {
         }
       }
 
+      for (const bz of this.bonusZones || []) {
+        if (bz.kind === 'power' && Math.hypot(bz.x - tower.x, bz.y - tower.y) <= (bz.effectRadius || 86)) {
+          bestSpeedBonus += bz.speedBonus || 0.08;
+        }
+      }
+
       for (const enemy of this.enemies) {
         if (enemy.hp <= 0 || enemy.burrowTimer > 0 || !enemy.jamAuraRadius) continue;
         if (Math.hypot(enemy.x - tower.x, enemy.y - tower.y) <= enemy.jamAuraRadius) {
@@ -876,6 +969,9 @@ export class TDEngine {
         this.shakeOffsetX = 0;
         this.shakeOffsetY = 0;
       }
+    }
+    if (this.fortressHitTimer > 0) {
+      this.fortressHitTimer = Math.max(0, this.fortressHitTimer - rawDt);
     }
 
     if (this.isPaused()) {
@@ -1031,6 +1127,8 @@ export class TDEngine {
       if (enemy.distance >= spline.totalLength) {
         this.enemies.splice(i, 1);
         this.hearts = Math.max(0, this.hearts - (enemy.heartCost || 1));
+        this.fortressHitTimer = 0.45;
+        this.triggerShake(4, 0.22);
         this.addFloatingText(
           this.map.fortress.x - 10,
           this.map.fortress.y - 24,
@@ -1836,6 +1934,12 @@ export class TDEngine {
   notifySelectionChange() {
     if (typeof this.callbacks.onSelectionChange === 'function') {
       this.callbacks.onSelectionChange(this);
+    }
+  }
+
+  notifyBonusZoneChange() {
+    if (typeof this.callbacks.onBonusZoneChange === 'function') {
+      this.callbacks.onBonusZoneChange(this.getActiveBonusZone(), this);
     }
   }
 
