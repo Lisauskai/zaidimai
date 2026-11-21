@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121g';
+} from '../../../shared/playtime-timer.js?v=20261121h';
 import {
   TOWER_LIST,
   TARGETING_PRIORITIES,
@@ -19,8 +19,9 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121g';
-import { TDEngine } from './engine.js?v=20261121g';
+} from './balance.js?v=20261121h';
+import { TDEngine } from './engine.js?v=20261121h';
+import { audioManager } from './audio.js?v=20261121h';
 
 const SAVE_KEY = 'gynyba_save_v1';
 
@@ -99,6 +100,7 @@ const screenGame = document.getElementById('screen-game');
 const topProfilePill = document.getElementById('top-profile-pill');
 const uiActiveProfile = document.getElementById('ui-active-profile');
 const btnSwitchProfile = document.getElementById('btn-switch-profile');
+const btnAudioToggle = document.getElementById('btn-audio-toggle');
 
 const campaignZonesBar = document.getElementById('campaign-zones-bar');
 const campaignNodesLayer = document.getElementById('campaign-nodes-layer');
@@ -700,6 +702,7 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
       syncGateCounters();
 
       if (outcome.isCorrect) {
+        audioManager.playGateSuccess();
         if (outcome.complete) {
           const bucket = saveData[activeProfile];
           if (!bucket.unlockedLevels.includes(pendingGateLevelId)) {
@@ -742,6 +745,7 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
       }
 
       // Klaidos bausmė + 2 sek. paaiškinimas
+      audioManager.playGateMistake();
       if (kgPenaltyBannerEl) {
         kgPenaltyBannerEl.textContent = outcome.warning;
         kgPenaltyBannerEl.classList.remove('hidden');
@@ -788,6 +792,7 @@ function openSmartUpgradeModal(padIndex) {
   const task = eduTaskGenerator.generateTask(activeProfile);
   renderTaskPromptAndOptions(task, (isCorrect) => {
     if (isCorrect) {
+      audioManager.playGateSuccess();
       engine.applyFreeSmartUpgrade(padIndex);
       if (kgFeedbackEl) {
         kgFeedbackEl.style.color = '#86efac';
@@ -806,6 +811,7 @@ function openSmartUpgradeModal(padIndex) {
       return;
     }
 
+    audioManager.playGateMistake();
     if (kgPenaltyBannerEl) {
       kgPenaltyBannerEl.textContent = '❌ Suklydai! Šios bangos nemokamas patobulinimas sudegė.';
       kgPenaltyBannerEl.classList.remove('hidden');
@@ -1128,5 +1134,22 @@ canvas?.addEventListener('pointerleave', () => {
   }
 });
 
+function syncAudioToggleButton() {
+  if (!btnAudioToggle) return;
+  const muted = audioManager.isMuted();
+  btnAudioToggle.classList.toggle('is-muted', muted);
+  btnAudioToggle.setAttribute('aria-pressed', muted ? 'true' : 'false');
+  btnAudioToggle.textContent = muted ? '🔇 Be garso' : '🔊 Garsas';
+}
+
+btnAudioToggle?.addEventListener('click', () => {
+  const muted = audioManager.toggleMute();
+  syncAudioToggleButton();
+  if (!muted) {
+    audioManager.playCoinChime();
+  }
+});
+
+syncAudioToggleButton();
 updateProfileCards();
 requestAnimationFrame(animationLoop);

@@ -16,15 +16,16 @@ import {
   selectTargetByPriority,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './balance.js?v=20261121g';
+} from './balance.js?v=20261121h';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121g';
-import { renderBattleScene } from './renderer.js?v=20261121g';
+} from './towers.js?v=20261121h';
+import { renderBattleScene } from './renderer.js?v=20261121h';
+import { audioManager } from './audio.js?v=20261121h';
 
 let nextEnemyUid = 1;
 
@@ -499,6 +500,7 @@ export class TDEngine {
     this.recomputeTowerAuras();
     this.spawnParticles(pad.x, pad.y, { count: 12, color: stats.color, speedMax: 75 });
     this.addFloatingText(pad.x, pad.y - 26, `-${stats.cost} 🪙`, '#fde047');
+    audioManager.playTowerBuild();
     this.notifySelectionChange();
     this.notifyStateChange();
     return true;
@@ -529,6 +531,7 @@ export class TDEngine {
     this.initTowerSubEntities(tower);
     this.recomputeTowerAuras();
     this.addFloatingText(tower.x, tower.y - 30, `⬆️ Lygis ${tower.level}!`, '#4ade80');
+    audioManager.playTowerUpgrade(tower.level);
     this.notifySelectionChange();
     this.notifyStateChange();
     return true;
@@ -556,6 +559,7 @@ export class TDEngine {
     this.initTowerSubEntities(tower);
     this.recomputeTowerAuras();
     this.addFloatingText(tower.x, tower.y - 30, `🧠 Nemokamas Lygis ${tower.level}!`, '#38bdf8');
+    audioManager.playTowerUpgrade(tower.level);
     this.notifySelectionChange();
     this.notifyStateChange();
     return true;
@@ -577,6 +581,7 @@ export class TDEngine {
     this.initTowerSubEntities(tower);
     this.recomputeTowerAuras();
     this.addFloatingText(tower.x, tower.y - 32, `${chosen.icon} ${chosen.name}!`, '#fde047');
+    audioManager.playTowerUpgrade(4);
     this.notifySelectionChange();
     this.notifyStateChange();
     return true;
@@ -593,6 +598,7 @@ export class TDEngine {
     this.coins += refund;
     this.recomputeTowerAuras();
     this.addFloatingText(tower.x, tower.y - 26, `+${refund} 🪙 (75%)`, '#fde047');
+    audioManager.playCoinChime();
 
     if (this.selectedPadIndex === padIndex) {
       this.selectedPadIndex = null;
@@ -633,6 +639,7 @@ export class TDEngine {
           `+${bonus} 🪙 Ankstyva banga!`,
           '#fde047'
         );
+        audioManager.playCoinChime();
       }
     }
 
@@ -802,6 +809,9 @@ export class TDEngine {
       hitFlash: 0
     };
     this.enemies.push(enemyObj);
+    if (enemyObj.isBoss) {
+      audioManager.playBossHorn();
+    }
     return enemyObj;
   }
 
@@ -998,6 +1008,7 @@ export class TDEngine {
             wave: this.wave,
             hearts: 0
           };
+          audioManager.playDefeatTone();
           this.notifyGameResult();
           return;
         }
@@ -1144,6 +1155,7 @@ export class TDEngine {
           wave: this.wave,
           hearts: this.hearts
         };
+        audioManager.playVictoryFanfare();
         this.notifyGameResult();
       }
       this.notifyStateChange();
@@ -1187,6 +1199,8 @@ export class TDEngine {
     if (selected[0]) {
       tower.angle = Math.atan2(selected[0].y - tower.y, selected[0].x - tower.x);
       tower.recoilOffset = Math.max(tower.recoilOffset || 0, 2.2);
+      const leadRamp = Math.min(stats.maxRamp || 2.5, 1 + (tower.lockTimers.get(selected[0].uid) || 0) * (stats.rampRatePerSec || 0.65));
+      audioManager.playSolarLaser(leadRamp);
     }
 
     for (const target of selected) {
@@ -1249,6 +1263,7 @@ export class TDEngine {
     tower.cooldownLeft = stats.cooldown;
     tower.recoilOffset = 4.6;
     tower.angle = Math.atan2(targets[0].y - tower.y, targets[0].x - tower.x);
+    audioManager.playDagilelisChord(tower.level);
     this.spawnParticles(tower.x, tower.y, { count: 7, color: stats.color, speedMax: 70 });
     this.pulses.push({
       x: tower.x,
@@ -1327,6 +1342,7 @@ export class TDEngine {
           drone.cooldownLeft = stats.cooldown;
           drone.recoilOffset = 3.5;
           tower.recoilOffset = 2.5;
+          audioManager.playDroneShot(Boolean(stats.homingMissiles));
           if (stats.homingMissiles) {
             this.projectiles.push({
               x: drone.x,
@@ -1440,6 +1456,7 @@ export class TDEngine {
       // Fizinis žemės priešo sustabdymas ir artima kova
       if (enemy && Math.hypot(enemy.x - unit.x, enemy.y - unit.y) <= 28) {
         enemy.isBlocked = true;
+        audioManager.playMowerClash();
         this.damageEnemy(enemy, stats.unitDps * dt, { silentText: true });
 
         // Priešo kontrataka į robotą
@@ -1490,6 +1507,7 @@ export class TDEngine {
     tower.shotCounter = (tower.shotCounter || 0) + 1;
     tower.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
     tower.recoilOffset = 6.0;
+    audioManager.playCatapultLaunch();
 
     const freezeShot =
       Boolean(stats.freezeEveryNShots) && tower.shotCounter % stats.freezeEveryNShots === 0;
@@ -1538,6 +1556,7 @@ export class TDEngine {
       speedMax: 105
     });
     this.triggerScreenShake(2.6, 0.14);
+    audioManager.playBerryFrostExplosion(shot.freezeDuration > 0);
 
     for (const enemy of [...this.enemies]) {
       if (enemy.isFlying || enemy.burrowTimer > 0) continue;
@@ -1572,6 +1591,7 @@ export class TDEngine {
         vy: -36,
         font: 'bold 15px Fredoka, Outfit, sans-serif'
       });
+      audioManager.playCoinChime();
       this.notifyStateChange();
     }
 
@@ -1689,6 +1709,7 @@ export class TDEngine {
         vy: -38,
         font: 'bold 14px Fredoka, Outfit, sans-serif'
       });
+      audioManager.playCoinChime();
       this.spawnParticles(enemy.x, enemy.y, {
         count: enemy.isBoss ? 28 : 11,
         color: enemy.color,

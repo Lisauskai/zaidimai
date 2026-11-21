@@ -168,6 +168,30 @@ body {
   border-color: var(--accent-cyan);
 }
 
+.audio-toggle-btn {
+  padding: 9px 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(56, 189, 248, 0.42);
+  background: rgba(14, 116, 144, 0.32);
+  color: #e0f2fe;
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+
+.audio-toggle-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-cyan);
+}
+
+.audio-toggle-btn.is-muted {
+  border-color: rgba(148, 163, 184, 0.35);
+  background: rgba(30, 41, 59, 0.85);
+  color: #94a3b8;
+}
+
 /* ==================== KONTEINERIS ==================== */
 .td-container {
   position: relative;
