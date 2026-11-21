@@ -48,6 +48,18 @@ function buildStringOptions(correctStr, distractors) {
 }
 
 // ==================== PROGRESUOJANČIOS BAUSMĖS ŽINIŲ VARTŲ SESIJA ====================
+export function buildTaskReviewSummary(task, isCorrect = false) {
+  const correctAnswer = String(task?.correctAnswer ?? '');
+  const rawExplanation = String(task?.explanation || '').trim();
+  const baseText = isCorrect
+    ? `✅ Teisingas atsakymas: ${correctAnswer}. ${rawExplanation}`
+    : `📖 Teisingas atsakymas: ${correctAnswer}. ${rawExplanation}`;
+  return {
+    correctAnswer,
+    explanationText: baseText.trim()
+  };
+}
+
 export function createKnowledgeGateSession(initialRemaining = 3) {
   const baseRequired = Math.max(1, Number(initialRemaining) || 3);
   return {

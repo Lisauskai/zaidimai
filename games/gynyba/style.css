@@ -1346,6 +1346,33 @@ body.in-battle-mode .td-container {
   color: #86efac;
 }
 
+.kg-next-btn {
+  width: 100%;
+  margin-top: 14px;
+  padding: 13px 18px;
+  border-radius: 14px;
+  border: 2px solid rgba(167, 243, 208, 0.72);
+  background: linear-gradient(135deg, #10b981, #0ea5e9);
+  color: #ffffff;
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-size: 1.08rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(14, 165, 233, 0.35);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+}
+
+.kg-next-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.07);
+  box-shadow: 0 14px 28px rgba(16, 185, 129, 0.42);
+}
+
+.kg-next-btn:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 980px) {
   .campaign-zones-bar {
     grid-template-columns: repeat(2, minmax(0, 1fr));

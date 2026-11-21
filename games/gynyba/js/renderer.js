@@ -6,7 +6,14 @@ import {
   getTowerStats,
   getTargetingPriorityMeta,
   renderMapThemeDecorations
-} from './balance.js?v=20261121m';
+} from './balance.js?v=20261121n';
+import {
+  drawEnemySprite,
+  drawTowerBaseSprite,
+  drawTowerTurretSprite,
+  drawDroneUnitSprite,
+  drawMowerUnitSprite
+} from './sprites.js?v=20261121n';
 
 function sampleSplinePoint(spline, distance) {
   const pts = spline?.points;
@@ -373,7 +380,7 @@ function renderTower25D(ctx, tower, isSelected, animClock) {
   ctx.save();
 
   // Krintantis 2.5D šešėlis
-  drawGroundShadow(ctx, tower.x + 4, tower.y + 7, baseRadius + 2, baseRadius * 0.72, 0.48);
+  drawGroundShadow(ctx, tower.x + 4, tower.y + 9, baseRadius + 5, baseRadius * 0.78, 0.48);
 
   // 4-ojo lygio neoninis švytėjimas aplink pagrindą
   if (lvl === 4) {
@@ -383,130 +390,21 @@ function renderTower25D(ctx, tower, isSelected, animClock) {
     ctx.strokeStyle = stats.color;
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.arc(tower.x, tower.y, baseRadius + 4, 0, Math.PI * 2);
+    ctx.arc(tower.x, tower.y, baseRadius + 6, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
   }
 
-  // 2.5D cilindro sienelė (apačia poslinkiu +4px Y)
-  ctx.fillStyle = '#020617';
-  ctx.beginPath();
-  ctx.arc(tower.x, tower.y + 4, baseRadius, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Pagrindo plokštė su radialiniu perėjimu
-  const padGrad = ctx.createRadialGradient(
-    tower.x - 6,
-    tower.y - 6,
-    3,
-    tower.x,
-    tower.y,
-    baseRadius
-  );
-  padGrad.addColorStop(0, '#334155');
-  padGrad.addColorStop(1, '#0f172a');
-  ctx.fillStyle = padGrad;
-  ctx.strokeStyle = isSelected ? '#fde047' : lvl === 3 ? '#fbbf24' : stats.color;
-  ctx.lineWidth = isSelected ? 3.5 : lvl >= 3 ? 3 : 2.2;
-  ctx.beginPath();
-  ctx.arc(tower.x, tower.y, baseRadius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  // 2–4 lygio papildomos šarvų plokštės kampuose
-  if (lvl >= 2) {
-    ctx.strokeStyle = lvl === 4 ? '#f472b6' : lvl === 3 ? '#fde047' : '#94a3b8';
-    ctx.lineWidth = lvl >= 3 ? 2.6 : 2;
-    for (let k = 0; k < 4; k++) {
-      const a = (k * Math.PI) / 2 + Math.PI / 4;
-      ctx.beginPath();
-      ctx.arc(tower.x, tower.y, baseRadius - 2, a - 0.25, a + 0.25);
-      ctx.stroke();
-    }
-  }
-
-  // Viršutinė besisukanti bokšto dalis (turret) + atatranka (recoil)
-  ctx.save();
-  ctx.translate(tower.x, tower.y);
-
-  if (tower.type === 'solar_station') {
-    // Saulės baterijų stotis su šviesos atspindžiu
-    const sheen = 0.5 + 0.5 * Math.sin(animClock * 2.5);
-    ctx.fillStyle = '#0369a1';
-    ctx.strokeStyle = '#38bdf8';
-    ctx.lineWidth = 1.6;
-    ctx.fillRect(-15, -10, 30, 18);
-    ctx.strokeRect(-15, -10, 30, 18);
-    ctx.fillStyle = `rgba(253, 224, 71, ${(0.18 + sheen * 0.22).toFixed(2)})`;
-    ctx.fillRect(-13, -8, 12, 14);
-    ctx.fillRect(1, -8, 12, 14);
-  } else if (tower.type === 'mower_barracks') {
-    // Barakų stogelis su energijos vartais
-    ctx.fillStyle = '#14532d';
-    ctx.strokeStyle = '#4ade80';
-    ctx.lineWidth = 2;
-    drawRoundedRectPath(ctx, -13, -11, 26, 20, 6);
-    ctx.fill();
-    ctx.stroke();
-  } else {
-    // Besisukantis vamzdis / spinduliuotuvas su atatrankos poslinkiu (-recoil)
-    ctx.rotate(tower.angle || 0);
-    ctx.translate(-recoil, 0);
-
-    if (lvl >= 3 && (tower.type === 'solar_laser' || tower.type === 'drone_hangar')) {
-      // Dvigubi vamzdžiai nuo 3 lygio
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(5, -7.5, 17 + lvl, 4);
-      ctx.fillRect(5, 3.5, 17 + lvl, 4);
-      ctx.fillStyle = stats.color;
-      ctx.fillRect(7, -6.5, 15 + lvl, 2);
-      ctx.fillRect(7, 4.5, 15 + lvl, 2);
-    } else if (tower.type === 'dagilelis_sound') {
-      // Garso bokšto auksinis garsiakalbio žiedas
-      ctx.fillStyle = stats.color;
-      ctx.beginPath();
-      ctx.moveTo(4, -5);
-      ctx.lineTo(18 + lvl, -10);
-      ctx.lineTo(18 + lvl, 10);
-      ctx.lineTo(4, 5);
-      ctx.closePath();
-      ctx.fill();
-    } else {
-      // Standartinis arba sustiprintas vamzdis / katapultos petys
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(3, -5, 19 + lvl * 1.5, 10);
-      ctx.fillStyle = stats.color;
-      ctx.fillRect(5, -3.5, 16 + lvl * 1.5, 7);
-    }
-
-    // Šūvio žybsnis (muzzle flash) atatrankos momentu
-    if (recoil > 1.4) {
-      ctx.fillStyle = '#fef08a';
-      ctx.beginPath();
-      ctx.arc(23 + lvl, 0, recoil * 1.15, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-  ctx.restore();
-
-  // Viršutinis kupolas / ikona
-  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-  ctx.beginPath();
-  ctx.arc(tower.x, tower.y, 12.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = lvl === 4 ? '#f472b6' : 'rgba(255,255,255,0.28)';
-  ctx.lineWidth = 1.4;
-  ctx.stroke();
-
-  ctx.font = '16px Outfit, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(tower.evolutionId ? stats.evolutionIcon : stats.icon, tower.x, tower.y + 1);
+  // Iliustruotas 2.5D bokštelio postamentas ir besisukantis / reaguojantis pabūklas
+  drawTowerBaseSprite(ctx, tower, animClock, isSelected);
+  drawTowerTurretSprite(ctx, tower, animClock);
 
   // Lygio žvaigždutės virš bokšto
   ctx.font = 'bold 10px Outfit, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.fillStyle = lvl === 4 ? '#f472b6' : '#fde047';
-  ctx.fillText(lvl === 4 ? '✦✦✦✦' : '★'.repeat(lvl), tower.x, tower.y - baseRadius - 8);
+  ctx.fillText(lvl === 4 ? '✦✦✦✦' : '★'.repeat(lvl), tower.x, tower.y - baseRadius - 11);
 
   // Prioriteto piktograma
   ctx.font = '12px Outfit, sans-serif';
@@ -542,23 +440,9 @@ function renderEnemy25D(ctx, enemy, animClock) {
   // Po žeme panėręs Kurmis
   if (enemy.burrowTimer > 0) {
     drawGroundShadow(ctx, enemy.x, enemy.y + 5, enemy.radius * 1.15, 5, 0.35);
-    ctx.fillStyle = '#78350f';
-    ctx.strokeStyle = '#fde68a';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(enemy.x, enemy.y + 3, enemy.radius * 1.1, enemy.radius * 0.65, 0, Math.PI, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.font = '12px Outfit, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('⛰️', enemy.x, enemy.y - 6);
+    drawEnemySprite(ctx, enemy, animClock);
     ctx.restore();
     return;
-  }
-
-  if (enemy.isCamo && (enemy.camoRevealedTimer || 0) <= 0) {
-    ctx.globalAlpha = 0.44;
   }
 
   if (enemy.jamAuraRadius > 0) {
@@ -569,81 +453,24 @@ function renderEnemy25D(ctx, enemy, animClock) {
     ctx.stroke();
   }
 
-  // Sklandi judėjimo animacija (siūbavimas / sparnų mostai)
-  const isStunned = enemy.stunTimer > 0;
-  const bobY = enemy.isFlying
-    ? Math.sin(animClock * 6.5 + enemy.uid) * 3.5
-    : isStunned
-      ? 0
-      : Math.abs(Math.sin(animClock * 9 + enemy.uid)) * -2.6;
-  const squashX = enemy.isFlying || isStunned ? 1 : 1 + Math.sin(animClock * 18 + enemy.uid) * 0.05;
-  const squashY = enemy.isFlying || isStunned ? 1 : 1 / squashX;
-
   // Šešėlis po priešu
   if (enemy.isFlying) {
-    drawGroundShadow(ctx, enemy.x + 2, enemy.y + 19, enemy.radius * 0.85, 5, 0.45);
+    drawGroundShadow(ctx, enemy.x + 2, enemy.y + 20, enemy.radius * 0.9, 5, 0.45);
   } else {
-    drawGroundShadow(ctx, enemy.x + 2, enemy.y + enemy.radius * 0.72, enemy.radius * 0.92, enemy.radius * 0.45, 0.4);
+    drawGroundShadow(ctx, enemy.x + 2, enemy.y + enemy.radius * 0.85, enemy.radius * 1.05, enemy.radius * 0.48, 0.42);
   }
 
-  const drawY = enemy.y + bobY;
-
-  // Skraidančių sparnai
-  if (enemy.isFlying) {
-    const wingY = Math.sin(animClock * 22 + enemy.uid) * 7;
-    ctx.strokeStyle = 'rgba(226, 232, 240, 0.82)';
-    ctx.lineWidth = 2.6;
-    ctx.beginPath();
-    ctx.moveTo(enemy.x - enemy.radius * 0.5, drawY - 2);
-    ctx.lineTo(enemy.x - enemy.radius * 1.45, drawY - 7 + wingY);
-    ctx.moveTo(enemy.x + enemy.radius * 0.5, drawY - 2);
-    ctx.lineTo(enemy.x + enemy.radius * 1.45, drawY - 7 + wingY);
-    ctx.stroke();
-  }
-
-  // Kūnas su 2.5D tūrio perėjimu
-  ctx.save();
-  ctx.translate(enemy.x, drawY);
-  ctx.scale(squashX, squashY);
-
-  const fillCol =
-    enemy.hitFlash > 0
-      ? '#ffffff'
-      : enemy.stunTimer > 0
-        ? '#93c5fd'
-        : enemy.slowTimer > 0
-          ? '#38bdf8'
-          : enemy.color;
-
-  ctx.fillStyle = fillCol;
-  ctx.strokeStyle = enemy.borderColor;
-  ctx.lineWidth = enemy.isBoss ? 3.2 : 2;
-  ctx.beginPath();
-  ctx.arc(0, 0, enemy.radius, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-
-  // Viršutinis 2.5D blizgesys
-  if (enemy.hitFlash <= 0) {
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.beginPath();
-    ctx.ellipse(-enemy.radius * 0.25, -enemy.radius * 0.3, enemy.radius * 0.45, enemy.radius * 0.24, -0.35, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  ctx.font = enemy.isBoss ? '16px Outfit, sans-serif' : '12px Outfit, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(enemy.icon || '👾', 0, 1);
-  ctx.restore();
+  // Iliustruotas SVG personažas su kryptimi ir animacija
+  drawEnemySprite(ctx, enemy, animClock);
 
   // Švari HP juostelė PASIRODO TIK GAVUS ŽALOS
   const hasTakenDamage =
     enemy.hp < enemy.maxHp - 0.01 ||
     (enemy.maxShield > 0 && enemy.shield < enemy.maxShield - 0.01);
 
-  const barW = Math.max(24, enemy.radius * 2.25);
-  const barY = drawY - enemy.radius - 10;
+  const spriteHalfH = enemy.isBoss ? 34 : Math.max(15, enemy.radius * 1.45);
+  const barW = Math.max(26, enemy.radius * 2.35);
+  const barY = enemy.y - spriteHalfH - 8;
 
   if (hasTakenDamage) {
     const ratio = Math.max(0, Math.min(1, enemy.hp / enemy.maxHp));
@@ -675,7 +502,7 @@ function renderEnemy25D(ctx, enemy, animClock) {
   if (enemy.stunTimer > 0) badges.push('💫');
 
   if (badges.length > 0) {
-    const badgeY = hasTakenDamage ? barY - 9 : drawY - enemy.radius - 9;
+    const badgeY = hasTakenDamage ? barY - 9 : enemy.y - spriteHalfH - 8;
     ctx.font = '10px Outfit, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -947,18 +774,7 @@ export function renderBattleScene(engine) {
           ctx.arc(u.x, u.y, stats.electroAuraRadius || 60, 0, Math.PI * 2);
           ctx.stroke();
         }
-        ctx.fillStyle = stats.color;
-        ctx.strokeStyle = '#0f172a';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(u.x, u.y, 10.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.font = '11px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(u.stunTimer > 0 ? '💫' : '🤖', u.x, u.y + 1);
+        drawMowerUnitSprite(ctx, u, tower, animClock);
 
         if (u.hp < u.maxHp - 0.1) {
           const uRatio = Math.max(0, Math.min(1, u.hp / u.maxHp));
@@ -1058,54 +874,7 @@ export function renderBattleScene(engine) {
     if (tower.type === 'drone_hangar') {
       for (const d of tower.drones) {
         drawGroundShadow(ctx, d.x + 2, d.y + 18, 9, 4, 0.38);
-
-        ctx.save();
-        ctx.translate(d.x, d.y);
-        ctx.rotate(d.angle || 0);
-        if (d.recoilOffset) ctx.translate(-d.recoilOffset, 0);
-
-        // Priekinis šviesos kūgis (searchlight)
-        const coneGrad = ctx.createLinearGradient(6, 0, 56, 0);
-        coneGrad.addColorStop(0, 'rgba(45, 212, 191, 0.32)');
-        coneGrad.addColorStop(1, 'rgba(45, 212, 191, 0)');
-        ctx.fillStyle = coneGrad;
-        ctx.beginPath();
-        ctx.moveTo(6, 0);
-        ctx.lineTo(56, -18);
-        ctx.lineTo(56, 18);
-        ctx.closePath();
-        ctx.fill();
-
-        // Drono korpusas
-        ctx.fillStyle = '#0f172a';
-        ctx.strokeStyle = '#2dd4bf';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(11, 0);
-        ctx.lineTo(-7, -7);
-        ctx.lineTo(-4, 0);
-        ctx.lineTo(-7, 7);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Besisukantys 4 propelerių diskai
-        const rotors = [
-          { rx: 5, ry: -7 },
-          { rx: 5, ry: 7 },
-          { rx: -6, ry: -7 },
-          { rx: -6, ry: 7 }
-        ];
-        rotors.forEach((rot, rIdx) => {
-          const spin = animClock * 28 + rIdx * 0.8;
-          ctx.strokeStyle = 'rgba(186, 230, 253, 0.78)';
-          ctx.lineWidth = 1.4;
-          ctx.beginPath();
-          ctx.moveTo(rot.rx + Math.cos(spin) * 5.5, rot.ry + Math.sin(spin) * 5.5);
-          ctx.lineTo(rot.rx - Math.cos(spin) * 5.5, rot.ry - Math.sin(spin) * 5.5);
-          ctx.stroke();
-        });
-        ctx.restore();
+        drawDroneUnitSprite(ctx, d, tower, animClock);
       }
     }
   }

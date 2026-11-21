@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121m';
+} from '../../../shared/playtime-timer.js?v=20261121n';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -23,12 +23,13 @@ import {
   computeSellRefund,
   calculateStarsForHearts,
   getProfileModifier,
+  buildTaskReviewSummary,
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121m';
-import { TDEngine } from './engine.js?v=20261121m';
-import { audioManager } from './audio.js?v=20261121m';
+} from './balance.js?v=20261121n';
+import { TDEngine } from './engine.js?v=20261121n';
+import { audioManager } from './audio.js?v=20261121n';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];
@@ -155,6 +156,7 @@ const kgPenaltyBannerEl = document.getElementById('kg-penalty-banner');
 const kgOptionsEl = document.getElementById('kg-options');
 const kgExplanationBoxEl = document.getElementById('kg-explanation-box');
 const kgFeedbackEl = document.getElementById('kg-feedback');
+const btnKgNext = document.getElementById('btn-kg-next');
 const kgTitleEl = document.getElementById('kg-title');
 const kgSubtitleEl = document.getElementById('kg-subtitle');
 const btnResultNextLevel = document.getElementById('btn-result-next-level');
@@ -209,7 +211,7 @@ let saveData = loadSaveData();
 let activeProfile = null;
 let lastFrameTimestamp = 0;
 let pendingGateLevelId = null;
-let gateStepTimeoutId = null;
+let kgNextAction = null;
 let victoryGateTimeoutId = null;
 let smartUpgradeRestorePause = null;
 
@@ -632,11 +634,20 @@ function syncBattleUI() {
   }
 }
 
+function hideKgNextButton() {
+  kgNextAction = null;
+  btnKgNext?.classList.add('hidden');
+}
+
+function showKgNextButton(label, onNext) {
+  kgNextAction = typeof onNext === 'function' ? onNext : null;
+  if (!btnKgNext) return;
+  btnKgNext.textContent = label || 'Kitas uždavinys →';
+  btnKgNext.classList.remove('hidden');
+}
+
 function clearEduModalTimers(restorePause = true) {
-  if (gateStepTimeoutId) {
-    clearTimeout(gateStepTimeoutId);
-    gateStepTimeoutId = null;
-  }
+  hideKgNextButton();
   if (victoryGateTimeoutId) {
     clearTimeout(victoryGateTimeoutId);
     victoryGateTimeoutId = null;
@@ -716,6 +727,7 @@ function renderTaskPromptAndOptions(task, onPick) {
   if (kgQuestionEl) kgQuestionEl.textContent = task.prompt;
   if (kgVisualCanvas) renderTaskVisual(kgVisualCanvas, task);
 
+  hideKgNextButton();
   kgPenaltyBannerEl?.classList.add('hidden');
   kgExplanationBoxEl?.classList.add('hidden');
   kgFeedbackEl?.classList.add('hidden');
@@ -783,6 +795,7 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
     const task = eduTaskGenerator.generateTask(activeProfile);
     renderTaskPromptAndOptions(task, (isCorrect) => {
       const outcome = session.submitAnswer(isCorrect);
+      const review = buildTaskReviewSummary(task, outcome.isCorrect);
       syncGateCounters();
 
       if (outcome.isCorrect) {
@@ -801,14 +814,17 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
             kgFeedbackEl.textContent = `🎉 Šaunuolis! Žinių vartai įveikti — ${targetLvl.levelNumber} lygis atrakintas!`;
             kgFeedbackEl.classList.remove('hidden');
           }
+          if (kgExplanationBoxEl) {
+            kgExplanationBoxEl.textContent = review.explanationText;
+            kgExplanationBoxEl.classList.remove('hidden');
+          }
           renderCampaignMap();
           const unlockedId = pendingGateLevelId;
-          gateStepTimeoutId = setTimeout(() => {
-            gateStepTimeoutId = null;
+          showKgNextButton('Tęsti žaidimą →', () => {
             knowledgeGateModal.classList.add('hidden');
             pendingGateLevelId = null;
             if (autoEnter) enterBattleLevel(unlockedId);
-          }, 1150);
+          });
           return;
         }
 
@@ -818,30 +834,24 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
           kgFeedbackEl.classList.remove('hidden');
         }
         if (kgExplanationBoxEl) {
-          kgExplanationBoxEl.textContent = `💡 ${task.explanation}`;
+          kgExplanationBoxEl.textContent = review.explanationText;
           kgExplanationBoxEl.classList.remove('hidden');
         }
-        gateStepTimeoutId = setTimeout(() => {
-          gateStepTimeoutId = null;
-          renderRound();
-        }, 1100);
+        showKgNextButton('Kitas uždavinys →', renderRound);
         return;
       }
 
-      // Klaidos bausmė + 2 sek. paaiškinimas
+      // Klaidos bausmė + ramus paaiškinimas su rankiniu „Kitas uždavinys →“ mygtuku
       audioManager.playGateMistake();
       if (kgPenaltyBannerEl) {
         kgPenaltyBannerEl.textContent = outcome.warning;
         kgPenaltyBannerEl.classList.remove('hidden');
       }
       if (kgExplanationBoxEl) {
-        kgExplanationBoxEl.textContent = `📖 Teisingas atsakymas: ${task.correctAnswer}. ${task.explanation}`;
+        kgExplanationBoxEl.textContent = review.explanationText;
         kgExplanationBoxEl.classList.remove('hidden');
       }
-      gateStepTimeoutId = setTimeout(() => {
-        gateStepTimeoutId = null;
-        renderRound();
-      }, 2000);
+      showKgNextButton('Kitas uždavinys →', renderRound);
     });
   };
 
@@ -875,6 +885,7 @@ function openSmartUpgradeModal(padIndex) {
 
   const task = eduTaskGenerator.generateTask(activeProfile);
   renderTaskPromptAndOptions(task, (isCorrect) => {
+    const review = buildTaskReviewSummary(task, isCorrect);
     if (isCorrect) {
       audioManager.playGateSuccess();
       engine.applyFreeSmartUpgrade(padIndex);
@@ -884,14 +895,13 @@ function openSmartUpgradeModal(padIndex) {
         kgFeedbackEl.classList.remove('hidden');
       }
       if (kgExplanationBoxEl) {
-        kgExplanationBoxEl.textContent = `💡 ${task.explanation}`;
+        kgExplanationBoxEl.textContent = review.explanationText;
         kgExplanationBoxEl.classList.remove('hidden');
       }
-      gateStepTimeoutId = setTimeout(() => {
-        gateStepTimeoutId = null;
+      showKgNextButton('Tęsti žaidimą →', () => {
         knowledgeGateModal.classList.add('hidden');
         clearEduModalTimers(true);
-      }, 1100);
+      });
       return;
     }
 
@@ -901,14 +911,13 @@ function openSmartUpgradeModal(padIndex) {
       kgPenaltyBannerEl.classList.remove('hidden');
     }
     if (kgExplanationBoxEl) {
-      kgExplanationBoxEl.textContent = `📖 Teisingas atsakymas: ${task.correctAnswer}. ${task.explanation}`;
+      kgExplanationBoxEl.textContent = review.explanationText;
       kgExplanationBoxEl.classList.remove('hidden');
     }
-    gateStepTimeoutId = setTimeout(() => {
-      gateStepTimeoutId = null;
+    showKgNextButton('Tęsti žaidimą →', () => {
       knowledgeGateModal.classList.add('hidden');
       clearEduModalTimers(true);
-    }, 2000);
+    });
   });
 
   knowledgeGateModal.classList.remove('hidden');
@@ -1338,6 +1347,14 @@ document.getElementById('btn-result-campaign')?.addEventListener('click', showCa
 document.getElementById('btn-close-kg')?.addEventListener('click', () => {
   clearEduModalTimers(true);
   knowledgeGateModal?.classList.add('hidden');
+});
+
+btnKgNext?.addEventListener('click', () => {
+  const action = kgNextAction;
+  hideKgNextButton();
+  if (typeof action === 'function') {
+    action();
+  }
 });
 
 btnResultNextLevel?.addEventListener('click', () => {
