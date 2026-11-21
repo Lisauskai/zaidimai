@@ -3,18 +3,21 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121d';
+} from '../../../shared/playtime-timer.js?v=20261121e';
 import {
   TOWER_LIST,
   TARGETING_PRIORITIES,
+  CAMPAIGN_ZONES,
+  CAMPAIGN_LEVELS,
+  getLevelById,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   computeSellRefund,
   calculateStarsForHearts,
   getProfileModifier
-} from './balance.js?v=20261121d';
-import { TDEngine } from './engine.js?v=20261121d';
+} from './balance.js?v=20261121e';
+import { TDEngine } from './engine.js?v=20261121e';
 
 const SAVE_KEY = 'gynyba_save_v1';
 
@@ -22,7 +25,8 @@ function loadSaveData() {
   const createEmpty = () => ({
     stars: 0,
     bestWave: 0,
-    mapStars: { bubiai: 0, kurtuvenai: 0, dagilelis: 0 }
+    unlockedLevels: ['lvl_1'],
+    levelStars: {}
   });
   const def = { linas: createEmpty(), lukas: createEmpty() };
 
@@ -32,16 +36,39 @@ function loadSaveData() {
     const parsed = JSON.parse(raw);
 
     const normalizeBucket = (b) => {
-      const mapStars = {
-        bubiai: Math.max(0, Number(b?.mapStars?.bubiai) || 0),
-        kurtuvenai: Math.max(0, Number(b?.mapStars?.kurtuvenai) || 0),
-        dagilelis: Math.max(0, Number(b?.mapStars?.dagilelis) || 0)
-      };
-      const summedMapStars = mapStars.bubiai + mapStars.kurtuvenai + mapStars.dagilelis;
+      const levelStars = {};
+      if (b?.levelStars && typeof b.levelStars === 'object') {
+        for (const [k, v] of Object.entries(b.levelStars)) {
+          const n = Math.max(0, Math.min(3, Number(v) || 0));
+          if (n > 0) levelStars[k] = n;
+        }
+      }
+      // Migracija iš ankstesnių 3 žemėlapių raktų, jei yra
+      if (b?.mapStars) {
+        if ((Number(b.mapStars.bubiai) || 0) > 0 && !levelStars.lvl_1) {
+          levelStars.lvl_1 = Math.min(3, Number(b.mapStars.bubiai));
+        }
+        if ((Number(b.mapStars.kurtuvenai) || 0) > 0 && !levelStars.lvl_7) {
+          levelStars.lvl_7 = Math.min(3, Number(b.mapStars.kurtuvenai));
+        }
+        if ((Number(b.mapStars.dagilelis) || 0) > 0 && !levelStars.lvl_10) {
+          levelStars.lvl_10 = Math.min(3, Number(b.mapStars.dagilelis));
+        }
+      }
+
+      const unlockedSet = new Set(['lvl_1']);
+      if (Array.isArray(b?.unlockedLevels)) {
+        b.unlockedLevels.forEach((id) => {
+          if (typeof id === 'string') unlockedSet.add(id);
+        });
+      }
+
+      const totalStars = Object.values(levelStars).reduce((acc, s) => acc + s, 0);
       return {
-        stars: Math.max(summedMapStars, Number(b?.stars) || 0),
+        stars: Math.max(totalStars, Number(b?.stars) || 0),
         bestWave: Math.max(0, Number(b?.bestWave) || 0),
-        mapStars
+        unlockedLevels: Array.from(unlockedSet),
+        levelStars
       };
     };
 
@@ -64,10 +91,25 @@ function persistSaveData(data) {
 
 // ==================== DOM NUORODOS ====================
 const screenProfiles = document.getElementById('screen-profiles');
+const screenCampaign = document.getElementById('screen-campaign');
 const screenGame = document.getElementById('screen-game');
 const topProfilePill = document.getElementById('top-profile-pill');
 const uiActiveProfile = document.getElementById('ui-active-profile');
 const btnSwitchProfile = document.getElementById('btn-switch-profile');
+
+const campaignZonesBar = document.getElementById('campaign-zones-bar');
+const campaignNodesLayer = document.getElementById('campaign-nodes-layer');
+const campaignRoadShadow = document.getElementById('campaign-road-shadow');
+const campaignRoadLine = document.getElementById('campaign-road-line');
+const campaignTotalStars = document.getElementById('campaign-total-stars');
+const campaignUnlockedCount = document.getElementById('campaign-unlocked-count');
+
+const knowledgeGateModal = document.getElementById('knowledge-gate-modal');
+const kgQuestionEl = document.getElementById('kg-question');
+const kgOptionsEl = document.getElementById('kg-options');
+const kgFeedbackEl = document.getElementById('kg-feedback');
+const kgTitleEl = document.getElementById('kg-title');
+const btnResultNextLevel = document.getElementById('btn-result-next-level');
 
 const canvasFrame = document.getElementById('canvas-frame');
 const canvas = document.getElementById('gynyba-canvas');
@@ -94,6 +136,7 @@ const btnSellTower = document.getElementById('btn-sell-tower');
 let saveData = loadSaveData();
 let activeProfile = null;
 let lastFrameTimestamp = 0;
+let pendingGateLevelId = null;
 
 const engine = new TDEngine(canvas, {
   onStateChange: () => syncBattleUI(),
@@ -102,10 +145,14 @@ const engine = new TDEngine(canvas, {
   onGameResult: (result) => handleGameResult(result)
 });
 
+function isInBattleView() {
+  return Boolean(screenGame && !screenGame.classList.contains('hidden'));
+}
+
 const playtimeTimer = initPlaytimeTimer({
   containerSelector: '#top-playtime-slot',
   portalUrl: '../../index.html',
-  shouldCount: () => Boolean(activeProfile) && !engine.isPaused(),
+  shouldCount: () => Boolean(activeProfile) && (!isInBattleView() || !engine.isPaused()),
   onSwitchProfile: () => showProfileScreen(),
   onLock: () => {
     engine.setExternalLocked(true);
@@ -474,15 +521,17 @@ function handleGameResult(result) {
   const titleEl = document.getElementById('result-title');
   const starsEl = document.getElementById('result-stars');
   const descEl = document.getElementById('result-desc');
+  const bucket = activeProfile ? saveData[activeProfile] : null;
+  const currentLvl = getLevelById(engine.mapId);
+  const nextLvl =
+    currentLvl.levelNumber < CAMPAIGN_LEVELS.length
+      ? getLevelById(currentLvl.levelNumber + 1)
+      : null;
 
   if (result.status === 'victory') {
-    if (activeProfile) {
-      const bucket = saveData[activeProfile];
-      bucket.mapStars[engine.mapId] = Math.max(bucket.mapStars[engine.mapId] || 0, result.stars);
-      bucket.stars =
-        (bucket.mapStars.bubiai || 0) +
-        (bucket.mapStars.kurtuvenai || 0) +
-        (bucket.mapStars.dagilelis || 0);
+    if (bucket) {
+      bucket.levelStars[engine.mapId] = Math.max(bucket.levelStars[engine.mapId] || 0, result.stars);
+      bucket.stars = Object.values(bucket.levelStars).reduce((acc, s) => acc + s, 0);
       bucket.bestWave = Math.max(bucket.bestWave || 0, result.wave);
       persistSaveData(saveData);
       updateProfileCards();
@@ -493,6 +542,17 @@ function handleGameResult(result) {
     if (descEl) {
       descEl.textContent = `Išsaugojai ${result.hearts} / 20 širdelių ir pelnei ${result.stars} žvaigždutę(-es)!`;
     }
+
+    if (btnResultNextLevel && nextLvl && bucket) {
+      const nextUnlocked = bucket.unlockedLevels.includes(nextLvl.id);
+      btnResultNextLevel.textContent = nextUnlocked
+        ? `▶️ Kitas lygis (${nextLvl.levelNumber}) →`
+        : `🔐 Žinių Vartai: Lygis ${nextLvl.levelNumber} →`;
+      btnResultNextLevel.dataset.nextLevelId = nextLvl.id;
+      btnResultNextLevel.classList.remove('hidden');
+    } else {
+      btnResultNextLevel?.classList.add('hidden');
+    }
   } else {
     if (iconEl) iconEl.textContent = '💔';
     if (titleEl) titleEl.textContent = 'TVIRTOVĖ NEATLAIKĖ!';
@@ -500,9 +560,239 @@ function handleGameResult(result) {
     if (descEl) {
       descEl.textContent = `Pasiekei ${result.wave}-ąją bangą. Pakeisk bokštelių taikymo prioritetus arba statyk prie sankirtos ir bandyk dar kartą!`;
     }
+    btnResultNextLevel?.classList.add('hidden');
   }
 
   resultOverlay.classList.remove('hidden');
+}
+
+function generateKnowledgeQuestion(profileId) {
+  let a;
+  let b;
+  let answer;
+  let promptText;
+
+  if (profileId === 'linas') {
+    // 1 klasė: sudėtis ir atimtis iki 20
+    const isAdd = Math.random() < 0.6;
+    if (isAdd) {
+      a = 3 + Math.floor(Math.random() * 10);
+      b = 2 + Math.floor(Math.random() * (20 - a));
+      answer = a + b;
+      promptText = `${a} + ${b} = ?`;
+    } else {
+      a = 8 + Math.floor(Math.random() * 12);
+      b = 2 + Math.floor(Math.random() * (a - 2));
+      answer = a - b;
+      promptText = `${a} - ${b} = ?`;
+    }
+  } else {
+    // 3 klasė: daugyba, dalyba arba dviaukštė sudėtis
+    const mode = Math.floor(Math.random() * 3);
+    if (mode === 0) {
+      a = 3 + Math.floor(Math.random() * 7);
+      b = 3 + Math.floor(Math.random() * 7);
+      answer = a * b;
+      promptText = `${a} × ${b} = ?`;
+    } else if (mode === 1) {
+      b = 3 + Math.floor(Math.random() * 7);
+      answer = 3 + Math.floor(Math.random() * 8);
+      a = b * answer;
+      promptText = `${a} ÷ ${b} = ?`;
+    } else {
+      a = 24 + Math.floor(Math.random() * 45);
+      b = 12 + Math.floor(Math.random() * 29);
+      answer = a + b;
+      promptText = `${a} + ${b} = ?`;
+    }
+  }
+
+  const optionsSet = new Set([answer]);
+  while (optionsSet.size < 4) {
+    const delta = (Math.floor(Math.random() * 7) - 3) || 4;
+    const candidate = Math.max(1, answer + delta);
+    optionsSet.add(candidate);
+  }
+  const options = Array.from(optionsSet).sort(() => Math.random() - 0.5);
+  return { promptText, answer, options };
+}
+
+function openKnowledgeGateModal(targetLevelId) {
+  if (!knowledgeGateModal || !activeProfile) return;
+  const targetLvl = getLevelById(targetLevelId);
+  pendingGateLevelId = targetLvl.id;
+
+  if (kgTitleEl) {
+    kgTitleEl.textContent = `Atrakink ${targetLvl.levelNumber} lygį: ${targetLvl.title.replace(/^\d+\.\s*/, '')}`;
+  }
+  if (kgFeedbackEl) {
+    kgFeedbackEl.classList.add('hidden');
+    kgFeedbackEl.textContent = '';
+  }
+
+  const renderRound = () => {
+    const q = generateKnowledgeQuestion(activeProfile);
+    if (kgQuestionEl) kgQuestionEl.textContent = q.promptText;
+    if (!kgOptionsEl) return;
+    kgOptionsEl.innerHTML = '';
+
+    q.options.forEach((opt) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'kg-opt-btn';
+      btn.textContent = String(opt);
+      btn.addEventListener('click', () => {
+        if (opt === q.answer) {
+          const bucket = saveData[activeProfile];
+          if (!bucket.unlockedLevels.includes(pendingGateLevelId)) {
+            bucket.unlockedLevels.push(pendingGateLevelId);
+            persistSaveData(saveData);
+          }
+          knowledgeGateModal.classList.add('hidden');
+          const lvlToStart = pendingGateLevelId;
+          pendingGateLevelId = null;
+          renderCampaignMap();
+          enterBattleLevel(lvlToStart);
+        } else {
+          if (kgFeedbackEl) {
+            kgFeedbackEl.textContent = '❌ Beveik! Pamėgink kitą užduotį ramiai suskaičiavęs.';
+            kgFeedbackEl.classList.remove('hidden');
+          }
+          renderRound();
+        }
+      });
+      kgOptionsEl.appendChild(btn);
+    });
+  };
+
+  renderRound();
+  knowledgeGateModal.classList.remove('hidden');
+}
+
+function renderCampaignMap() {
+  if (!activeProfile) return;
+  const bucket = saveData[activeProfile];
+
+  if (campaignTotalStars) {
+    campaignTotalStars.textContent = `${bucket.stars} / ${CAMPAIGN_LEVELS.length * 3}`;
+  }
+  if (campaignUnlockedCount) {
+    campaignUnlockedCount.textContent = `${bucket.unlockedLevels.length} / ${CAMPAIGN_LEVELS.length}`;
+  }
+
+  if (campaignZonesBar) {
+    campaignZonesBar.innerHTML = '';
+    CAMPAIGN_ZONES.forEach((z) => {
+      const pill = document.createElement('div');
+      pill.className = 'campaign-zone-pill';
+      pill.style.borderColor = z.accent;
+      pill.innerHTML = `
+        <strong>${z.icon} ${z.zoneId}. ${z.name}</strong>
+        <span>${z.desc}</span>
+      `;
+      campaignZonesBar.appendChild(pill);
+    });
+  }
+
+  // Kelio SVG linija per visus 15 lygių taškų
+  if (campaignRoadShadow && campaignRoadLine) {
+    const pts = CAMPAIGN_LEVELS.map((l) => ({
+      x: (l.campaignPos.x / 100) * 1000,
+      y: (l.campaignPos.y / 100) * 520
+    }));
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 1; i < pts.length; i++) {
+      const prev = pts[i - 1];
+      const curr = pts[i];
+      const cx = (prev.x + curr.x) / 2;
+      d += ` Q ${cx} ${prev.y}, ${curr.x} ${curr.y}`;
+    }
+    campaignRoadShadow.setAttribute('d', d);
+    campaignRoadLine.setAttribute('d', d);
+  }
+
+  if (campaignNodesLayer) {
+    campaignNodesLayer.innerHTML = '';
+    CAMPAIGN_LEVELS.forEach((lvl, idx) => {
+      const isUnlocked = bucket.unlockedLevels.includes(lvl.id);
+      const stars = bucket.levelStars[lvl.id] || 0;
+      const isBeaten = stars > 0;
+      const prevLvl = idx > 0 ? CAMPAIGN_LEVELS[idx - 1] : null;
+      const prevBeaten = !prevLvl || (bucket.levelStars[prevLvl.id] || 0) > 0;
+      const isGateReady = !isUnlocked && prevBeaten;
+      const isBoss = lvl.levelInZone === 3;
+      const zone = CAMPAIGN_ZONES.find((z) => z.zoneId === lvl.zoneId);
+
+      const node = document.createElement('button');
+      node.type = 'button';
+      node.className = `campaign-node ${
+        isUnlocked
+          ? isBeaten
+            ? 'is-unlocked is-beaten'
+            : 'is-unlocked'
+          : isGateReady
+            ? 'is-gate-ready'
+            : 'is-locked'
+      }${isBoss ? ' is-boss' : ''}`;
+      node.style.left = `${lvl.campaignPos.x}%`;
+      node.style.top = `${lvl.campaignPos.y}%`;
+      if (isUnlocked && zone) {
+        node.style.borderColor = isBeaten ? '#4ade80' : zone.accent;
+      }
+
+      node.title = isUnlocked
+        ? `${lvl.title} (${lvl.maxWaves} bangos)`
+        : isGateReady
+          ? `Pasiruošęs atrakinti: ${lvl.title} – spausk ir įveik Žinių Vartus!`
+          : `Užrakinta – pirmiausia įveik ${lvl.levelNumber - 1}-ąjį lygį`;
+
+      const statusBadge = isUnlocked
+        ? `${isBoss ? '👑 ' : ''}${lvl.levelNumber}`
+        : isGateReady
+          ? `🔐 ${lvl.levelNumber}`
+          : `🔒 ${lvl.levelNumber}`;
+
+      const starsText = isUnlocked
+        ? '★'.repeat(stars) + '☆'.repeat(3 - stars)
+        : isGateReady
+          ? 'ŽIN. VARTAI'
+          : 'UŽRAKINTA';
+
+      node.innerHTML = `
+        <span class="node-num">${statusBadge}</span>
+        <span class="node-stars">${starsText}</span>
+        <span class="node-waves">${lvl.maxWaves} bang.</span>
+      `;
+
+      node.addEventListener('click', () => {
+        if (isUnlocked) {
+          enterBattleLevel(lvl.id);
+        } else if (isGateReady) {
+          openKnowledgeGateModal(lvl.id);
+        }
+      });
+
+      campaignNodesLayer.appendChild(node);
+    });
+  }
+}
+
+function showCampaignMapView() {
+  if (!activeProfile) return;
+  closePadMenus();
+  resultOverlay?.classList.add('hidden');
+  knowledgeGateModal?.classList.add('hidden');
+  engine.setPaused(false);
+  screenGame?.classList.add('hidden');
+  screenCampaign?.classList.remove('hidden');
+  renderCampaignMap();
+}
+
+function enterBattleLevel(mapId) {
+  if (!activeProfile) return;
+  screenCampaign?.classList.add('hidden');
+  screenGame?.classList.remove('hidden');
+  selectMap(mapId);
 }
 
 function selectProfile(profileId) {
@@ -510,7 +800,6 @@ function selectProfile(profileId) {
   const mod = getProfileModifier(activeProfile);
 
   screenProfiles?.classList.add('hidden');
-  screenGame?.classList.remove('hidden');
   topProfilePill?.classList.remove('hidden');
   btnSwitchProfile?.classList.remove('hidden');
   resultOverlay?.classList.add('hidden');
@@ -526,7 +815,7 @@ function selectProfile(profileId) {
   }
 
   engine.setProfile(activeProfile);
-  selectMap(engine.mapId);
+  showCampaignMapView();
   const allowed = playtimeTimer.setActiveChild(activeProfile);
   engine.setExternalLocked(!allowed);
 }
@@ -535,8 +824,10 @@ function showProfileScreen() {
   activeProfile = null;
   closePadMenus();
   resultOverlay?.classList.add('hidden');
+  knowledgeGateModal?.classList.add('hidden');
   playtimeTimer.clearActiveChild();
   screenGame?.classList.add('hidden');
+  screenCampaign?.classList.add('hidden');
   screenProfiles?.classList.remove('hidden');
   topProfilePill?.classList.add('hidden');
   btnSwitchProfile?.classList.add('hidden');
@@ -548,9 +839,10 @@ function selectMap(mapId) {
   resultOverlay?.classList.add('hidden');
   engine.loadMap(mapId, activeProfile || 'lukas');
 
-  document.querySelectorAll('.map-tab-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.mapId === engine.mapId);
-  });
+  const badgeEl = document.getElementById('ui-active-level-badge');
+  if (badgeEl) {
+    badgeEl.textContent = engine.map.badge;
+  }
 
   const titleEl = document.getElementById('map-title');
   const subEl = document.getElementById('map-subtitle');
@@ -563,7 +855,7 @@ function animationLoop(timestamp) {
   const rawDt = Math.min(0.05, (timestamp - lastFrameTimestamp) / 1000);
   lastFrameTimestamp = timestamp;
 
-  if (activeProfile) {
+  if (activeProfile && isInBattleView()) {
     engine.update(rawDt);
     engine.render();
   }
@@ -575,11 +867,21 @@ function animationLoop(timestamp) {
 document.getElementById('btn-select-linas')?.addEventListener('click', () => selectProfile('linas'));
 document.getElementById('btn-select-lukas')?.addEventListener('click', () => selectProfile('lukas'));
 btnSwitchProfile?.addEventListener('click', showProfileScreen);
+document.getElementById('btn-back-campaign')?.addEventListener('click', showCampaignMapView);
+document.getElementById('btn-result-campaign')?.addEventListener('click', showCampaignMapView);
+document.getElementById('btn-close-kg')?.addEventListener('click', () => {
+  knowledgeGateModal?.classList.add('hidden');
+});
 
-document.querySelectorAll('.map-tab-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    if (btn.dataset.mapId) selectMap(btn.dataset.mapId);
-  });
+btnResultNextLevel?.addEventListener('click', () => {
+  const nextId = btnResultNextLevel.dataset.nextLevelId;
+  if (!nextId || !activeProfile) return;
+  const bucket = saveData[activeProfile];
+  if (bucket.unlockedLevels.includes(nextId)) {
+    enterBattleLevel(nextId);
+  } else {
+    openKnowledgeGateModal(nextId);
+  }
 });
 
 btnSpeedToggle?.addEventListener('click', () => {

@@ -360,7 +360,9 @@ export function createEnemyInstanceData(archetype, waveNumber, profileId, pathIn
   };
 }
 
-function getWavePlanTypes(waveNumber) {
+function getWavePlanTypes(waveNumber, options = {}) {
+  const zoneId = Number(options.zoneId) || 1;
+  const effectiveWave = Math.min(10, Math.max(1, waveNumber + (zoneId > 1 ? zoneId - 1 : 0)));
   const plans = {
     1: ['garden_slug', 'rushing_hedgehog'],
     2: ['garden_slug', 'rushing_hedgehog', 'armored_beetle'],
@@ -373,23 +375,17 @@ function getWavePlanTypes(waveNumber) {
     9: ['cyber_raven', 'weed_golem', 'noise_goblin', 'armored_beetle'],
     10: ['cyber_raven', 'hornet_swarm', 'weed_golem', 'noise_goblin', 'exploding_beetle']
   };
-  return plans[Math.max(1, Math.min(10, waveNumber))] || plans[10];
+  return plans[effectiveWave] || plans[10];
 }
 
 function resolveBossForWave(waveNumber, options = {}) {
   const maxWaves = options.maxWaves || MAX_WAVES_DEFAULT;
-  const zoneId = options.zoneId || 1;
-  const mapId = options.mapId || 'bubiai';
+  const zoneId = Number(options.zoneId) || 1;
+  const isBossLevel = options.levelInZone === undefined || options.levelInZone === 3;
 
-  if (waveNumber === maxWaves) {
-    // Paskutinėje bangoje (pvz., 3-iojo lygio finalinėje bangoje) išeina zonos teminis bosas
+  if (waveNumber === maxWaves && isBossLevel) {
+    // 5 Teminiai Bosai pasirodo kiekvienos zonos 3-iojo lygio paskutinėje bangoje (3, 6, 9, 12, 15 lyg.)
     return getZoneBoss(zoneId);
-  }
-  if (waveNumber === 5) {
-    if (mapId === 'bubiai') return getZoneBoss(2);      // Geležinis Kurmis
-    if (mapId === 'kurtuvenai') return getZoneBoss(2);  // Geležinis Kurmis
-    if (mapId === 'dagilelis') return getZoneBoss(4);   // Klaidingų Natų Baubas
-    return getZoneBoss(Math.max(1, zoneId - 1));
   }
   return null;
 }
@@ -397,7 +393,7 @@ function resolveBossForWave(waveNumber, options = {}) {
 export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas', options = {}) {
   const w = Math.max(1, Number(waveNumber) || 1);
   const paths = Math.max(1, Number(pathCount) || 1);
-  const planTypes = getWavePlanTypes(w);
+  const planTypes = getWavePlanTypes(w, options);
   const totalUnits = 7 + w * 3;
   const intervalBase = Math.max(0.36, 0.92 - w * 0.045);
 

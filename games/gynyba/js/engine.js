@@ -15,15 +15,16 @@ import {
   getTargetingPriorityMeta,
   selectTargetByPriority,
   generateWaveSpawns,
-  getWavePreviewInfo
-} from './balance.js?v=20261121d';
+  getWavePreviewInfo,
+  renderMapThemeDecorations
+} from './balance.js?v=20261121e';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121d';
+} from './towers.js?v=20261121e';
 
 let nextEnemyUid = 1;
 
@@ -224,6 +225,8 @@ export class TDEngine {
     return {
       maxWaves: this.map.maxWaves,
       zoneId: this.map.zoneId || 1,
+      levelInZone: this.map.levelInZone,
+      levelNumber: this.map.levelNumber,
       mapId: this.map.id
     };
   }
@@ -1585,7 +1588,10 @@ export class TDEngine {
       ctx.stroke();
     }
 
-    // 2. Glotnūs keliai (1 arba 2 išsišakojantys keliai)
+    // 1b. Teminės zonos dekoracijos (šiltnamis, tvenkinys, pušynas, klavišai, ateities bazė)
+    renderMapThemeDecorations(ctx, this.map, this.animClock);
+
+    // 2. Glotnūs keliai (1 arba 2 išsišakojantys / atskiri keliai)
     for (const spline of this.pathSplines) {
       if (spline.points.length < 2) continue;
 
@@ -1604,6 +1610,19 @@ export class TDEngine {
       ctx.strokeStyle = this.map.pathColor;
       ctx.lineWidth = 34;
       ctx.stroke();
+
+      // Dagilėlio muzikos aikštėje – juodai balti klavišų takeliai
+      if (this.map.theme === 'dagilelis_music') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(248, 250, 252, 0.72)';
+        ctx.lineWidth = 22;
+        ctx.setLineDash([12, 12]);
+        ctx.stroke();
+        ctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.lineDashOffset = 12;
+        ctx.stroke();
+        ctx.restore();
+      }
 
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
       ctx.lineWidth = 2;
@@ -1668,19 +1687,32 @@ export class TDEngine {
       ctx.restore();
     }
 
-    // 3. Tvirtovė kelio pabaigoje
-    const fortress = this.map.fortress;
-    ctx.fillStyle = '#0f172a';
-    ctx.strokeStyle = this.map.accentColor;
-    ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.arc(fortress.x, fortress.y, 31, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.font = '28px Outfit, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('🏰', fortress.x, fortress.y + 1);
+    // 3. Tvirtovė(-s) kiekvieno kelio pabaigoje (pvz., 5-oje zonoje yra du atskiri išėjimai)
+    const exits = [];
+    for (const spline of this.pathSplines) {
+      const endPt = spline.points?.[spline.points.length - 1];
+      if (!endPt) continue;
+      if (!exits.some((ex) => Math.hypot(ex.x - endPt.x, ex.y - endPt.y) < 12)) {
+        exits.push(endPt);
+      }
+    }
+    if (exits.length === 0 && this.map.fortress) {
+      exits.push(this.map.fortress);
+    }
+
+    for (const exitPt of exits) {
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = this.map.accentColor;
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.arc(exitPt.x, exitPt.y, 30, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.font = '26px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.map.theme === 'solar_future_base' ? '🛰️' : '🏰', exitPt.x, exitPt.y + 1);
+    }
 
     // 4. Veikimo spindulio (Range) ir auros peržiūra
     if (this.selectedPadIndex !== null && this.map.pads[this.selectedPadIndex]) {

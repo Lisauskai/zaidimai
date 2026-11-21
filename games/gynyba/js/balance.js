@@ -8,7 +8,7 @@ export {
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121d';
+} from './towers.js?v=20261121e';
 
 export {
   ENEMY_ARCHETYPES,
@@ -19,7 +19,15 @@ export {
   createEnemyInstanceData,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './enemies.js?v=20261121d';
+} from './enemies.js?v=20261121e';
+
+export {
+  CAMPAIGN_ZONES,
+  CAMPAIGN_LEVELS,
+  MAP_DEFINITIONS,
+  getLevelById,
+  renderMapThemeDecorations
+} from './maps.js?v=20261121e';
 
 export const STARTING_HEARTS = 20;
 export const SELL_REFUND_RATE = 0.75; // 75% investuotų monetų grąžinimas
@@ -170,134 +178,4 @@ export function selectTargetByPriority(enemiesInRange, tower, priorityId = 'firs
   return best;
 }
 
-// ==================== ŽEMĖLAPIŲ APRAŠAI SU SKLANDŽIOMIS KREIVĖMIS IR AIKŠTELĖMIS ====================
-export const MAP_DEFINITIONS = {
-  bubiai: {
-    id: 'bubiai',
-    zoneId: 1,
-    title: '🏡 Bubių kiemas',
-    badge: '1 kelias • Pradedančiųjų arena',
-    subtitle: 'Paspausk ant pažymėtos statybos aikštelės (+), pastatyk bokštelį ir gink kiemą!',
-    baseCoins: 200,
-    maxWaves: MAX_WAVES_PER_MAP,
-    bgTop: '#0d291f',
-    bgBottom: '#071412',
-    pathColor: '#a18055',
-    pathBorder: '#574226',
-    accentColor: '#34d399',
-    fortress: { x: 848, y: 235 },
-    paths: [
-      [
-        { x: 24, y: 255 },
-        { x: 165, y: 255 },
-        { x: 205, y: 120 },
-        { x: 420, y: 120 },
-        { x: 455, y: 375 },
-        { x: 675, y: 375 },
-        { x: 705, y: 235 },
-        { x: 848, y: 235 }
-      ]
-    ],
-    pads: [
-      { id: 'b1', x: 105, y: 175 },
-      { id: 'b2', x: 105, y: 340 },
-      { id: 'b3', x: 285, y: 205 },
-      { id: 'b4', x: 355, y: 300 },
-      { id: 'b5', x: 545, y: 185 },
-      { id: 'b6', x: 565, y: 295 },
-      { id: 'b7', x: 615, y: 440 },
-      { id: 'b8', x: 775, y: 150 }
-    ]
-  },
-  kurtuvenai: {
-    id: 'kurtuvenai',
-    zoneId: 3,
-    title: '🌲 Kurtuvėnai',
-    badge: '2 išsišakojantys keliai • Pušynas',
-    subtitle: 'Priešai puola dviem miško takais vienu metu – saugok abi atšakas ir centrinę sankirtą!',
-    baseCoins: 220,
-    maxWaves: MAX_WAVES_PER_MAP,
-    bgTop: '#0b242c',
-    bgBottom: '#061218',
-    pathColor: '#7a664f',
-    pathBorder: '#403428',
-    accentColor: '#38bdf8',
-    fortress: { x: 848, y: 245 },
-    paths: [
-      [
-        { x: 24, y: 120 },
-        { x: 215, y: 110 },
-        { x: 365, y: 185 },
-        { x: 565, y: 115 },
-        { x: 715, y: 180 },
-        { x: 848, y: 245 }
-      ],
-      [
-        { x: 24, y: 380 },
-        { x: 225, y: 390 },
-        { x: 385, y: 315 },
-        { x: 575, y: 390 },
-        { x: 720, y: 310 },
-        { x: 848, y: 245 }
-      ]
-    ],
-    pads: [
-      { id: 'k1', x: 125, y: 250 },
-      { id: 'k2', x: 295, y: 90 },
-      { id: 'k3', x: 295, y: 410 },
-      { id: 'k4', x: 375, y: 250 },
-      { id: 'k5', x: 485, y: 190 },
-      { id: 'k6', x: 490, y: 315 },
-      { id: 'k7', x: 645, y: 245 },
-      { id: 'k8', x: 775, y: 125 }
-    ]
-  },
-  dagilelis: {
-    id: 'dagilelis',
-    zoneId: 5,
-    title: '🏛️ Dagilėlio aikštė',
-    badge: '2 keliai • Iššūkis meistrams',
-    subtitle: 'Dvi plačios alėjos susilieja prie aikštės tvirtovės – derink lazerius, rezonatorius ir patrankas!',
-    baseCoins: 240,
-    maxWaves: MAX_WAVES_PER_MAP,
-    bgTop: '#191c3d',
-    bgBottom: '#080c1f',
-    pathColor: '#64748b',
-    pathBorder: '#334155',
-    accentColor: '#fb7185',
-    fortress: { x: 848, y: 250 },
-    paths: [
-      [
-        { x: 24, y: 135 },
-        { x: 185, y: 135 },
-        { x: 240, y: 75 },
-        { x: 470, y: 75 },
-        { x: 530, y: 175 },
-        { x: 705, y: 175 },
-        { x: 765, y: 250 },
-        { x: 848, y: 250 }
-      ],
-      [
-        { x: 24, y: 365 },
-        { x: 185, y: 365 },
-        { x: 245, y: 425 },
-        { x: 470, y: 425 },
-        { x: 530, y: 325 },
-        { x: 705, y: 325 },
-        { x: 765, y: 250 },
-        { x: 848, y: 250 }
-      ]
-    ],
-    pads: [
-      { id: 'd1', x: 115, y: 250 },
-      { id: 'd2', x: 280, y: 180 },
-      { id: 'd3', x: 280, y: 320 },
-      { id: 'd4', x: 360, y: 145 },
-      { id: 'd5', x: 360, y: 355 },
-      { id: 'd6', x: 440, y: 250 },
-      { id: 'd7', x: 615, y: 105 },
-      { id: 'd8', x: 615, y: 395 },
-      { id: 'd9', x: 645, y: 250 }
-    ]
-  }
-};
+// (Žemėlapiai perkelti į ./maps.js)
