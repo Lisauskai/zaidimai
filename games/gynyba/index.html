@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261121c" />
+  <link rel="stylesheet" href="./style.css?v=20261121d" />
 </head>
 <body>
   <div class="td-bg-glow" aria-hidden="true"></div>
@@ -165,6 +165,15 @@
         <div id="canvas-frame" class="canvas-frame">
           <canvas id="gynyba-canvas" width="900" height="500" aria-label="Bubių Tvirtovės taktinis žemėlapis"></canvas>
 
+          <!-- Bangos peržiūros kortelė (paspaudus / užvedus ant ikonos kelio pradžioje) -->
+          <div id="wave-preview-card" class="wave-preview-card hidden" role="region" aria-label="Būsimos bangos sudėtis">
+            <div class="floating-menu-head">
+              <span id="wave-preview-headline">⚠️ Ateina skraidančios širšės!</span>
+              <button id="btn-close-wave-preview" class="menu-close-x" type="button" aria-label="Uždaryti">✕</button>
+            </div>
+            <div id="wave-preview-list" class="wave-preview-list"></div>
+          </div>
+
           <!-- Kompaktiškas radialinis statybos meniu ant tuščios aikštelės -->
           <div id="pad-build-menu" class="floating-pad-menu hidden" role="dialog" aria-label="Bokštelio statyba">
             <div class="floating-menu-head">
@@ -237,6 +246,6 @@
     </section>
   </main>
 
-  <script type="module" src="./js/main.js?v=20261121c"></script>
+  <script type="module" src="./js/main.js?v=20261121d"></script>
 </body>
 </html>

@@ -6,21 +6,24 @@ import {
   STARTING_HEARTS,
   INTER_WAVE_COOLDOWN_SECONDS,
   MAP_DEFINITIONS,
+  ENEMY_ARCHETYPES,
+  createEnemyInstanceData,
   getStartingCoins,
   computeSellRefund,
   computeEarlyWaveBonus,
   calculateStarsForHearts,
   getTargetingPriorityMeta,
   selectTargetByPriority,
-  generateWaveSpawns
-} from './balance.js?v=20261121c';
+  generateWaveSpawns,
+  getWavePreviewInfo
+} from './balance.js?v=20261121d';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121c';
+} from './towers.js?v=20261121d';
 
 let nextEnemyUid = 1;
 
@@ -156,11 +159,14 @@ export class TDEngine {
     this.lightningBolts = [];
     this.pulses = [];
     this.explosions = [];
+    this.slimePuddles = [];
     this.floatingTexts = [];
 
     this.selectedPadIndex = null;
     this.previewTowerType = 'solar_laser';
     this.placingRallyPadIndex = null;
+    this.nextWavePreview = null;
+    this.pinnedWavePreview = false;
     this.gameResult = null;
     this.animClock = 0;
     this.lastUiSyncTime = 0;
@@ -200,15 +206,39 @@ export class TDEngine {
     this.lightningBolts = [];
     this.pulses = [];
     this.explosions = [];
+    this.slimePuddles = [];
     this.floatingTexts = [];
 
     this.selectedPadIndex = null;
     this.previewTowerType = 'solar_laser';
     this.placingRallyPadIndex = null;
+    this.pinnedWavePreview = false;
     this.manualPaused = false;
     this.gameResult = null;
 
+    this.refreshNextWavePreview();
     this.notifyStateChange();
+  }
+
+  getWaveOptions() {
+    return {
+      maxWaves: this.map.maxWaves,
+      zoneId: this.map.zoneId || 1,
+      mapId: this.map.id
+    };
+  }
+
+  refreshNextWavePreview() {
+    if (this.wave < this.map.maxWaves && !this.gameResult) {
+      this.nextWavePreview = getWavePreviewInfo(
+        this.wave + 1,
+        this.pathSplines.length,
+        this.profileId,
+        this.getWaveOptions()
+      );
+    } else {
+      this.nextWavePreview = null;
+    }
   }
 
   isPaused() {
@@ -289,6 +319,28 @@ export class TDEngine {
     return true;
   }
 
+  getWaveBadgeAtPoint(canvasX, canvasY) {
+    if (!this.nextWavePreview || !this.canCallWaveEarly()) return null;
+    for (let i = 0; i < this.pathSplines.length; i++) {
+      const entry = this.pathSplines[i]?.points?.[0];
+      if (!entry) continue;
+      const bx = entry.x + 18;
+      const by = entry.y;
+      if (Math.hypot(bx - canvasX, by - canvasY) <= 30) {
+        return { pathIndex: i, x: bx, y: by };
+      }
+    }
+    return null;
+  }
+
+  handleCanvasHover(canvasX, canvasY) {
+    if (this.pinnedWavePreview) return;
+    const badge = this.getWaveBadgeAtPoint(canvasX, canvasY);
+    if (typeof this.callbacks.onWavePreviewChange === 'function') {
+      this.callbacks.onWavePreviewChange(badge ? this.nextWavePreview : null, badge, false);
+    }
+  }
+
   handleCanvasTap(canvasX, canvasY) {
     if (this.gameResult || this.externalLocked) return { type: 'locked' };
 
@@ -296,6 +348,20 @@ export class TDEngine {
     if (this.placingRallyPadIndex !== null) {
       this.setTowerRallyPoint(this.placingRallyPadIndex, canvasX, canvasY);
       return { type: 'rally_set' };
+    }
+
+    // Patikriname bangos peržiūros ikoną kelio pradžioje
+    const waveBadge = this.getWaveBadgeAtPoint(canvasX, canvasY);
+    if (waveBadge) {
+      this.pinnedWavePreview = !this.pinnedWavePreview;
+      if (typeof this.callbacks.onWavePreviewChange === 'function') {
+        this.callbacks.onWavePreviewChange(
+          this.pinnedWavePreview ? this.nextWavePreview : null,
+          waveBadge,
+          this.pinnedWavePreview
+        );
+      }
+      return { type: 'wave_preview', preview: this.nextWavePreview };
     }
 
     const hitRadius = 30;
@@ -404,7 +470,9 @@ export class TDEngine {
       rallyPoint: null,
       effectiveRange: stats.range,
       effectiveFireRateMult: 1,
-      radarAngle: 0
+      radarAngle: 0,
+      silencedTimer: 0,
+      isJammed: false
     };
 
     this.initTowerSubEntities(tower);
@@ -531,9 +599,19 @@ export class TDEngine {
     this.wave += 1;
     this.waveActive = true;
     this.interWaveTimer = 0;
-    const newSpawns = generateWaveSpawns(this.wave, this.pathSplines.length, this.profileId);
+    this.pinnedWavePreview = false;
+    if (typeof this.callbacks.onWavePreviewChange === 'function') {
+      this.callbacks.onWavePreviewChange(null, null, false);
+    }
+    const newSpawns = generateWaveSpawns(
+      this.wave,
+      this.pathSplines.length,
+      this.profileId,
+      this.getWaveOptions()
+    );
     this.spawnQueue.push(...newSpawns);
     this.spawnCooldown = newSpawns.length > 0 ? newSpawns[0].delay : 0;
+    this.refreshNextWavePreview();
   }
 
   addFloatingText(x, y, text, color = '#ffffff') {
@@ -548,7 +626,7 @@ export class TDEngine {
   }
 
   /**
-   * Apskaičiuoja „Dagilėlio“ (+15% / +30% šaudymo greičio) ir Saulės Stoties (+12% / +15% nuotolio) auras.
+   * Apskaičiuoja „Dagilėlio“ (+greičio), Saulės Stoties (+nuotolio) ir Triukšmo Goblino (slopinimo) auras.
    */
   recomputeTowerAuras() {
     for (const tower of this.towers) {
@@ -557,9 +635,10 @@ export class TDEngine {
 
       let bestRangeBonus = 0;
       let bestSpeedBonus = 0;
+      let jamPenalty = 0;
 
       for (const other of this.towers) {
-        if (other === tower) continue;
+        if (other === tower || other.silencedTimer > 0) continue;
         const otherStats = getTowerStats(other.type, other.level, other.evolutionId);
         if (!otherStats) continue;
         const dist = Math.hypot(other.x - tower.x, other.y - tower.y);
@@ -572,20 +651,79 @@ export class TDEngine {
         }
       }
 
+      for (const enemy of this.enemies) {
+        if (enemy.hp <= 0 || enemy.burrowTimer > 0 || !enemy.jamAuraRadius) continue;
+        if (Math.hypot(enemy.x - tower.x, enemy.y - tower.y) <= enemy.jamAuraRadius) {
+          jamPenalty = Math.max(jamPenalty, enemy.jamFireRatePenalty || 0.25);
+        }
+      }
+
       tower.effectiveRange = Math.round(stats.range * (1 + bestRangeBonus));
-      tower.effectiveFireRateMult = 1 + bestSpeedBonus;
+      tower.effectiveFireRateMult = Math.max(0.35, (1 + bestSpeedBonus) * (1 - jamPenalty));
       tower.rangeAuraPct = Math.round(bestRangeBonus * 100);
       tower.speedAuraPct = Math.round(bestSpeedBonus * 100);
+      tower.isJammed = jamPenalty > 0;
     }
   }
 
   isEnemyVisibleToTower(towerStats, enemy) {
     if (!enemy || enemy.hp <= 0) return false;
+    if ((enemy.burrowTimer || 0) > 0) return false;
     if (enemy.isFlying && !towerStats.canHitFlying) return false;
     if (enemy.isCamo && !towerStats.detectsCamo && (enemy.camoRevealedTimer || 0) <= 0) {
       return false;
     }
     return true;
+  }
+
+  spawnEnemyRuntime(instanceData, initialDistance = 0) {
+    const pathIndex = Math.max(0, Math.min(this.pathSplines.length - 1, instanceData.pathIndex || 0));
+    const spline = this.pathSplines[pathIndex];
+    const dist = Math.max(0, Math.min(spline.totalLength - 4, initialDistance));
+    const pos = samplePathAtDistance(spline, dist);
+
+    const enemyObj = {
+      ...instanceData,
+      uid: nextEnemyUid++,
+      pathIndex,
+      maxHp: instanceData.hp,
+      shield: instanceData.maxShield || 0,
+      maxShield: instanceData.maxShield || 0,
+      timeSinceLastHit: 0,
+      distance: dist,
+      remainingDistance: Math.max(0, spline.totalLength - dist),
+      x: pos.x,
+      y: pos.y,
+      angle: pos.angle,
+      slowTimer: 0,
+      slowFactor: 1,
+      stunTimer: 0,
+      camoRevealedTimer: 0,
+      scannerVulnerable: false,
+      permanentUncamo: false,
+      burrowTimer: 0,
+      hasBurrowedAtHalf: false,
+      periodicBurrowTimer: 0,
+      summonTimer: 0,
+      slimeTimer: 0,
+      periodicCamoTimer: 0,
+      periodicCamoActiveTimer: 0,
+      silenceTowerTimer: 0,
+      isBlocked: false,
+      hitFlash: 0
+    };
+    this.enemies.push(enemyObj);
+    return enemyObj;
+  }
+
+  applySlowToEnemy(enemy, rawSlowPct, duration) {
+    if (!enemy || enemy.burrowTimer > 0) return;
+    const resist = enemy.slowResistance || 0;
+    const effectiveSlowPct = rawSlowPct * (1 - resist);
+    if (effectiveSlowPct <= 0.02) return;
+    const factor = 1 - effectiveSlowPct;
+    enemy.slowFactor = Math.min(enemy.slowFactor, factor);
+    enemy.slowTimer = Math.max(enemy.slowTimer, duration);
   }
 
   update(rawDt) {
@@ -603,28 +741,7 @@ export class TDEngine {
       this.spawnCooldown -= dt;
       while (this.spawnQueue.length > 0 && this.spawnCooldown <= 0) {
         const next = this.spawnQueue.shift();
-        const pathIndex = Math.max(0, Math.min(this.pathSplines.length - 1, next.pathIndex));
-        const spline = this.pathSplines[pathIndex];
-        const pos = samplePathAtDistance(spline, 0);
-
-        this.enemies.push({
-          ...next,
-          uid: nextEnemyUid++,
-          pathIndex,
-          maxHp: next.hp,
-          distance: 0,
-          remainingDistance: spline.totalLength,
-          x: pos.x,
-          y: pos.y,
-          angle: pos.angle,
-          slowTimer: 0,
-          slowFactor: 1,
-          stunTimer: 0,
-          camoRevealedTimer: 0,
-          scannerVulnerable: false,
-          isBlocked: false,
-          hitFlash: 0
-        });
+        this.spawnEnemyRuntime(next, 0);
 
         if (this.spawnQueue.length > 0) {
           this.spawnCooldown += this.spawnQueue[0].delay;
@@ -645,7 +762,7 @@ export class TDEngine {
       }
     }
 
-    // 3. Priešų būsenos ir judėjimas glotniais keliais
+    // 3. Priešų ir 5 bosų gebėjimai bei judėjimas glotniais keliais
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
       if (enemy.slowTimer > 0) {
@@ -662,12 +779,103 @@ export class TDEngine {
         enemy.hitFlash = Math.max(0, enemy.hitFlash - dt);
       }
 
-      // Priešas nejuda, jei yra apsvaigintas / sušaldytas arba sustabdytas roboto-vejapjovės
+      // Kurmis-Tunelininkas (50% HP) ir Geležinis Kurmis (periodinis panėrimas)
+      if (enemy.burrowTimer > 0) {
+        enemy.burrowTimer = Math.max(0, enemy.burrowTimer - dt);
+        enemy.isBlocked = false;
+      } else {
+        if (enemy.burrowAtHalfHp && !enemy.hasBurrowedAtHalf && enemy.hp <= enemy.maxHp * 0.5 && enemy.hp > 0) {
+          enemy.hasBurrowedAtHalf = true;
+          enemy.burrowTimer = enemy.burrowDuration || 2.0;
+          enemy.isBlocked = false;
+          this.addFloatingText(enemy.x, enemy.y - 22, '🕳️ Po žeme!', '#fde68a');
+        } else if (enemy.periodicBurrowInterval > 0) {
+          enemy.periodicBurrowTimer += dt;
+          if (enemy.periodicBurrowTimer >= enemy.periodicBurrowInterval) {
+            enemy.periodicBurrowTimer = 0;
+            enemy.burrowTimer = enemy.burrowDuration || 2.0;
+            enemy.isBlocked = false;
+            this.addFloatingText(enemy.x, enemy.y - 24, '⛏️ Tunelis!', '#fde68a');
+          }
+        }
+      }
+
+      // 1 Zonos Bosas: Šliužų Karalius palieka gleivių pėdsaką ir kviečia šliužus
+      if (enemy.slimeTrail) {
+        enemy.slimeTimer += dt;
+        if (enemy.slimeTimer >= 0.55) {
+          enemy.slimeTimer = 0;
+          this.slimePuddles.push({ x: enemy.x, y: enemy.y, life: 4.0, maxLife: 4.0 });
+        }
+      }
+      if (enemy.summonInterval > 0 && enemy.summonType) {
+        enemy.summonTimer += dt;
+        if (enemy.summonTimer >= enemy.summonInterval) {
+          enemy.summonTimer = 0;
+          const arch = ENEMY_ARCHETYPES[enemy.summonType] || ENEMY_ARCHETYPES.garden_slug;
+          const count = enemy.summonCount || 2;
+          for (let s = 0; s < count; s++) {
+            const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, enemy.pathIndex, 0, 0.55);
+            this.spawnEnemyRuntime(minion, Math.max(0, enemy.distance - (s + 1) * 14));
+          }
+          this.addFloatingText(enemy.x, enemy.y - 26, '🐌 +Šliužai!', '#bef264');
+        }
+      }
+
+      // 3 Zonos Bosas: Girios Šešėlių Valdovas tampa nematomas kas 6s
+      if (enemy.periodicCamoInterval > 0 && !enemy.permanentUncamo) {
+        if (enemy.periodicCamoActiveTimer > 0) {
+          enemy.periodicCamoActiveTimer = Math.max(0, enemy.periodicCamoActiveTimer - dt);
+          if (enemy.periodicCamoActiveTimer <= 0) {
+            enemy.isCamo = false;
+          }
+        } else {
+          enemy.periodicCamoTimer += dt;
+          if (enemy.periodicCamoTimer >= enemy.periodicCamoInterval) {
+            enemy.periodicCamoTimer = 0;
+            enemy.periodicCamoActiveTimer = enemy.periodicCamoDuration || 2.8;
+            enemy.isCamo = true;
+            this.addFloatingText(enemy.x, enemy.y - 26, '🌑 Nematomas!', '#c4b5fd');
+          }
+        }
+      }
+
+      // 4 Zonos Bosas: Klaidingų Natų Baubas užtildo artimiausią bokštą
+      if (enemy.silenceTowerInterval > 0) {
+        enemy.silenceTowerTimer += dt;
+        if (enemy.silenceTowerTimer >= enemy.silenceTowerInterval) {
+          enemy.silenceTowerTimer = 0;
+          let closestTower = null;
+          let closestDist = enemy.silenceRange || 215;
+          for (const t of this.towers) {
+            if (t.silencedTimer > 0) continue;
+            const d = Math.hypot(t.x - enemy.x, t.y - enemy.y);
+            if (d <= closestDist) {
+              closestDist = d;
+              closestTower = t;
+            }
+          }
+          if (closestTower) {
+            closestTower.silencedTimer = enemy.silenceTowerDuration || 2.6;
+            this.addFloatingText(closestTower.x, closestTower.y - 26, '🔇 Užtildytas!', '#fda4af');
+          }
+        }
+      }
+
+      // 5 Zonos Bosas: Kibernetinio Mega-Bosuko regeneruojantis skydas
+      if (enemy.maxShield > 0) {
+        enemy.timeSinceLastHit += dt;
+        if (enemy.shield < enemy.maxShield && enemy.timeSinceLastHit >= (enemy.shieldRegenDelay || 2.8)) {
+          enemy.shield = Math.min(enemy.maxShield, enemy.shield + (enemy.shieldRegenPerSec || 28) * dt);
+        }
+      }
+
       const canMove = enemy.stunTimer <= 0 && !enemy.isBlocked;
       const spline = this.pathSplines[enemy.pathIndex];
 
       if (canMove) {
-        const currentSpeed = enemy.speed * (enemy.slowTimer > 0 ? enemy.slowFactor : 1);
+        const burrowMult = enemy.burrowTimer > 0 ? enemy.burrowSpeedMult || 1.3 : 1;
+        const currentSpeed = enemy.speed * burrowMult * (enemy.slowTimer > 0 ? enemy.slowFactor : 1);
         enemy.distance += currentSpeed * dt;
       }
 
@@ -700,11 +908,17 @@ export class TDEngine {
       enemy.y = sampled.y;
       enemy.angle = sampled.angle;
       enemy.remainingDistance = sampled.remainingDistance;
-      enemy.isBlocked = false; // Barakai iš naujo pažymės blokavimą šiame kadre
+      enemy.isBlocked = false;
     }
 
-    // 4. Visų 6 bokštelių mechanikų atnaujinimas
+    // 4. Visų 6 bokštelių mechanikų atnaujinimas (atsižvelgiant į užtildymą 🔇)
     for (const tower of this.towers) {
+      if (tower.silencedTimer > 0) {
+        tower.silencedTimer = Math.max(0, tower.silencedTimer - dt);
+        tower.activeBeams = [];
+        continue;
+      }
+
       const stats = getTowerStats(tower.type, tower.level, tower.evolutionId);
       if (!stats) continue;
 
@@ -779,6 +993,10 @@ export class TDEngine {
     for (let i = this.explosions.length - 1; i >= 0; i--) {
       this.explosions[i].life -= dt;
       if (this.explosions[i].life <= 0) this.explosions.splice(i, 1);
+    }
+    for (let i = this.slimePuddles.length - 1; i >= 0; i--) {
+      this.slimePuddles[i].life -= dt;
+      if (this.slimePuddles[i].life <= 0) this.slimePuddles.splice(i, 1);
     }
     for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
       const ft = this.floatingTexts[i];
@@ -936,9 +1154,10 @@ export class TDEngine {
     // Radaras atidengia nematomus (Camo) priešus
     for (const enemy of this.enemies) {
       if (Math.hypot(enemy.x - tower.x, enemy.y - tower.y) <= revealRadius) {
-        if (enemy.isCamo) {
+        if (enemy.isCamo && enemy.burrowTimer <= 0) {
           if (stats.stripCamoPermanently) {
             enemy.isCamo = false;
+            enemy.permanentUncamo = true;
             enemy.scannerVulnerable = true;
             this.addFloatingText(enemy.x, enemy.y - 20, '📡 Atidengtas!', '#34d399');
           } else {
@@ -1041,7 +1260,14 @@ export class TDEngine {
           unit.x = tower.x;
           unit.y = tower.y;
           unit.engagedEnemyId = null;
+          unit.stunTimer = 0;
         }
+        continue;
+      }
+
+      if (unit.stunTimer > 0) {
+        unit.stunTimer = Math.max(0, unit.stunTimer - dt);
+        unit.engagedEnemyId = null;
         continue;
       }
 
@@ -1049,10 +1275,10 @@ export class TDEngine {
       const homeX = rally.x + Math.cos(angle) * spreadRadius;
       const homeY = rally.y + Math.sin(angle) * spreadRadius;
 
-      // Ieškome žemės priešo arti Rally Point
+      // Ieškome žemės priešo arti Rally Point (išskyrus panėrusius kurmius)
       let enemy =
         unit.engagedEnemyId !== null
-          ? this.enemies.find((e) => e.uid === unit.engagedEnemyId && e.hp > 0)
+          ? this.enemies.find((e) => e.uid === unit.engagedEnemyId && e.hp > 0 && e.burrowTimer <= 0)
           : null;
 
       if (enemy && Math.hypot(enemy.x - rally.x, enemy.y - rally.y) > 78) {
@@ -1064,6 +1290,7 @@ export class TDEngine {
         enemy = this.enemies.find(
           (e) =>
             !e.isFlying &&
+            e.burrowTimer <= 0 &&
             (!e.isCamo || (e.camoRevealedTimer || 0) > 0) &&
             Math.hypot(e.x - rally.x, e.y - rally.y) <= 58
         );
@@ -1159,7 +1386,7 @@ export class TDEngine {
         arcHeight: stats.arcHeight || 66,
         damage: stats.damage,
         splashRadius: stats.splashRadius || 68,
-        slowFactor: 1 - (stats.slowPercentage || 0.35),
+        slowPercentage: stats.slowPercentage || 0.35,
         slowDuration: stats.slowDuration || 2.5,
         freezeDuration: freezeShot ? stats.freezeDuration || 1.7 : 0,
         color: freezeShot ? '#60a5fa' : stats.color
@@ -1178,11 +1405,10 @@ export class TDEngine {
     });
 
     for (const enemy of [...this.enemies]) {
-      if (enemy.isFlying) continue;
+      if (enemy.isFlying || enemy.burrowTimer > 0) continue;
       const dist = Math.hypot(enemy.x - shot.targetX, enemy.y - shot.targetY);
       if (dist <= shot.splashRadius) {
-        enemy.slowFactor = Math.min(enemy.slowFactor, shot.slowFactor);
-        enemy.slowTimer = Math.max(enemy.slowTimer, shot.slowDuration);
+        this.applySlowToEnemy(enemy, shot.slowPercentage || 0.35, shot.slowDuration);
         if (shot.freezeDuration > 0) {
           enemy.stunTimer = Math.max(
             enemy.stunTimer,
@@ -1249,6 +1475,7 @@ export class TDEngine {
         maxLife: 0.24
       });
       for (const enemy of [...this.enemies]) {
+        if (enemy.burrowTimer > 0) continue;
         const dist = Math.hypot(enemy.x - proj.tx, enemy.y - proj.ty);
         if (dist <= proj.splashRadius) {
           const falloff = dist < proj.splashRadius * 0.45 ? 1 : 0.72;
@@ -1261,13 +1488,24 @@ export class TDEngine {
   }
 
   damageEnemy(enemy, rawAmount, options = {}) {
-    if (!enemy || enemy.hp <= 0) return false;
+    if (!enemy || enemy.hp <= 0 || enemy.burrowTimer > 0) return false;
     const armorPierce = options.armorPierce || 0;
     const effectiveArmor = Math.max(0, (enemy.armor || 0) * (1 - armorPierce));
     const vulnMult = enemy.scannerVulnerable ? 1.2 : 1.0;
-    const finalDamage = rawAmount * (1 - effectiveArmor) * vulnMult;
+    let finalDamage = rawAmount * (1 - effectiveArmor) * vulnMult;
 
-    enemy.hp -= finalDamage;
+    enemy.timeSinceLastHit = 0;
+
+    // 5 Zonos Boso regeneruojantis energijos skydas sugeria žalą pirmiausia
+    if (enemy.shield > 0) {
+      const absorbed = Math.min(enemy.shield, finalDamage);
+      enemy.shield -= absorbed;
+      finalDamage -= absorbed;
+    }
+
+    if (finalDamage > 0) {
+      enemy.hp -= finalDamage;
+    }
     enemy.hitFlash = 0.08;
 
     if (enemy.hp <= 0) {
@@ -1278,6 +1516,38 @@ export class TDEngine {
       const reward = enemy.reward || 10;
       this.coins += reward;
       this.addFloatingText(enemy.x, enemy.y - 14, `+${reward} 🪙`, '#fde047');
+
+      // Piktžolių Golemas sunaikintas suskyla į 2 mažus šliužus
+      if (enemy.splitOnDeath) {
+        const arch = ENEMY_ARCHETYPES[enemy.splitOnDeath.type] || ENEMY_ARCHETYPES.garden_slug;
+        const count = enemy.splitOnDeath.count || 2;
+        const hpScale = enemy.splitOnDeath.hpScale || 0.45;
+        for (let s = 0; s < count; s++) {
+          const child = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, enemy.pathIndex, 0, hpScale);
+          this.spawnEnemyRuntime(child, Math.max(0, enemy.distance + (s === 0 ? -8 : 8)));
+        }
+      }
+
+      // Sprogstantis Vabalas mirdamas sustabdo netoliese esančius robotus-vejapjoves
+      if (enemy.deathStunMowersRadius > 0) {
+        this.explosions.push({
+          x: enemy.x,
+          y: enemy.y,
+          radius: enemy.deathStunMowersRadius,
+          color: '#ef4444',
+          life: 0.3,
+          maxLife: 0.3
+        });
+        for (const t of this.towers) {
+          if (t.type !== 'mower_barracks') continue;
+          for (const u of t.units) {
+            if (u.respawnTimer <= 0 && Math.hypot(u.x - enemy.x, u.y - enemy.y) <= enemy.deathStunMowersRadius) {
+              u.stunTimer = Math.max(u.stunTimer || 0, enemy.deathStunMowersDuration || 2.2);
+            }
+          }
+        }
+      }
+
       this.notifyStateChange();
       return true;
     }
@@ -1363,6 +1633,39 @@ export class TDEngine {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('⚔️', entry.x, entry.y + 1);
+
+      // Pulsuojanti būsimos bangos peržiūros ikona kelio pradžioje
+      if (this.nextWavePreview && this.canCallWaveEarly()) {
+        const pulseScale = 1 + Math.sin(this.animClock * 5) * 0.1;
+        const bx = entry.x + 18;
+        const by = entry.y;
+        ctx.save();
+        ctx.translate(bx, by);
+        ctx.scale(pulseScale, pulseScale);
+        ctx.fillStyle = this.nextWavePreview.hasBoss ? 'rgba(190, 18, 60, 0.92)' : 'rgba(180, 83, 9, 0.92)';
+        ctx.strokeStyle = '#fde047';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(0, 0, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = '14px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.nextWavePreview.primaryIcon || '⚠️', 0, 1);
+        ctx.restore();
+      }
+    }
+
+    // Gleivių pėdsakas (1 Zonos Bosas: Šliužų Karalius)
+    for (const puddle of this.slimePuddles) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, puddle.life / puddle.maxLife) * 0.52;
+      ctx.fillStyle = '#84cc16';
+      ctx.beginPath();
+      ctx.ellipse(puddle.x, puddle.y + 4, 15, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
 
     // 3. Tvirtovė kelio pabaigoje
@@ -1532,7 +1835,7 @@ export class TDEngine {
           ctx.font = '11px Outfit, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('🤖', u.x, u.y + 1);
+          ctx.fillText(u.stunTimer > 0 ? '💫' : '🤖', u.x, u.y + 1);
 
           const uRatio = Math.max(0, Math.min(1, u.hp / u.maxHp));
           ctx.fillStyle = '#020617';
@@ -1580,7 +1883,14 @@ export class TDEngine {
       ctx.font = '12px Outfit, sans-serif';
       ctx.fillText(priorityMeta.icon, tower.x + 19, tower.y + 18);
 
-      // Aurų indikatoriai (+greitis / +nuotolis)
+      // Užtildymo (🔇) arba Triukšmo Goblino slopinimo (👺) / Aurų indikatoriai
+      if (tower.silencedTimer > 0) {
+        ctx.font = '14px Outfit, sans-serif';
+        ctx.fillText('🔇', tower.x - 19, tower.y - 16);
+      } else if (tower.isJammed) {
+        ctx.font = '12px Outfit, sans-serif';
+        ctx.fillText('👺', tower.x - 19, tower.y - 16);
+      }
       if (tower.speedAuraPct > 0 || tower.rangeAuraPct > 0) {
         ctx.font = 'bold 9px Outfit, sans-serif';
         ctx.fillStyle = '#a7f3d0';
@@ -1649,11 +1959,37 @@ export class TDEngine {
       ctx.restore();
     }
 
-    // 10. Priešai
+    // 10. Priešai ir 5 Zonos Bosai
     for (const enemy of this.enemies) {
       ctx.save();
+
+      // Po žeme panėręs Kurmis-Tunelininkas arba Geležinis Kurmis
+      if (enemy.burrowTimer > 0) {
+        ctx.fillStyle = '#78350f';
+        ctx.strokeStyle = '#fde68a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(enemy.x, enemy.y + 3, enemy.radius * 1.1, enemy.radius * 0.65, 0, Math.PI, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = '12px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('⛰️', enemy.x, enemy.y - 6);
+        ctx.restore();
+        continue;
+      }
+
       if (enemy.isCamo && (enemy.camoRevealedTimer || 0) <= 0) {
         ctx.globalAlpha = 0.42;
+      }
+
+      if (enemy.jamAuraRadius > 0) {
+        ctx.strokeStyle = 'rgba(236, 72, 153, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.jamAuraRadius, 0, Math.PI * 2);
+        ctx.stroke();
       }
 
       if (enemy.isFlying) {
@@ -1679,21 +2015,17 @@ export class TDEngine {
       ctx.fill();
       ctx.stroke();
 
-      if (enemy.isFlying) {
-        ctx.font = '11px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🪽', enemy.x, enemy.y - enemy.radius - 13);
+      ctx.font = enemy.isBoss ? '15px Outfit, sans-serif' : '12px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(enemy.icon || '👾', enemy.x, enemy.y + 1);
+
+      if (enemy.isBoss) {
+        ctx.font = '14px Outfit, sans-serif';
+        ctx.fillText('👑', enemy.x, enemy.y - enemy.radius - 16);
       } else if (enemy.isCamo) {
         ctx.font = '11px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('👁️', enemy.x, enemy.y - enemy.radius - 13);
-      } else if (enemy.isBoss) {
-        ctx.font = '15px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('👑', enemy.x, enemy.y - enemy.radius - 14);
+        ctx.fillText('👁️', enemy.x, enemy.y - enemy.radius - 14);
       }
 
       const barW = enemy.radius * 2.2;
@@ -1703,6 +2035,15 @@ export class TDEngine {
       ctx.fillRect(enemy.x - barW / 2, barY, barW, 5);
       ctx.fillStyle = enemy.isBoss ? '#facc15' : '#4ade80';
       ctx.fillRect(enemy.x - barW / 2, barY, barW * ratio, 5);
+
+      // Kibernetinio Mega-Bosuko energijos skydo juosta
+      if (enemy.maxShield > 0 && enemy.shield > 0) {
+        const sRatio = Math.max(0, Math.min(1, enemy.shield / enemy.maxShield));
+        ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
+        ctx.fillRect(enemy.x - barW / 2, barY - 6, barW, 4);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillRect(enemy.x - barW / 2, barY - 6, barW * sRatio, 4);
+      }
       ctx.restore();
     }
 

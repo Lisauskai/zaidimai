@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121c';
+} from '../../../shared/playtime-timer.js?v=20261121d';
 import {
   TOWER_LIST,
   TARGETING_PRIORITIES,
@@ -13,8 +13,8 @@ import {
   computeSellRefund,
   calculateStarsForHearts,
   getProfileModifier
-} from './balance.js?v=20261121c';
-import { TDEngine } from './engine.js?v=20261121c';
+} from './balance.js?v=20261121d';
+import { TDEngine } from './engine.js?v=20261121d';
 
 const SAVE_KEY = 'gynyba_save_v1';
 
@@ -78,6 +78,9 @@ const inspectorPriorityGrid = document.getElementById('inspector-priority-grid')
 const inspectorEvolutionsBox = document.getElementById('inspector-evolutions-box');
 const inspectorEvolutionsGrid = document.getElementById('inspector-evolutions-grid');
 const btnRallyPoint = document.getElementById('btn-rally-point');
+const wavePreviewCard = document.getElementById('wave-preview-card');
+const wavePreviewHeadline = document.getElementById('wave-preview-headline');
+const wavePreviewList = document.getElementById('wave-preview-list');
 const resultOverlay = document.getElementById('battle-result-overlay');
 
 const btnSpeedToggle = document.getElementById('btn-speed-toggle');
@@ -95,6 +98,7 @@ let lastFrameTimestamp = 0;
 const engine = new TDEngine(canvas, {
   onStateChange: () => syncBattleUI(),
   onSelectionChange: () => syncSelectionUI(),
+  onWavePreviewChange: (preview) => renderWavePreviewCard(preview),
   onGameResult: (result) => handleGameResult(result)
 });
 
@@ -166,6 +170,42 @@ function positionFloatingMenu(menuEl, padX, padY) {
 function closePadMenus() {
   padBuildMenu?.classList.add('hidden');
   towerInspectorMenu?.classList.add('hidden');
+}
+
+function renderWavePreviewCard(preview) {
+  if (!wavePreviewCard || !wavePreviewHeadline || !wavePreviewList) return;
+  if (!preview || !preview.groups || preview.groups.length === 0) {
+    wavePreviewCard.classList.add('hidden');
+    return;
+  }
+
+  wavePreviewHeadline.textContent = preview.headline;
+  wavePreviewList.innerHTML = '';
+
+  preview.groups.forEach((g) => {
+    const row = document.createElement('div');
+    row.className = 'wave-preview-row';
+
+    const top = document.createElement('div');
+    top.className = 'wave-preview-row-top';
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = `${g.icon} ${g.name}`;
+    const countSpan = document.createElement('span');
+    countSpan.className = 'wave-preview-count';
+    countSpan.textContent = `×${g.count}`;
+    top.appendChild(nameSpan);
+    top.appendChild(countSpan);
+
+    const tip = document.createElement('div');
+    tip.className = 'wave-preview-tip';
+    tip.textContent = g.counterTip || '';
+
+    row.appendChild(top);
+    if (g.counterTip) row.appendChild(tip);
+    wavePreviewList.appendChild(row);
+  });
+
+  wavePreviewCard.classList.remove('hidden');
 }
 
 function syncBuildMenuAffordability() {
@@ -377,6 +417,7 @@ function syncBattleUI() {
   if (btnCallWave && uiCallWaveLabel && uiEarlyWaveBonus) {
     const canCall = engine.canCallWaveEarly();
     btnCallWave.disabled = !canCall;
+    btnCallWave.title = engine.nextWavePreview?.headline || 'Kviesti kitą bangą';
 
     if (engine.wave >= engine.map.maxWaves) {
       uiCallWaveLabel.textContent = engine.gameResult ? '🏁 Kova baigta' : `⚔️ Paskutinė banga (${engine.wave}/${engine.map.maxWaves})`;
@@ -569,6 +610,11 @@ document.getElementById('btn-close-inspector')?.addEventListener('click', () => 
   engine.clearSelection();
 });
 
+document.getElementById('btn-close-wave-preview')?.addEventListener('click', () => {
+  engine.pinnedWavePreview = false;
+  renderWavePreviewCard(null);
+});
+
 btnUpgradeTower?.addEventListener('click', () => {
   if (engine.selectedPadIndex !== null) {
     engine.upgradeTower(engine.selectedPadIndex);
@@ -594,6 +640,21 @@ canvas?.addEventListener('click', (event) => {
   const mx = ((event.clientX - rect.left) * canvas.width) / rect.width;
   const my = ((event.clientY - rect.top) * canvas.height) / rect.height;
   engine.handleCanvasTap(mx, my);
+});
+
+canvas?.addEventListener('pointermove', (event) => {
+  if (!activeProfile || event.pointerType !== 'mouse') return;
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const mx = ((event.clientX - rect.left) * canvas.width) / rect.width;
+  const my = ((event.clientY - rect.top) * canvas.height) / rect.height;
+  engine.handleCanvasHover(mx, my);
+});
+
+canvas?.addEventListener('pointerleave', () => {
+  if (!engine.pinnedWavePreview) {
+    renderWavePreviewCard(null);
+  }
 });
 
 updateProfileCards();
