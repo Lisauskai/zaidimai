@@ -2,96 +2,42 @@
 // Automatiškai išvalo besidubliuojančius daiktus (duplicate items) kuprinėje ir už kiekvieną ištrintą dublikatą kompensuoja jo pardavimo vertę monetomis!
 
 import { GEAR_ITEMS, getSellPrice } from './shop.js';
+import {
+  GLOBAL_TIME_KEYS,
+  DEFAULT_DAILY_TIME_LIMIT_SECONDS,
+  getTodayDateString,
+  loadGlobalPlaytime as sharedLoadGlobalPlaytime,
+  saveGlobalPlaytime as sharedSaveGlobalPlaytime
+} from '../../../shared/playtime-timer.js?v=20261121k';
 
 const STORAGE_KEY_LINAS = 'skaiciu_karalyste_save_linas_v2';
 const STORAGE_KEY_LUKAS = 'skaiciu_karalyste_save_lukas_v2';
 const STORAGE_KEY_META = 'skaiciu_karalyste_meta_v2';
 
 // BENDRI (GLOBALŪS) PORTALO LAIKO RAKTAI VISIEMS ŽAIDIMAMS KARTU!
-export const GLOBAL_TIME_KEY_LINAS = 'bosas_global_time_linas';
-export const GLOBAL_TIME_KEY_LUKAS = 'bosas_global_time_lukas';
+export const GLOBAL_TIME_KEY_LINAS = GLOBAL_TIME_KEYS.linas;
+export const GLOBAL_TIME_KEY_LUKAS = GLOBAL_TIME_KEYS.lukas;
 
 export const BACKPACK_CAPACITY = 15;
-export const DEFAULT_DAILY_TIME_LIMIT_SECONDS = 1200; // 20 minučių (1200 s)
-
-export function getTodayDateString() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+export { DEFAULT_DAILY_TIME_LIMIT_SECONDS, getTodayDateString };
 
 export function getGlobalTimeKeyForSlot(slotIndexOrId) {
   if (slotIndexOrId === 0 || slotIndexOrId === 'linas') return GLOBAL_TIME_KEY_LINAS;
   return GLOBAL_TIME_KEY_LUKAS;
 }
 
+function resolveChildIdForSlot(slotIndexOrId) {
+  return slotIndexOrId === 0 || slotIndexOrId === 'linas' ? 'linas' : 'lukas';
+}
+
 export function loadGlobalPlaytime(slotIndexOrId, fallbackProfile = null) {
-  const key = getGlobalTimeKeyForSlot(slotIndexOrId);
-  const today = getTodayDateString();
-  try {
-    const raw = localStorage.getItem(key);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        if (parsed.lastPlayedDate !== today) {
-          const fresh = {
-            lastPlayedDate: today,
-            timePlayedTodaySeconds: 0,
-            dailyTimeLimitSeconds: DEFAULT_DAILY_TIME_LIMIT_SECONDS
-          };
-          localStorage.setItem(key, JSON.stringify(fresh));
-          return fresh;
-        }
-        return {
-          lastPlayedDate: today,
-          timePlayedTodaySeconds: Math.max(0, Number(parsed.timePlayedTodaySeconds) || 0),
-          dailyTimeLimitSeconds: Math.max(60, Number(parsed.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS)
-        };
-      }
-    }
-  } catch (e) {
-    // Ignoruojame localStorage klaidas
-  }
-
-  // Migracija iš seno profilio, jei globalus raktas dar neegzistuoja
-  const migratedPlayed =
-    fallbackProfile && fallbackProfile.lastPlayedDate === today
-      ? Math.max(0, Number(fallbackProfile.timePlayedTodaySeconds) || 0)
-      : 0;
-  const migratedLimit =
-    fallbackProfile && fallbackProfile.lastPlayedDate === today
-      ? Math.max(60, Number(fallbackProfile.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS)
-      : DEFAULT_DAILY_TIME_LIMIT_SECONDS;
-
-  const initial = {
-    lastPlayedDate: today,
-    timePlayedTodaySeconds: migratedPlayed,
-    dailyTimeLimitSeconds: migratedLimit
-  };
-  try {
-    localStorage.setItem(key, JSON.stringify(initial));
-  } catch (e) {
-    // Ignoruojame
-  }
-  return initial;
+  const childId = resolveChildIdForSlot(slotIndexOrId);
+  return sharedLoadGlobalPlaytime(childId);
 }
 
 export function saveGlobalPlaytime(slotIndexOrId, timeData) {
-  const key = getGlobalTimeKeyForSlot(slotIndexOrId);
-  const today = getTodayDateString();
-  const payload = {
-    lastPlayedDate: timeData.lastPlayedDate || today,
-    timePlayedTodaySeconds: Math.max(0, Number(timeData.timePlayedTodaySeconds) || 0),
-    dailyTimeLimitSeconds: Math.max(60, Number(timeData.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS)
-  };
-  try {
-    localStorage.setItem(key, JSON.stringify(payload));
-  } catch (e) {
-    // Ignoruojame
-  }
-  return payload;
+  const childId = resolveChildIdForSlot(slotIndexOrId);
+  return sharedSaveGlobalPlaytime(childId, timeData);
 }
 
 export const COLOR_PALETTE = [

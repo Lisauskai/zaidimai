@@ -9,6 +9,8 @@ export const GLOBAL_TIME_KEYS = {
   lukas: 'bosas_global_time_lukas'
 };
 
+export const DAILY_PLAYTIME_KEY_PREFIX = 'bosas_playtime_';
+
 export const LEGACY_PROFILE_KEYS = {
   linas: 'skaiciu_karalyste_save_linas_v2',
   lukas: 'skaiciu_karalyste_save_lukas_v2'
@@ -25,6 +27,10 @@ export function getTodayDateString() {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+export function getDailyPlaytimeKey(dateStr = getTodayDateString()) {
+  return `${DAILY_PLAYTIME_KEY_PREFIX}${dateStr}`;
 }
 
 export function normalizeChildId(idOrGrade) {
@@ -67,94 +73,182 @@ export function formatMMSS(totalSeconds) {
   return `${mm}:${ss}`;
 }
 
-export function loadGlobalPlaytime(idOrGrade) {
-  const childId = normalizeChildId(idOrGrade) || 'linas';
-  const storageKey = GLOBAL_TIME_KEYS[childId];
-  const today = getTodayDateString();
-
+function readChildFallbackForToday(childId, today) {
   try {
-    const raw = localStorage.getItem(storageKey);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        if (parsed.lastPlayedDate !== today) {
-          const fresh = {
-            lastPlayedDate: today,
-            timePlayedTodaySeconds: 0,
-            dailyTimeLimitSeconds: DEFAULT_DAILY_TIME_LIMIT_SECONDS
-          };
-          localStorage.setItem(storageKey, JSON.stringify(fresh));
-          return fresh;
-        }
+    const rawGlobal = localStorage.getItem(GLOBAL_TIME_KEYS[childId]);
+    if (rawGlobal) {
+      const parsed = JSON.parse(rawGlobal);
+      if (parsed && typeof parsed === 'object' && parsed.lastPlayedDate === today) {
+        const limit = Math.max(60, Number(parsed.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS);
+        const played = Math.max(0, Number(parsed.timePlayedTodaySeconds) || 0);
         return {
-          lastPlayedDate: today,
-          timePlayedTodaySeconds: Math.max(0, Number(parsed.timePlayedTodaySeconds) || 0),
-          dailyTimeLimitSeconds: Math.max(
-            60,
-            Number(parsed.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS
-          )
+          remaining: Math.max(0, limit - played),
+          limit
         };
       }
     }
 
-    // Migracija iš seno Matematikos RPG profilio, jei globalus raktas dar neegzistuoja
-    const legacyKey = LEGACY_PROFILE_KEYS[childId];
-    const rawLegacy = localStorage.getItem(legacyKey);
+    const rawLegacy = localStorage.getItem(LEGACY_PROFILE_KEYS[childId]);
     if (rawLegacy) {
       const legacyObj = JSON.parse(rawLegacy);
       if (legacyObj && legacyObj.lastPlayedDate === today) {
-        const migrated = {
-          lastPlayedDate: today,
-          timePlayedTodaySeconds: Math.max(0, Number(legacyObj.timePlayedTodaySeconds) || 0),
-          dailyTimeLimitSeconds: Math.max(
-            60,
-            Number(legacyObj.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS
-          )
+        const limit = Math.max(60, Number(legacyObj.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS);
+        const played = Math.max(0, Number(legacyObj.timePlayedTodaySeconds) || 0);
+        return {
+          remaining: Math.max(0, limit - played),
+          limit
         };
-        localStorage.setItem(storageKey, JSON.stringify(migrated));
-        return migrated;
       }
     }
   } catch (e) {
     // Ignoruojame localStorage skaitymo klaidas
   }
+  return {
+    remaining: DEFAULT_DAILY_TIME_LIMIT_SECONDS,
+    limit: DEFAULT_DAILY_TIME_LIMIT_SECONDS
+  };
+}
 
-  const initial = {
-    lastPlayedDate: today,
-    timePlayedTodaySeconds: 0,
-    dailyTimeLimitSeconds: DEFAULT_DAILY_TIME_LIMIT_SECONDS
+function readDailyBucket(today = getTodayDateString()) {
+  const dailyKey = getDailyPlaytimeKey(today);
+  try {
+    const rawDaily = localStorage.getItem(dailyKey);
+    if (rawDaily) {
+      const parsed = JSON.parse(rawDaily);
+      if (parsed && typeof parsed === 'object') {
+        const limLinas = Math.max(
+          60,
+          Number(parsed.limits?.linas) || DEFAULT_DAILY_TIME_LIMIT_SECONDS
+        );
+        const limLukas = Math.max(
+          60,
+          Number(parsed.limits?.lukas) || DEFAULT_DAILY_TIME_LIMIT_SECONDS
+        );
+        const remLinas = Math.max(
+          0,
+          parsed.linas !== undefined ? Number(parsed.linas) : limLinas
+        );
+        const remLukas = Math.max(
+          0,
+          parsed.lukas !== undefined ? Number(parsed.lukas) : limLukas
+        );
+        return {
+          linas: remLinas,
+          lukas: remLukas,
+          limits: { linas: limLinas, lukas: limLukas }
+        };
+      }
+    }
+  } catch (e) {
+    // Ignoruojame localStorage klaidas
+  }
+
+  const fbLinas = readChildFallbackForToday('linas', today);
+  const fbLukas = readChildFallbackForToday('lukas', today);
+  const freshBucket = {
+    linas: fbLinas.remaining,
+    lukas: fbLukas.remaining,
+    limits: { linas: fbLinas.limit, lukas: fbLukas.limit }
   };
   try {
-    localStorage.setItem(storageKey, JSON.stringify(initial));
+    localStorage.setItem(dailyKey, JSON.stringify(freshBucket));
   } catch (e) {
     // Ignoruojame saugojimo klaidas
   }
-  return initial;
+  return freshBucket;
+}
+
+export function loadGlobalPlaytime(idOrGrade) {
+  const childId = normalizeChildId(idOrGrade) || 'linas';
+  const today = getTodayDateString();
+  const bucket = readDailyBucket(today);
+
+  const rawRemaining =
+    bucket[childId] !== undefined ? Number(bucket[childId]) : DEFAULT_DAILY_TIME_LIMIT_SECONDS;
+  const dailyTimeLimitSeconds = Math.max(
+    60,
+    Number(bucket.limits?.[childId]) || DEFAULT_DAILY_TIME_LIMIT_SECONDS,
+    Number.isFinite(rawRemaining) ? rawRemaining : 0
+  );
+  const remainingSeconds = Math.max(
+    0,
+    Math.min(dailyTimeLimitSeconds, Number.isFinite(rawRemaining) ? rawRemaining : dailyTimeLimitSeconds)
+  );
+  const timePlayedTodaySeconds = Math.max(0, dailyTimeLimitSeconds - remainingSeconds);
+
+  const result = {
+    lastPlayedDate: today,
+    timePlayedTodaySeconds,
+    dailyTimeLimitSeconds,
+    remainingSeconds
+  };
+
+  // Laikome abu formatus sinchronizuotus: bosas_playtime_YYYY-MM-DD ir bosas_global_time_<vaikas>
+  try {
+    localStorage.setItem(
+      GLOBAL_TIME_KEYS[childId],
+      JSON.stringify({
+        lastPlayedDate: today,
+        timePlayedTodaySeconds,
+        dailyTimeLimitSeconds
+      })
+    );
+  } catch (e) {
+    // Ignoruojame saugojimo klaidas
+  }
+
+  return result;
 }
 
 export function saveGlobalPlaytime(idOrGrade, timeData) {
   const childId = normalizeChildId(idOrGrade) || 'linas';
-  const storageKey = GLOBAL_TIME_KEYS[childId];
   const today = getTodayDateString();
+  const activeDate = timeData?.lastPlayedDate || today;
+  const dailyTimeLimitSeconds = Math.max(
+    60,
+    Number(timeData?.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS
+  );
+  const timePlayedTodaySeconds = Math.max(0, Number(timeData?.timePlayedTodaySeconds) || 0);
+  const remainingSeconds = Math.max(0, dailyTimeLimitSeconds - timePlayedTodaySeconds);
+
   const payload = {
-    lastPlayedDate: timeData?.lastPlayedDate || today,
-    timePlayedTodaySeconds: Math.max(0, Number(timeData?.timePlayedTodaySeconds) || 0),
-    dailyTimeLimitSeconds: Math.max(
-      60,
-      Number(timeData?.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS
-    )
+    lastPlayedDate: activeDate,
+    timePlayedTodaySeconds,
+    dailyTimeLimitSeconds
   };
+
   try {
-    localStorage.setItem(storageKey, JSON.stringify(payload));
+    localStorage.setItem(GLOBAL_TIME_KEYS[childId], JSON.stringify(payload));
+    const bucket = readDailyBucket(activeDate);
+    bucket[childId] = remainingSeconds;
+    if (!bucket.limits) {
+      bucket.limits = {
+        linas: DEFAULT_DAILY_TIME_LIMIT_SECONDS,
+        lukas: DEFAULT_DAILY_TIME_LIMIT_SECONDS
+      };
+    }
+    bucket.limits[childId] = dailyTimeLimitSeconds;
+    localStorage.setItem(getDailyPlaytimeKey(activeDate), JSON.stringify(bucket));
   } catch (e) {
     // Ignoruojame saugojimo klaidas
   }
-  return payload;
+  return { ...payload, remainingSeconds };
 }
 
 export function getRemainingPlaytimeSeconds(idOrGrade) {
   const data = loadGlobalPlaytime(idOrGrade);
   return Math.max(0, data.dailyTimeLimitSeconds - data.timePlayedTodaySeconds);
+}
+
+export function setRemainingPlaytimeSeconds(idOrGrade, remainingSeconds) {
+  const data = loadGlobalPlaytime(idOrGrade);
+  const clampedRem = Math.max(0, Math.round(Number(remainingSeconds) || 0));
+  const limit = Math.max(data.dailyTimeLimitSeconds, clampedRem);
+  return saveGlobalPlaytime(idOrGrade, {
+    lastPlayedDate: data.lastPlayedDate,
+    dailyTimeLimitSeconds: limit,
+    timePlayedTodaySeconds: Math.max(0, limit - clampedRem)
+  });
 }
 
 function injectSharedTimerStyles() {
@@ -592,7 +686,12 @@ export function initPlaytimeTimer(options = {}) {
     }
 
     if (modalOpen || locked) return;
-    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+    if (
+      typeof document !== 'undefined' &&
+      (document.hidden || document.visibilityState === 'hidden')
+    ) {
+      return;
+    }
     if (typeof options.shouldCount === 'function' && !options.shouldCount()) return;
 
     data.timePlayedTodaySeconds += 1;
@@ -609,19 +708,47 @@ export function initPlaytimeTimer(options = {}) {
     }
   }
 
-  const onStorageSync = (e) => {
-    if (
-      e.key === GLOBAL_TIME_KEYS.linas ||
-      e.key === GLOBAL_TIME_KEYS.lukas ||
-      e.key === null
-    ) {
-      renderBadge();
-      if (activeChild && getRemainingPlaytimeSeconds(activeChild) <= 0 && !locked) {
-        openModal(true);
+  function syncFromStorage() {
+    renderBadge();
+    if (!activeChild) return;
+    const rem = getRemainingPlaytimeSeconds(activeChild);
+    if (rem <= 0 && !locked) {
+      openModal(true);
+    } else if (rem > 0 && locked) {
+      closeModal();
+      if (typeof options.onUnlock === 'function') {
+        options.onUnlock(activeChild);
       }
     }
+    if (typeof options.onTick === 'function') {
+      options.onTick(rem, activeChild);
+    }
+  }
+
+  const onStorageSync = (e) => {
+    if (
+      e.key === null ||
+      e.key === GLOBAL_TIME_KEYS.linas ||
+      e.key === GLOBAL_TIME_KEYS.lukas ||
+      (typeof e.key === 'string' && e.key.startsWith(DAILY_PLAYTIME_KEY_PREFIX))
+    ) {
+      syncFromStorage();
+    }
   };
-  window.addEventListener('storage', onStorageSync);
+
+  const onVisibilityOrFocus = () => {
+    if (typeof document !== 'undefined' && !document.hidden) {
+      syncFromStorage();
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', onStorageSync);
+    window.addEventListener('focus', onVisibilityOrFocus);
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', onVisibilityOrFocus);
+  }
 
   intervalId = setInterval(checkAndTick, 1000);
   renderBadge();
@@ -667,7 +794,13 @@ export function initPlaytimeTimer(options = {}) {
         clearInterval(intervalId);
         intervalId = null;
       }
-      window.removeEventListener('storage', onStorageSync);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', onStorageSync);
+        window.removeEventListener('focus', onVisibilityOrFocus);
+      }
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibilityOrFocus);
+      }
     }
   };
 }

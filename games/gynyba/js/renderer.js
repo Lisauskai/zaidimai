@@ -6,7 +6,7 @@ import {
   getTowerStats,
   getTargetingPriorityMeta,
   renderMapThemeDecorations
-} from './balance.js?v=20261121j';
+} from './balance.js?v=20261121k';
 
 function sampleSplinePoint(spline, distance) {
   const pts = spline?.points;

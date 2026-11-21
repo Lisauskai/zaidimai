@@ -21,8 +21,8 @@ import {
   loadGlobalPlaytime,
   saveGlobalPlaytime,
   getRemainingPlaytimeSeconds
-} from './garage.js?v=20261113n';
-import { PitStopMath } from './math.js?v=20261113n';
+} from './garage.js?v=20261121k';
+import { PitStopMath } from './math.js?v=20261121k';
 
 const PARENT_PASSWORD = 'bosas123';
 
@@ -447,7 +447,23 @@ function updateGlobalTimerBadges() {
 }
 
 function startGlobalPlaytimeTicker() {
+  const syncVisibilityOrStorage = () => {
+    if (typeof document !== 'undefined' && document.hidden) return;
+    updateGlobalTimerBadges();
+    const profile = garage.getActiveProfile();
+    if (profile && currentScreen !== 'PROFILES' && getRemainingPlaytimeSeconds(profile.driverKey) <= 0 && !isTimeLimitPaused) {
+      openTimeLimitModal(true);
+    }
+  };
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', syncVisibilityOrStorage);
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', syncVisibilityOrStorage);
+  }
+
   setInterval(() => {
+    if (typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden')) return;
     if (currentScreen === 'PROFILES' || isTimeLimitPaused) return;
     const profile = garage.getActiveProfile();
     if (!profile) return;

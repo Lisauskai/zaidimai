@@ -8,102 +8,17 @@ export const SAVE_KEYS = {
 };
 
 // BENDRI (GLOBALŪS) PORTALO LAIKO RAKTAI VISIEMS ŽAIDIMAMS KARTU!
-export const GLOBAL_TIME_KEYS = {
-  linas: 'bosas_global_time_linas',
-  lukas: 'bosas_global_time_lukas'
-};
+export {
+  GLOBAL_TIME_KEYS,
+  DEFAULT_DAILY_TIME_LIMIT_SECONDS,
+  getTodayDateString,
+  loadGlobalPlaytime,
+  saveGlobalPlaytime,
+  getRemainingPlaytimeSeconds
+} from '../../shared/playtime-timer.js?v=20261121k';
 
-export const DEFAULT_DAILY_TIME_LIMIT_SECONDS = 1200; // 20 minučių (1200 s)
 export const MAX_MICRO_UPGRADE_LEVEL = 50;
 export const MAX_PART_LEVEL = 50;
-
-export function getTodayDateString() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-export function loadGlobalPlaytime(driverKey) {
-  const safeKey = driverKey === 'lukas' ? 'lukas' : 'linas';
-  const storageKey = GLOBAL_TIME_KEYS[safeKey];
-  const today = getTodayDateString();
-
-  try {
-    const raw = localStorage.getItem(storageKey);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object') {
-        if (parsed.lastPlayedDate !== today) {
-          const fresh = {
-            lastPlayedDate: today,
-            timePlayedTodaySeconds: 0,
-            dailyTimeLimitSeconds: DEFAULT_DAILY_TIME_LIMIT_SECONDS
-          };
-          localStorage.setItem(storageKey, JSON.stringify(fresh));
-          return fresh;
-        }
-        return {
-          lastPlayedDate: today,
-          timePlayedTodaySeconds: Math.max(0, Number(parsed.timePlayedTodaySeconds) || 0),
-          dailyTimeLimitSeconds: Math.max(60, Number(parsed.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS)
-        };
-      }
-    }
-
-    const rpgKey = safeKey === 'linas' ? 'skaiciu_karalyste_save_linas_v2' : 'skaiciu_karalyste_save_lukas_v2';
-    const rawRpg = localStorage.getItem(rpgKey);
-    if (rawRpg) {
-      const rpgProf = JSON.parse(rawRpg);
-      if (rpgProf && rpgProf.lastPlayedDate === today) {
-        const migrated = {
-          lastPlayedDate: today,
-          timePlayedTodaySeconds: Math.max(0, Number(rpgProf.timePlayedTodaySeconds) || 0),
-          dailyTimeLimitSeconds: Math.max(60, Number(rpgProf.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS)
-        };
-        localStorage.setItem(storageKey, JSON.stringify(migrated));
-        return migrated;
-      }
-    }
-  } catch (e) {
-    // Ignoruojame localStorage klaidas
-  }
-
-  const initial = {
-    lastPlayedDate: today,
-    timePlayedTodaySeconds: 0,
-    dailyTimeLimitSeconds: DEFAULT_DAILY_TIME_LIMIT_SECONDS
-  };
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(initial));
-  } catch (e) {
-    // Ignoruojame
-  }
-  return initial;
-}
-
-export function saveGlobalPlaytime(driverKey, timeData) {
-  const safeKey = driverKey === 'lukas' ? 'lukas' : 'linas';
-  const storageKey = GLOBAL_TIME_KEYS[safeKey];
-  const today = getTodayDateString();
-  const payload = {
-    lastPlayedDate: timeData.lastPlayedDate || today,
-    timePlayedTodaySeconds: Math.max(0, Number(timeData.timePlayedTodaySeconds) || 0),
-    dailyTimeLimitSeconds: Math.max(60, Number(timeData.dailyTimeLimitSeconds) || DEFAULT_DAILY_TIME_LIMIT_SECONDS)
-  };
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(payload));
-  } catch (e) {
-    // Ignoruojame
-  }
-  return payload;
-}
-
-export function getRemainingPlaytimeSeconds(driverKey) {
-  const data = loadGlobalPlaytime(driverKey);
-  return Math.max(0, data.dailyTimeLimitSeconds - data.timePlayedTodaySeconds);
-}
 
 // ==================== 1 PUNKTAS: TRASŲ TEMŲ (BIOMES) IR FIZIKOS MULTIPLIERS SISTEMA ====================
 export const BIOMES = {

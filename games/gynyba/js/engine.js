@@ -20,16 +20,16 @@ import {
   selectTargetByPriority,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './balance.js?v=20261121j';
+} from './balance.js?v=20261121k';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121j';
-import { renderBattleScene } from './renderer.js?v=20261121j';
-import { audioManager } from './audio.js?v=20261121j';
+} from './towers.js?v=20261121k';
+import { renderBattleScene } from './renderer.js?v=20261121k';
+import { audioManager } from './audio.js?v=20261121k';
 
 let nextEnemyUid = 1;
 

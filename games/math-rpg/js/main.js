@@ -9,7 +9,7 @@ import {
   saveSystem,
   BACKPACK_CAPACITY,
   DEFAULT_DAILY_TIME_LIMIT_SECONDS
-} from './saveSystem.js';
+} from './saveSystem.js?v=20261121k';
 import { audio } from './audio.js';
 import { mathEngine } from './mathEngine.js';
 import { Player } from './player.js';
@@ -136,7 +136,24 @@ function updatePlaytimeHud(profile) {
 }
 
 function startPlaytimeTicker() {
+  const syncVisibilityOrStorage = () => {
+    if (typeof document !== 'undefined' && document.hidden) return;
+    const profile = saveSystem.getActiveProfile();
+    if (!profile) return;
+    updatePlaytimeHud(profile);
+    if (getRemainingPlaytimeSeconds(profile) <= 0 && !isTimeLimitPaused) {
+      openTimeLimitModal(true);
+    }
+  };
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', syncVisibilityOrStorage);
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', syncVisibilityOrStorage);
+  }
+
   setInterval(() => {
+    if (typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden')) return;
     const profile = saveSystem.getActiveProfile();
     if (!profile) return;
 

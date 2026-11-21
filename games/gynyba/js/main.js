@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121j';
+} from '../../../shared/playtime-timer.js?v=20261121k';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -26,9 +26,9 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121j';
-import { TDEngine } from './engine.js?v=20261121j';
-import { audioManager } from './audio.js?v=20261121j';
+} from './balance.js?v=20261121k';
+import { TDEngine } from './engine.js?v=20261121k';
+import { audioManager } from './audio.js?v=20261121k';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];

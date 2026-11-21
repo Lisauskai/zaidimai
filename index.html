@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css?v=20261121j" />
+  <link rel="stylesheet" href="./style.css?v=20261121k" />
 </head>
 <body>
   <!-- Gyvas kosminis dalelių tinklo fonas -->
@@ -23,6 +23,9 @@
       <div class="portal-top-badge">
         <span class="pulse-dot"></span>
         <span>BOSAS.EU • ŽAIDIMŲ ARENA</span>
+        <span id="portal-daily-timer-banner" style="margin-left:10px;padding-left:10px;border-left:1px solid rgba(148,163,184,0.35);color:#7dd3fc;">
+          ⏳ Linas: 20:00 | Lukas: 20:00
+        </span>
       </div>
 
       <div class="portal-brand-row">
@@ -499,29 +502,6 @@
         return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
       }
 
-      function formatRemainingTime(globalKey, fallbackProfile) {
-        const today = getTodayStr();
-        let played = 0;
-        let limit = 1200;
-        try {
-          const rawT = localStorage.getItem(globalKey);
-          if (rawT) {
-            const tObj = JSON.parse(rawT);
-            if (tObj && tObj.lastPlayedDate === today) {
-              played = Math.max(0, Number(tObj.timePlayedTodaySeconds) || 0);
-              limit = Math.max(60, Number(tObj.dailyTimeLimitSeconds) || 1200);
-            }
-          } else if (fallbackProfile && fallbackProfile.lastPlayedDate === today) {
-            played = Math.max(0, Number(fallbackProfile.timePlayedTodaySeconds) || 0);
-            limit = Math.max(60, Number(fallbackProfile.dailyTimeLimitSeconds) || 1200);
-          }
-        } catch (e) {}
-        const rem = Math.max(0, limit - played);
-        const mm = String(Math.floor(rem / 60)).padStart(2, '0');
-        const ss = String(rem % 60).padStart(2, '0');
-        return `⏳ ${mm}:${ss}`;
-      }
-
       function readJson(key) {
         try {
           const raw = localStorage.getItem(key);
@@ -531,31 +511,89 @@
         }
       }
 
+      function getRemainingSecForChild(childId, globalKey, fallbackProfile) {
+        const today = getTodayStr();
+        const dailyBucket = readJson('bosas_playtime_' + today);
+        if (dailyBucket && typeof dailyBucket === 'object' && dailyBucket[childId] !== undefined) {
+          return Math.max(0, Number(dailyBucket[childId]) || 0);
+        }
+
+        let played = 0;
+        let limit = 1200;
+        const tObj = readJson(globalKey);
+        if (tObj && tObj.lastPlayedDate === today) {
+          played = Math.max(0, Number(tObj.timePlayedTodaySeconds) || 0);
+          limit = Math.max(60, Number(tObj.dailyTimeLimitSeconds) || 1200);
+        } else if (fallbackProfile && fallbackProfile.lastPlayedDate === today) {
+          played = Math.max(0, Number(fallbackProfile.timePlayedTodaySeconds) || 0);
+          limit = Math.max(60, Number(fallbackProfile.dailyTimeLimitSeconds) || 1200);
+        }
+        return Math.max(0, limit - played);
+      }
+
+      function formatClockMMSS(sec) {
+        const s = Math.max(0, Math.floor(Number(sec) || 0));
+        const mm = String(Math.floor(s / 60)).padStart(2, '0');
+        const ss = String(s % 60).padStart(2, '0');
+        return `${mm}:${ss}`;
+      }
+
+      function refreshPortalTimeAndStats() {
+        try {
+          const p1 = readJson('skaiciu_karalyste_save_linas_v2');
+          const p2 = readJson('skaiciu_karalyste_save_lukas_v2');
+          const race1 = readJson('lenktynes_save_linas');
+          const race2 = readJson('lenktynes_save_lukas');
+          const labData = readJson('proto_lab_progress');
+
+          const g1Crystals = Number(labData?.grade1?.crystals) || 0;
+          const g3Crystals = Number(labData?.grade3?.crystals) || 0;
+
+          const rem1 = getRemainingSecForChild('linas', 'bosas_global_time_linas', p1);
+          const rem2 = getRemainingSecForChild('lukas', 'bosas_global_time_lukas', p2);
+          const mmss1 = formatClockMMSS(rem1);
+          const mmss2 = formatClockMMSS(rem2);
+
+          const bannerEl = document.getElementById('portal-daily-timer-banner');
+          if (bannerEl) {
+            bannerEl.textContent = `⏳ Linas: ${mmss1} | Lukas: ${mmss2}`;
+          }
+
+          const el1 = document.getElementById('hub-linas-stats');
+          if (el1) {
+            el1.textContent = p1
+              ? `Lygis ${p1.unlockedLevel || 1}/50 • ${(p1.coins || 0).toLocaleString('lt-LT')} 🪙 • ${g1Crystals} 💎 • ⏳ ${mmss1}`
+              : `Lygis 1/50 • 0 🪙 • ${g1Crystals} 💎 • ⏳ ${mmss1}`;
+          }
+
+          const el2 = document.getElementById('hub-lukas-stats');
+          if (el2) {
+            el2.textContent = p2
+              ? `Lygis ${p2.unlockedLevel || 1}/50 • ${(p2.coins || 0).toLocaleString('lt-LT')} 🪙 • ${g3Crystals} 💎 • ⏳ ${mmss2}`
+              : `Lygis 1/50 • 0 🪙 • ${g3Crystals} 💎 • ⏳ ${mmss2}`;
+          }
+
+          return { p1, p2, race1, race2, labData, g1Crystals, g3Crystals };
+        } catch (e) {
+          return null;
+        }
+      }
+
       try {
-        const p1 = readJson('skaiciu_karalyste_save_linas_v2');
-        const p2 = readJson('skaiciu_karalyste_save_lukas_v2');
-        const race1 = readJson('lenktynes_save_linas');
-        const race2 = readJson('lenktynes_save_lukas');
-        const labData = readJson('proto_lab_progress');
+        const portalData = refreshPortalTimeAndStats();
+        const p1 = portalData?.p1;
+        const p2 = portalData?.p2;
+        const race1 = portalData?.race1;
+        const race2 = portalData?.race2;
+        const labData = portalData?.labData;
+        const g1Crystals = portalData?.g1Crystals || 0;
+        const g3Crystals = portalData?.g3Crystals || 0;
 
-        const g1Crystals = Number(labData?.grade1?.crystals) || 0;
-        const g3Crystals = Number(labData?.grade3?.crystals) || 0;
-
-        const el1 = document.getElementById('hub-linas-stats');
-        if (el1) {
-          const t1 = formatRemainingTime('bosas_global_time_linas', p1);
-          el1.textContent = p1
-            ? `Lygis ${p1.unlockedLevel || 1}/50 • ${(p1.coins || 0).toLocaleString('lt-LT')} 🪙 • ${g1Crystals} 💎 • ${t1}`
-            : `Lygis 1/50 • 0 🪙 • ${g1Crystals} 💎 • ${t1}`;
-        }
-
-        const el2 = document.getElementById('hub-lukas-stats');
-        if (el2) {
-          const t2 = formatRemainingTime('bosas_global_time_lukas', p2);
-          el2.textContent = p2
-            ? `Lygis ${p2.unlockedLevel || 1}/50 • ${(p2.coins || 0).toLocaleString('lt-LT')} 🪙 • ${g3Crystals} 💎 • ${t2}`
-            : `Lygis 1/50 • 0 🪙 • ${g3Crystals} 💎 • ${t2}`;
-        }
+        window.addEventListener('pageshow', refreshPortalTimeAndStats);
+        window.addEventListener('storage', refreshPortalTimeAndStats);
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) refreshPortalTimeAndStats();
+        });
 
         // Kortelių kampų pasiekimų ženkliukai (rodomi tik jei localStorage yra įrašų)
         const racingBadge = document.getElementById('badge-progress-racing');
