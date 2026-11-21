@@ -1,6 +1,15 @@
 // ==================== BUBIŲ TVIRTOVĖ: EKONOMIKOS, BALANSO IR ŽEMĖLAPIŲ MATEMATIKA ====================
 // Parengta pagal Kingdom Rush ir Bloons TD 6 strateginius standartus.
 
+export {
+  TOWER_CATALOG,
+  TOWER_LIST,
+  getTowerStats,
+  getUpgradeCost,
+  getTowerEvolutions,
+  findNearestPathPoint
+} from './towers.js?v=20261121c';
+
 export const STARTING_HEARTS = 20;
 export const SELL_REFUND_RATE = 0.75; // 75% investuotų monetų grąžinimas
 export const INTER_WAVE_COOLDOWN_SECONDS = 14;
@@ -150,98 +159,6 @@ export function selectTargetByPriority(enemiesInRange, tower, priorityId = 'firs
   return best;
 }
 
-// ==================== BOKŠTELIŲ KATALOGAS IR TOBULINIMO KREIVĖS ====================
-export const TOWER_CATALOG = {
-  laser: {
-    id: 'laser',
-    name: 'Lazerio bokštas',
-    shortName: 'Lazeris',
-    icon: '🔦',
-    color: '#38bdf8',
-    accentColor: '#bae6fd',
-    cost: 70,
-    attackMode: 'beam',
-    desc: 'Greiti taiklūs lazerio šūviai vienam taikiniui',
-    levels: [
-      { level: 1, upgradeCost: 0, range: 155, damage: 22, cooldown: 0.45, splashRadius: 0 },
-      { level: 2, upgradeCost: 65, range: 175, damage: 36, cooldown: 0.38, splashRadius: 0 },
-      { level: 3, upgradeCost: 110, range: 200, damage: 58, cooldown: 0.30, splashRadius: 0 }
-    ]
-  },
-  acorn: {
-    id: 'acorn',
-    name: 'Kurtuvėnų svaidyklė',
-    shortName: 'Svaidyklė',
-    icon: '🌰',
-    color: '#fbbf24',
-    accentColor: '#fef08a',
-    cost: 85,
-    attackMode: 'projectile',
-    projectileSpeed: 420,
-    desc: 'Toli šaudo sunkiais riešutais su sprogimo banga',
-    levels: [
-      { level: 1, upgradeCost: 0, range: 210, damage: 45, cooldown: 0.90, splashRadius: 42 },
-      { level: 2, upgradeCost: 80, range: 235, damage: 72, cooldown: 0.80, splashRadius: 54 },
-      { level: 3, upgradeCost: 130, range: 265, damage: 115, cooldown: 0.70, splashRadius: 68 }
-    ]
-  },
-  sonic: {
-    id: 'sonic',
-    name: 'Dagilėlio rezonatorius',
-    shortName: 'Rezonatorius',
-    icon: '🔔',
-    color: '#fb7185',
-    accentColor: '#fecdd3',
-    cost: 95,
-    attackMode: 'pulse',
-    desc: 'Garso banga pažeidžia ir stipriai sulėtina priešus',
-    levels: [
-      { level: 1, upgradeCost: 0, range: 150, damage: 25, cooldown: 0.72, slowFactor: 0.52, slowDuration: 1.8, splashRadius: 0 },
-      { level: 2, upgradeCost: 85, range: 172, damage: 40, cooldown: 0.64, slowFactor: 0.44, slowDuration: 2.2, splashRadius: 0 },
-      { level: 3, upgradeCost: 135, range: 196, damage: 62, cooldown: 0.54, slowFactor: 0.35, slowDuration: 2.6, splashRadius: 0 }
-    ]
-  },
-  cannon: {
-    id: 'cannon',
-    name: 'Bubių patranka',
-    shortName: 'Patranka',
-    icon: '💣',
-    color: '#a855f7',
-    accentColor: '#e9d5ff',
-    cost: 115,
-    attackMode: 'projectile',
-    projectileSpeed: 330,
-    desc: 'Sunki artilerija – didelis ploto sprogimas būriams',
-    levels: [
-      { level: 1, upgradeCost: 0, range: 170, damage: 64, cooldown: 1.25, splashRadius: 72 },
-      { level: 2, upgradeCost: 105, range: 190, damage: 102, cooldown: 1.12, splashRadius: 86 },
-      { level: 3, upgradeCost: 165, range: 215, damage: 158, cooldown: 0.96, splashRadius: 102 }
-    ]
-  }
-};
-
-export const TOWER_LIST = [
-  TOWER_CATALOG.laser,
-  TOWER_CATALOG.acorn,
-  TOWER_CATALOG.sonic,
-  TOWER_CATALOG.cannon
-];
-
-export function getTowerStats(towerType, level = 1) {
-  const def = TOWER_CATALOG[towerType];
-  if (!def) return null;
-  const idx = Math.max(0, Math.min(def.levels.length - 1, (Number(level) || 1) - 1));
-  return { ...def, ...def.levels[idx] };
-}
-
-export function getUpgradeCost(towerType, currentLevel = 1) {
-  const def = TOWER_CATALOG[towerType];
-  if (!def) return null;
-  const nextIdx = Number(currentLevel) || 1;
-  if (nextIdx >= def.levels.length) return null;
-  return def.levels[nextIdx].upgradeCost;
-}
-
 // ==================== PRIEŠŲ ARCHETIPAI IR BANGŲ GENERATORIUS ====================
 export const ENEMY_ARCHETYPES = {
   scout: {
@@ -251,10 +168,13 @@ export const ENEMY_ARCHETYPES = {
     speed: 86,
     reward: 11,
     heartCost: 1,
+    armor: 0,
     radius: 12,
     color: '#f43f5e',
     borderColor: '#fecdd3',
-    isBoss: false
+    isBoss: false,
+    isCamo: false,
+    isFlying: false
   },
   swarm: {
     id: 'swarm',
@@ -263,10 +183,43 @@ export const ENEMY_ARCHETYPES = {
     speed: 112,
     reward: 8,
     heartCost: 1,
+    armor: 0,
     radius: 10,
     color: '#fb923c',
     borderColor: '#fed7aa',
-    isBoss: false
+    isBoss: false,
+    isCamo: false,
+    isFlying: false
+  },
+  camo_scout: {
+    id: 'camo_scout',
+    name: 'Nematomas šmėkla (Camo)',
+    baseHp: 58,
+    speed: 96,
+    reward: 15,
+    heartCost: 1,
+    armor: 0,
+    radius: 12,
+    color: '#94a3b8',
+    borderColor: '#2dd4bf',
+    isBoss: false,
+    isCamo: true,
+    isFlying: false
+  },
+  sky_drone: {
+    id: 'sky_drone',
+    name: 'Skraidantis dronas',
+    baseHp: 64,
+    speed: 92,
+    reward: 16,
+    heartCost: 1,
+    armor: 0.1,
+    radius: 12,
+    color: '#38bdf8',
+    borderColor: '#fef08a',
+    isBoss: false,
+    isCamo: false,
+    isFlying: true
   },
   raider: {
     id: 'raider',
@@ -275,10 +228,13 @@ export const ENEMY_ARCHETYPES = {
     speed: 64,
     reward: 17,
     heartCost: 1,
+    armor: 0.30,
     radius: 14,
     color: '#e11d48',
     borderColor: '#fda4af',
-    isBoss: false
+    isBoss: false,
+    isCamo: false,
+    isFlying: false
   },
   golem: {
     id: 'golem',
@@ -287,10 +243,13 @@ export const ENEMY_ARCHETYPES = {
     speed: 48,
     reward: 28,
     heartCost: 2,
+    armor: 0.45,
     radius: 17,
     color: '#8b5cf6',
     borderColor: '#ddd6fe',
-    isBoss: false
+    isBoss: false,
+    isCamo: false,
+    isFlying: false
   },
   boss: {
     id: 'boss',
@@ -299,10 +258,13 @@ export const ENEMY_ARCHETYPES = {
     speed: 40,
     reward: 95,
     heartCost: 5,
+    armor: 0.25,
     radius: 22,
     color: '#be123c',
     borderColor: '#fde047',
-    isBoss: true
+    isBoss: true,
+    isCamo: false,
+    isFlying: false
   }
 };
 
@@ -317,9 +279,11 @@ export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas
   for (let i = 0; i < totalUnits; i++) {
     let type = 'scout';
     if (w >= 2 && i % 4 === 3) type = 'raider';
-    if (w >= 3 && i % 3 === 1) type = 'swarm';
+    if (w >= 3 && i % 5 === 2) type = 'camo_scout';
+    else if (w >= 3 && i % 3 === 1) type = 'swarm';
+    if (w >= 4 && i % 6 === 4) type = 'sky_drone';
     if (w >= 5 && i % 6 === 5) type = 'golem';
-    if (w >= 8 && i % 3 === 2) type = 'raider';
+    if (w >= 8 && i % 4 === 1) type = 'raider';
 
     const arch = ENEMY_ARCHETYPES[type];
     spawns.push({
@@ -330,10 +294,13 @@ export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas
       speed: arch.speed + Math.min(18, w * 1.6),
       reward: arch.reward,
       heartCost: arch.heartCost,
+      armor: arch.armor || 0,
       radius: arch.radius,
       color: arch.color,
       borderColor: arch.borderColor,
       isBoss: arch.isBoss,
+      isCamo: Boolean(arch.isCamo),
+      isFlying: Boolean(arch.isFlying),
       name: arch.name
     });
   }
@@ -351,10 +318,13 @@ export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas
         speed: bossArch.speed,
         reward: bossArch.reward,
         heartCost: bossArch.heartCost,
+        armor: bossArch.armor || 0,
         radius: bossArch.radius,
         color: bossArch.color,
         borderColor: bossArch.borderColor,
         isBoss: true,
+        isCamo: false,
+        isFlying: false,
         name: bossArch.name
       });
     }

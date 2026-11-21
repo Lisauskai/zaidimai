@@ -3,17 +3,18 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121b';
+} from '../../../shared/playtime-timer.js?v=20261121c';
 import {
   TOWER_LIST,
   TARGETING_PRIORITIES,
   getTowerStats,
   getUpgradeCost,
+  getTowerEvolutions,
   computeSellRefund,
   calculateStarsForHearts,
   getProfileModifier
-} from './balance.js?v=20261121b';
-import { TDEngine } from './engine.js?v=20261121b';
+} from './balance.js?v=20261121c';
+import { TDEngine } from './engine.js?v=20261121c';
 
 const SAVE_KEY = 'gynyba_save_v1';
 
@@ -74,6 +75,9 @@ const padBuildMenu = document.getElementById('pad-build-menu');
 const padBuildOptions = document.getElementById('pad-build-options');
 const towerInspectorMenu = document.getElementById('tower-inspector-menu');
 const inspectorPriorityGrid = document.getElementById('inspector-priority-grid');
+const inspectorEvolutionsBox = document.getElementById('inspector-evolutions-box');
+const inspectorEvolutionsGrid = document.getElementById('inspector-evolutions-grid');
+const btnRallyPoint = document.getElementById('btn-rally-point');
 const resultOverlay = document.getElementById('battle-result-overlay');
 
 const btnSpeedToggle = document.getElementById('btn-speed-toggle');
@@ -212,18 +216,47 @@ function renderPadBuildMenu(pad) {
   positionFloatingMenu(padBuildMenu, pad.x, pad.y);
 }
 
+function formatTowerStatsLine(tower, stats) {
+  const effRange = tower.effectiveRange || stats.range;
+  const parts = [];
+  if (tower.type === 'solar_laser') {
+    parts.push(`DPS: ${stats.dps} (iki ${(stats.dps * (stats.maxRamp || 2.5)).toFixed(0)})`);
+    parts.push(`Šarvų kirtimas: ${Math.round((stats.armorPierce || 0) * 100)}%`);
+  } else if (tower.type === 'mower_barracks') {
+    parts.push(`Robotai: ${stats.unitCount}`);
+    parts.push(`HP: ${stats.unitMaxHp}`);
+    parts.push(`Žala/s: ${stats.unitDps}`);
+  } else if (tower.type === 'solar_station') {
+    parts.push(`Pajamos: +${stats.incomeAmount} 🪙 / ${stats.incomeInterval}s`);
+    parts.push(`Aura: +${Math.round((stats.auraRangeBonus || 0.12) * 100)}% nuotolio`);
+  } else {
+    parts.push(`Žala: ${stats.damage}`);
+    parts.push(`Greitis: ${stats.cooldown.toFixed(2)}s`);
+    if (stats.slowPercentage) {
+      parts.push(`Sulėtina: ${Math.round(stats.slowPercentage * 100)}%`);
+    }
+    if (tower.type === 'dagilelis_sound' && stats.auraFireRateBonus) {
+      parts.push(`Aura: +${Math.round(stats.auraFireRateBonus * 100)}% greičio`);
+    }
+  }
+  parts.push(`Nuotolis: ${effRange}`);
+  return parts.join(' • ');
+}
+
 function renderTowerInspectorMenu(pad, tower) {
   if (!towerInspectorMenu || !inspectorPriorityGrid) return;
-  const stats = getTowerStats(tower.type, tower.level);
+  const stats = getTowerStats(tower.type, tower.level, tower.evolutionId);
   const titleEl = document.getElementById('inspector-tower-title');
   const statsEl = document.getElementById('inspector-tower-stats');
 
   if (titleEl) {
-    titleEl.textContent = `${stats.icon} ${stats.name} • Lyg. ${tower.level}/3`;
+    const icon = tower.evolutionId ? stats.evolutionIcon : stats.icon;
+    const name = tower.evolutionId ? stats.evolutionName : stats.name;
+    titleEl.textContent =
+      tower.level === 4 ? `${icon} ${name} (Tier 4)` : `${icon} ${name} • Lyg. ${tower.level}/3`;
   }
   if (statsEl) {
-    const slowText = stats.slowFactor ? ` • Sulėtinimas ${Math.round((1 - stats.slowFactor) * 100)}%` : '';
-    statsEl.textContent = `Žala: ${stats.damage} • Spindulys: ${stats.range} • Greitis: ${stats.cooldown.toFixed(2)}s${slowText}`;
+    statsEl.textContent = formatTowerStatsLine(tower, stats);
   }
 
   inspectorPriorityGrid.innerHTML = '';
@@ -239,10 +272,46 @@ function renderTowerInspectorMenu(pad, tower) {
     inspectorPriorityGrid.appendChild(btn);
   });
 
+  // 4-ojo lygio šakotos evoliucijos (rodomos pasiekus 3 lygį)
+  if (inspectorEvolutionsBox && inspectorEvolutionsGrid) {
+    if (tower.level === 3 && !tower.evolutionId) {
+      const evos = getTowerEvolutions(tower.type);
+      inspectorEvolutionsGrid.innerHTML = '';
+      evos.forEach((evo) => {
+        const evoBtn = document.createElement('button');
+        evoBtn.type = 'button';
+        evoBtn.className = 'evo-btn';
+        evoBtn.dataset.cost = String(evo.cost);
+        evoBtn.disabled = engine.coins < evo.cost;
+        evoBtn.innerHTML = `
+          <span class="evo-title">${evo.icon} ${evo.name}</span>
+          <span class="evo-cost">${evo.cost} 🪙</span>
+          <span class="evo-desc">${evo.desc}</span>
+        `;
+        evoBtn.addEventListener('click', () => {
+          engine.evolveTower(tower.padIndex, evo.id);
+        });
+        inspectorEvolutionsGrid.appendChild(evoBtn);
+      });
+      inspectorEvolutionsBox.classList.remove('hidden');
+    } else {
+      inspectorEvolutionsBox.classList.add('hidden');
+      inspectorEvolutionsGrid.innerHTML = '';
+    }
+  }
+
+  // Barakų Rally Point perkėlimo mygtukas
+  if (btnRallyPoint) {
+    btnRallyPoint.classList.toggle('hidden', tower.type !== 'mower_barracks');
+  }
+
   const upgradeCost = getUpgradeCost(tower.type, tower.level);
   if (btnUpgradeTower) {
-    if (upgradeCost === null) {
-      btnUpgradeTower.textContent = '✅ Maks. lygis';
+    if (tower.level >= 4) {
+      btnUpgradeTower.textContent = '✦ Tier 4 Evoliucija';
+      btnUpgradeTower.disabled = true;
+    } else if (upgradeCost === null) {
+      btnUpgradeTower.textContent = '✨ Rinkis evoliuciją';
       btnUpgradeTower.disabled = true;
     } else {
       btnUpgradeTower.textContent = `⬆️ Tobulinti (${upgradeCost} 🪙)`;
@@ -261,6 +330,10 @@ function renderTowerInspectorMenu(pad, tower) {
 }
 
 function syncSelectionUI() {
+  if (engine.placingRallyPadIndex !== null) {
+    closePadMenus();
+    return;
+  }
   if (engine.selectedPadIndex === null) {
     closePadMenus();
     return;
@@ -334,7 +407,13 @@ function syncBattleUI() {
     const t = engine.getTowerAtPad(engine.selectedPadIndex);
     if (t && btnUpgradeTower) {
       const upCost = getUpgradeCost(t.type, t.level);
-      btnUpgradeTower.disabled = upCost === null || engine.coins < upCost;
+      btnUpgradeTower.disabled = t.level >= 3 || upCost === null || engine.coins < upCost;
+    }
+    if (inspectorEvolutionsGrid && !inspectorEvolutionsBox?.classList.contains('hidden')) {
+      inspectorEvolutionsGrid.querySelectorAll('.evo-btn').forEach((evoBtn) => {
+        const c = Number(evoBtn.dataset.cost) || 0;
+        evoBtn.disabled = engine.coins < c;
+      });
     }
   }
 
@@ -493,6 +572,12 @@ document.getElementById('btn-close-inspector')?.addEventListener('click', () => 
 btnUpgradeTower?.addEventListener('click', () => {
   if (engine.selectedPadIndex !== null) {
     engine.upgradeTower(engine.selectedPadIndex);
+  }
+});
+
+btnRallyPoint?.addEventListener('click', () => {
+  if (engine.selectedPadIndex !== null) {
+    engine.startRallyPlacement(engine.selectedPadIndex);
   }
 });
 

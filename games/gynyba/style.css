@@ -549,7 +549,7 @@ body {
 .floating-pad-menu {
   position: absolute;
   z-index: 15;
-  width: 280px;
+  width: 316px;
   max-width: calc(100% - 16px);
   border-radius: 18px;
   padding: 12px;
@@ -562,7 +562,7 @@ body {
 }
 
 .inspector-menu {
-  width: 304px;
+  width: 332px;
   border-color: rgba(250, 204, 21, 0.6);
 }
 
@@ -687,6 +687,65 @@ body {
   border-color: #38bdf8;
   color: #ffffff;
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.28);
+}
+
+.evolutions-section {
+  margin-bottom: 10px;
+}
+
+.evolutions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.evo-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 3px;
+  padding: 8px 9px;
+  border-radius: 11px;
+  border: 1.5px solid rgba(244, 114, 182, 0.52);
+  background: linear-gradient(155deg, rgba(49, 20, 66, 0.92), rgba(15, 23, 48, 0.95));
+  color: #f8fafc;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.14s ease;
+}
+
+.evo-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #fde047;
+}
+
+.evo-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.evo-title {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-size: 0.82rem;
+  color: #fbcfe8;
+}
+
+.evo-cost {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #fde047;
+}
+
+.evo-desc {
+  font-size: 0.7rem;
+  line-height: 1.25;
+  color: #cbd5e1;
+}
+
+.insp-rally {
+  width: 100%;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #16a34a, #15803d);
 }
 
 .inspector-actions {
