@@ -54,7 +54,7 @@ export const CAMPAIGN_LEVELS = [
     title: '1. Kiemas prie šiltnamio',
     badge: '1 Zona • 6 bangos • S takelis',
     subtitle: 'Mokomasis S formos takelis pro šiltnamį: statyk bokštelius posūkiuose!',
-    baseCoins: 210,
+    baseCoins: 220,
     maxWaves: 6,
     bgTop: '#11301e',
     bgBottom: '#081910',
@@ -76,10 +76,10 @@ export const CAMPAIGN_LEVELS = [
     pads: [
       { id: 'p1', x: 140, y: 95 },
       { id: 'p2', x: 140, y: 235 },
-      { id: 'p3', x: 265, y: 255 },
+      { id: 'p3', x: 215, y: 265 },
       { id: 'p4', x: 430, y: 265 },
       { id: 'p5', x: 485, y: 420 },
-      { id: 'p6', x: 635, y: 255 },
+      { id: 'p6', x: 610, y: 255 },
       { id: 'p7', x: 765, y: 160 }
     ]
   },
@@ -291,7 +291,7 @@ export const CAMPAIGN_LEVELS = [
       { id: 'p6', x: 560, y: 305 },
       { id: 'p7', x: 605, y: 430 },
       { id: 'p8', x: 765, y: 155 },
-      { id: 'p9', x: 765, y: 355 }
+      { id: 'p9', x: 765, y: 375 }
     ]
   },
 
@@ -539,12 +539,12 @@ export const CAMPAIGN_LEVELS = [
       { id: 'p1', x: 115, y: 200 },
       { id: 'p2', x: 115, y: 300 },
       { id: 'p3', x: 240, y: 250 },
-      { id: 'p4', x: 420, y: 175 },
-      { id: 'p5', x: 420, y: 325 },
+      { id: 'p4', x: 420, y: 205 },
+      { id: 'p5', x: 420, y: 295 },
       { id: 'p6', x: 530, y: 250 },
-      { id: 'p7', x: 625, y: 105 },
-      { id: 'p8', x: 625, y: 395 },
-      { id: 'p9', x: 700, y: 250 }
+      { id: 'p7', x: 635, y: 72 },
+      { id: 'p8', x: 635, y: 428 },
+      { id: 'p9', x: 670, y: 250 }
     ]
   },
   {
@@ -734,16 +734,16 @@ export const CAMPAIGN_LEVELS = [
     ],
     pads: [
       { id: 'p1', x: 115, y: 250 },
-      { id: 'p2', x: 225, y: 250 },
+      { id: 'p2', x: 195, y: 250 },
       { id: 'p3', x: 385, y: 145 },
       { id: 'p4', x: 385, y: 355 },
-      { id: 'p5', x: 405, y: 250 },
+      { id: 'p5', x: 295, y: 75 },
       { id: 'p6', x: 525, y: 250 },
-      { id: 'p7', x: 600, y: 155 },
-      { id: 'p8', x: 600, y: 345 },
+      { id: 'p7', x: 525, y: 175 },
+      { id: 'p8', x: 525, y: 325 },
       { id: 'p9', x: 695, y: 115 },
       { id: 'p10', x: 695, y: 385 },
-      { id: 'p11', x: 775, y: 250 }
+      { id: 'p11', x: 825, y: 250 }
     ]
   }
 ];

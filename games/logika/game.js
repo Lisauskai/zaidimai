@@ -75,7 +75,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../shared/playtime-timer.js?v=20261121a';
+} from '../../shared/playtime-timer.js?v=20261121j';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 

@@ -393,6 +393,9 @@ function resolveBossForWave(waveNumber, options = {}) {
 export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas', options = {}) {
   const w = Math.max(1, Number(waveNumber) || 1);
   const paths = Math.max(1, Number(pathCount) || 1);
+  const levelNum = Math.max(1, Number(options.levelNumber) || 1);
+  const zoneId = Math.max(1, Number(options.zoneId) || 1);
+  const levelHpScale = 1 + (levelNum - 1) * 0.045 + (zoneId - 1) * 0.08;
   const planTypes = getWavePlanTypes(w, options);
   const totalUnits = 7 + w * 3;
   const intervalBase = Math.max(0.36, 0.92 - w * 0.045);
@@ -402,13 +405,13 @@ export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas
     const typeId = planTypes[i % planTypes.length];
     const arch = ENEMY_ARCHETYPES[typeId] || ENEMY_ARCHETYPES.garden_slug;
     spawns.push(
-      createEnemyInstanceData(arch, w, profileId, i % paths, i === 0 ? 0.15 : intervalBase)
+      createEnemyInstanceData(arch, w, profileId, i % paths, i === 0 ? 0.15 : intervalBase, levelHpScale)
     );
   }
 
   const bossArch = resolveBossForWave(w, options);
   if (bossArch) {
-    spawns.push(createEnemyInstanceData(bossArch, w, profileId, 0, 1.4));
+    spawns.push(createEnemyInstanceData(bossArch, w, profileId, 0, 1.4, levelHpScale));
   }
 
   return spawns;
