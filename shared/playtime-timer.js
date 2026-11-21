@@ -20,6 +20,70 @@ export const DEFAULT_DAILY_TIME_LIMIT_SECONDS = 1200; // 20 minučių (1200 s)
 export const PARENT_PASSWORD = 'bosas123';
 export const LOCKOUT_MESSAGE =
   'Šiandienos 20 min. žaidimo laikas baigėsi! Pailsėk arba pasivažinėk dviračiu.';
+export const TASK_PAUSED_LABEL = '⏸ Uždavinys (laikas sustabdytas)';
+export const GRACE_BANNER_TEXT = '⏳ 20 min. laikas baigėsi! Užbaik šį lygį ir pailsėk.';
+
+function createTaskPauseTracker() {
+  const activeReasons = new Set();
+  let anonDepth = 0;
+  return {
+    set(isPaused, reason) {
+      const key = typeof reason === 'string' && reason.trim() ? reason.trim() : null;
+      if (isPaused) {
+        if (key) activeReasons.add(key);
+        else anonDepth += 1;
+      } else if (key) {
+        activeReasons.delete(key);
+      } else if (anonDepth > 0) {
+        anonDepth -= 1;
+      }
+      return this.isPaused();
+    },
+    isPaused() {
+      return activeReasons.size > 0 || anonDepth > 0;
+    },
+    clear() {
+      activeReasons.clear();
+      anonDepth = 0;
+    }
+  };
+}
+
+const globalTaskPauseTracker = createTaskPauseTracker();
+const taskPauseListeners = new Set();
+
+function notifyTaskPauseListeners() {
+  for (const fn of [...taskPauseListeners]) {
+    try {
+      fn();
+    } catch (e) {
+      // Ignoruojame klausytojo klaidas
+    }
+  }
+}
+
+export function setTaskPaused(isPaused, reason) {
+  const state = globalTaskPauseTracker.set(Boolean(isPaused), reason);
+  notifyTaskPauseListeners();
+  return state;
+}
+
+export function pauseForTask(reason) {
+  return setTaskPaused(true, reason);
+}
+
+export function resumeFromTask(reason) {
+  return setTaskPaused(false, reason);
+}
+
+export function isTaskPaused() {
+  return globalTaskPauseTracker.isPaused();
+}
+
+export function clearTaskPauses() {
+  globalTaskPauseTracker.clear();
+  notifyTaskPauseListeners();
+}
 
 export function getTodayDateString() {
   const d = new Date();
@@ -295,6 +359,38 @@ function injectSharedTimerStyles() {
       background: #7f1d1d;
       color: #ffffff;
     }
+    .spt-top-badge.is-task-paused {
+      border-color: rgba(52, 211, 153, 0.78);
+      background: linear-gradient(180deg, rgba(6, 78, 59, 0.88), rgba(15, 23, 42, 0.92));
+      color: #a7f3d0;
+    }
+    .spt-top-badge.is-grace-expired {
+      border-color: #fb923c;
+      background: linear-gradient(180deg, rgba(194, 65, 12, 0.92), rgba(124, 45, 18, 0.94));
+      color: #ffedd5;
+    }
+    .spt-grace-banner {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99990;
+      pointer-events: none;
+      padding: 10px 22px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      border: 2px solid #fed7aa;
+      color: #ffffff;
+      font-family: 'Fredoka', 'Outfit', system-ui, sans-serif;
+      font-size: 0.96rem;
+      font-weight: 700;
+      box-shadow: 0 12px 28px rgba(234, 88, 12, 0.45);
+      max-width: calc(100vw - 24px);
+      text-align: center;
+    }
+    .spt-grace-banner.spt-hidden {
+      display: none !important;
+    }
     @keyframes sptLowTimePulse {
       0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
       50% { box-shadow: 0 0 16px 3px rgba(239, 68, 68, 0.65); }
@@ -470,7 +566,11 @@ export function initPlaytimeTimer(options = {}) {
   let activeChild = normalizeChildId(options.initialChild);
   let modalOpen = false;
   let locked = false;
+  let activeGameplay = false;
+  let graceExpired = false;
   let intervalId = null;
+  const taskTracker = createTaskPauseTracker();
+  const isAnyTaskPaused = () => taskTracker.isPaused() || globalTaskPauseTracker.isPaused();
 
   // 1. Viršutinis likusio laiko indikatorius
   let badgeBtn = null;
@@ -556,6 +656,23 @@ export function initPlaytimeTimer(options = {}) {
   const portalLink = overlay.querySelector('#spt-btn-portal');
   if (portalLink) portalLink.href = portalUrl;
 
+  let graceBanner =
+    typeof document !== 'undefined' ? document.getElementById('shared-playtime-grace-banner') : null;
+  if (!graceBanner && typeof document !== 'undefined') {
+    graceBanner = document.createElement('div');
+    graceBanner.id = 'shared-playtime-grace-banner';
+    graceBanner.className = 'spt-grace-banner spt-hidden';
+    graceBanner.setAttribute('role', 'status');
+    graceBanner.textContent = GRACE_BANNER_TEXT;
+    document.body.appendChild(graceBanner);
+  }
+
+  function updateGraceBanner() {
+    if (!graceBanner) return;
+    const show = Boolean(activeChild && graceExpired && activeGameplay && !modalOpen);
+    graceBanner.classList.toggle('spt-hidden', !show);
+  }
+
   function renderBadge() {
     if (!badgeBtn) return;
     if (!activeChild) {
@@ -568,10 +685,25 @@ export function initPlaytimeTimer(options = {}) {
 
     const rem = getRemainingPlaytimeSeconds(activeChild);
     const shortName = activeChild === 'linas' ? 'Linas' : 'Lukas';
+    badgeBtn.classList.remove(
+      'is-idle',
+      'is-low-time',
+      'is-locked',
+      'is-task-paused',
+      'is-grace-expired'
+    );
+
+    if (isAnyTaskPaused()) {
+      badgeBtn.textContent = TASK_PAUSED_LABEL;
+      badgeBtn.classList.add('is-task-paused');
+      return;
+    }
+
     badgeBtn.textContent = `⏳ ${shortName}: ${formatMMSS(rem)}`;
 
-    badgeBtn.classList.remove('is-idle', 'is-low-time', 'is-locked');
-    if (rem <= 0) {
+    if (rem <= 0 && activeGameplay) {
+      badgeBtn.classList.add('is-grace-expired');
+    } else if (rem <= 0) {
       badgeBtn.classList.add('is-locked');
     } else if (rem < 300) {
       badgeBtn.classList.add('is-low-time');
@@ -579,12 +711,17 @@ export function initPlaytimeTimer(options = {}) {
   }
 
   function closeModal() {
-    if (activeChild && getRemainingPlaytimeSeconds(activeChild) <= 0) {
+    if (
+      activeChild &&
+      getRemainingPlaytimeSeconds(activeChild) <= 0 &&
+      !(activeGameplay && graceExpired)
+    ) {
       return;
     }
     modalOpen = false;
     locked = false;
     overlay.classList.add('spt-hidden');
+    updateGraceBanner();
     renderBadge();
   }
 
@@ -592,9 +729,10 @@ export function initPlaytimeTimer(options = {}) {
     if (!activeChild) return;
     const remaining = getRemainingPlaytimeSeconds(activeChild);
     const expired = forceExpired || remaining <= 0;
+    const inGraceFinishMode = expired && activeGameplay && graceExpired;
 
     modalOpen = true;
-    locked = expired;
+    locked = expired && !inGraceFinishMode;
 
     if (passInput) passInput.value = '';
     if (feedbackEl) {
@@ -607,7 +745,16 @@ export function initPlaytimeTimer(options = {}) {
     }
     cardEl?.classList.toggle('is-expired', expired);
 
-    if (expired) {
+    if (inGraceFinishMode) {
+      if (titleEl) titleEl.textContent = GRACE_BANNER_TEXT;
+      if (subEl) {
+        subEl.textContent = `${getChildLabel(activeChild)} pasiekė 20 min. ribą lygio metu. Gali užbaigti šį lygį ir Žinių vartus, o tada pailsėti!`;
+      }
+      if (resumeBtn) {
+        resumeBtn.textContent = '▶️ Užbaigti pradėtą lygį';
+        resumeBtn.classList.remove('spt-hidden');
+      }
+    } else if (expired) {
       if (titleEl) titleEl.textContent = LOCKOUT_MESSAGE;
       if (subEl) {
         subEl.textContent = `${getChildLabel(activeChild)} šiandien jau išnaudojo savo 20 minučių žaidimo laiką. Visi tavo pasiekimai yra saugiai išsaugoti!`;
@@ -621,14 +768,33 @@ export function initPlaytimeTimer(options = {}) {
         subEl.textContent =
           'Žaidimas pristabdytas. Gali grįžti į žaidimą, pakeisti žaidėją arba grįžti į portalą.';
       }
-      resumeBtn?.classList.remove('spt-hidden');
+      if (resumeBtn) {
+        resumeBtn.textContent = '▶️ Tęsti žaidimą';
+        resumeBtn.classList.remove('spt-hidden');
+      }
     }
 
     overlay.classList.remove('spt-hidden');
+    updateGraceBanner();
     renderBadge();
 
-    if (expired && typeof options.onLock === 'function') {
+    if (expired && !inGraceFinishMode && typeof options.onLock === 'function') {
       options.onLock(activeChild);
+    }
+  }
+
+  function handleTimeExpired() {
+    if (!activeChild) return;
+    if (activeGameplay) {
+      graceExpired = true;
+      updateGraceBanner();
+      renderBadge();
+      return;
+    }
+    graceExpired = false;
+    updateGraceBanner();
+    if (!modalOpen || !locked) {
+      openModal(true);
     }
   }
 
@@ -642,6 +808,7 @@ export function initPlaytimeTimer(options = {}) {
       passInput.value = '';
       feedbackEl.classList.add('spt-hidden');
       locked = false;
+      graceExpired = false;
       closeModal();
       if (typeof options.onUnlock === 'function') {
         options.onUnlock(activeChild);
@@ -664,7 +831,11 @@ export function initPlaytimeTimer(options = {}) {
     activeChild = null;
     modalOpen = false;
     locked = false;
+    activeGameplay = false;
+    graceExpired = false;
+    taskTracker.clear();
     overlay.classList.add('spt-hidden');
+    updateGraceBanner();
     renderBadge();
     if (typeof options.onSwitchProfile === 'function') {
       options.onSwitchProfile();
@@ -674,15 +845,25 @@ export function initPlaytimeTimer(options = {}) {
   function checkAndTick() {
     if (!activeChild) {
       renderBadge();
+      updateGraceBanner();
+      return;
+    }
+
+    if (isAnyTaskPaused()) {
+      renderBadge();
+      updateGraceBanner();
       return;
     }
 
     const data = loadGlobalPlaytime(activeChild);
     if (data.timePlayedTodaySeconds >= data.dailyTimeLimitSeconds) {
-      if (!modalOpen || !locked) {
-        openModal(true);
-      }
+      handleTimeExpired();
       return;
+    }
+
+    if (graceExpired) {
+      graceExpired = false;
+      updateGraceBanner();
     }
 
     if (modalOpen || locked) return;
@@ -704,26 +885,39 @@ export function initPlaytimeTimer(options = {}) {
     }
 
     if (remaining <= 0) {
-      openModal(true);
+      handleTimeExpired();
     }
   }
 
   function syncFromStorage() {
     renderBadge();
-    if (!activeChild) return;
+    if (!activeChild) {
+      updateGraceBanner();
+      return;
+    }
     const rem = getRemainingPlaytimeSeconds(activeChild);
     if (rem <= 0 && !locked) {
-      openModal(true);
-    } else if (rem > 0 && locked) {
-      closeModal();
-      if (typeof options.onUnlock === 'function') {
-        options.onUnlock(activeChild);
+      handleTimeExpired();
+    } else if (rem > 0) {
+      graceExpired = false;
+      updateGraceBanner();
+      if (locked) {
+        closeModal();
+        if (typeof options.onUnlock === 'function') {
+          options.onUnlock(activeChild);
+        }
       }
     }
     if (typeof options.onTick === 'function') {
       options.onTick(rem, activeChild);
     }
   }
+
+  const onTaskChange = () => {
+    renderBadge();
+    updateGraceBanner();
+  };
+  taskPauseListeners.add(onTaskChange);
 
   const onStorageSync = (e) => {
     if (
@@ -762,7 +956,11 @@ export function initPlaytimeTimer(options = {}) {
       activeChild = normalizeChildId(idOrGrade);
       modalOpen = false;
       locked = false;
+      activeGameplay = false;
+      graceExpired = false;
+      taskTracker.clear();
       overlay.classList.add('spt-hidden');
+      updateGraceBanner();
       renderBadge();
       if (activeChild && getRemainingPlaytimeSeconds(activeChild) <= 0) {
         openModal(true);
@@ -774,7 +972,11 @@ export function initPlaytimeTimer(options = {}) {
       activeChild = null;
       modalOpen = false;
       locked = false;
+      activeGameplay = false;
+      graceExpired = false;
+      taskTracker.clear();
       overlay.classList.add('spt-hidden');
+      updateGraceBanner();
       renderBadge();
     },
     getActiveChild() {
@@ -783,13 +985,70 @@ export function initPlaytimeTimer(options = {}) {
     isLocked() {
       return locked || modalOpen;
     },
+    setTaskPaused(isPaused, reason) {
+      const state = taskTracker.set(Boolean(isPaused), reason);
+      renderBadge();
+      updateGraceBanner();
+      return state || globalTaskPauseTracker.isPaused();
+    },
+    pauseForTask(reason) {
+      return this.setTaskPaused(true, reason);
+    },
+    resumeFromTask(reason) {
+      return this.setTaskPaused(false, reason);
+    },
+    isTaskPaused() {
+      return isAnyTaskPaused();
+    },
+    clearTaskPauses() {
+      taskTracker.clear();
+      renderBadge();
+      updateGraceBanner();
+    },
+    setActiveGameplay(isInLevel) {
+      activeGameplay = Boolean(isInLevel);
+      if (!activeChild) {
+        graceExpired = false;
+        updateGraceBanner();
+        renderBadge();
+        return true;
+      }
+      const rem = getRemainingPlaytimeSeconds(activeChild);
+      if (activeGameplay) {
+        if (rem <= 0) {
+          graceExpired = true;
+        }
+        updateGraceBanner();
+        renderBadge();
+        return !locked;
+      }
+      graceExpired = false;
+      updateGraceBanner();
+      if (rem <= 0) {
+        openModal(true);
+        return false;
+      }
+      renderBadge();
+      return !locked;
+    },
+    isInActiveGameplay() {
+      return activeGameplay;
+    },
+    isGracePeriodActive() {
+      return Boolean(activeChild && activeGameplay && graceExpired);
+    },
+    checkNow() {
+      checkAndTick();
+    },
     refreshUI() {
       renderBadge();
+      updateGraceBanner();
     },
     openModal(forceExpired = false) {
       openModal(forceExpired);
     },
     destroy() {
+      taskPauseListeners.delete(onTaskChange);
       if (intervalId !== null) {
         clearInterval(intervalId);
         intervalId = null;

@@ -11,11 +11,16 @@ export const SAVE_KEYS = {
 export {
   GLOBAL_TIME_KEYS,
   DEFAULT_DAILY_TIME_LIMIT_SECONDS,
+  TASK_PAUSED_LABEL,
   getTodayDateString,
   loadGlobalPlaytime,
   saveGlobalPlaytime,
-  getRemainingPlaytimeSeconds
-} from '../../shared/playtime-timer.js?v=20261121k';
+  getRemainingPlaytimeSeconds,
+  setTaskPaused,
+  pauseForTask,
+  resumeFromTask,
+  isTaskPaused
+} from '../../shared/playtime-timer.js?v=20261121p';
 
 export const MAX_MICRO_UPGRADE_LEVEL = 50;
 export const MAX_PART_LEVEL = 50;

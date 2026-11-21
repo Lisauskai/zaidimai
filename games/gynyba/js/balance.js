@@ -8,7 +8,7 @@ export {
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121o';
+} from './towers.js?v=20261121p';
 
 export {
   ENEMY_ARCHETYPES,
@@ -19,7 +19,7 @@ export {
   createEnemyInstanceData,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './enemies.js?v=20261121o';
+} from './enemies.js?v=20261121p';
 
 export {
   CAMPAIGN_ZONES,
@@ -27,7 +27,7 @@ export {
   MAP_DEFINITIONS,
   getLevelById,
   renderMapThemeDecorations
-} from './maps.js?v=20261121o';
+} from './maps.js?v=20261121p';
 
 export {
   buildTaskReviewSummary,
@@ -35,7 +35,7 @@ export {
   EduTaskGenerator,
   eduTaskGenerator,
   renderTaskVisual
-} from './edu_tasks.js?v=20261121o';
+} from './edu_tasks.js?v=20261121p';
 
 export const STARTING_HEARTS = 20;
 export const SELL_REFUND_RATE = 0.75; // 75% investuotų monetų grąžinimas

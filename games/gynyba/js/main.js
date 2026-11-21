@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121o';
+} from '../../../shared/playtime-timer.js?v=20261121p';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -27,9 +27,9 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121o';
-import { TDEngine } from './engine.js?v=20261121o';
-import { audioManager } from './audio.js?v=20261121o';
+} from './balance.js?v=20261121p';
+import { TDEngine } from './engine.js?v=20261121p';
+import { audioManager } from './audio.js?v=20261121p';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];
@@ -689,6 +689,8 @@ function clearEduModalTimers(restorePause = true) {
     clearTimeout(victoryGateTimeoutId);
     victoryGateTimeoutId = null;
   }
+  playtimeTimer?.setTaskPaused(false, 'knowledge_gate');
+  playtimeTimer?.setTaskPaused(false, 'smart_upgrade');
   if (restorePause && smartUpgradeRestorePause !== null) {
     engine.setPaused(smartUpgradeRestorePause);
     smartUpgradeRestorePause = null;
@@ -757,6 +759,10 @@ function handleGameResult(result) {
   }
 
   resultOverlay.classList.remove('hidden');
+
+  if (result.status !== 'victory') {
+    playtimeTimer.setActiveGameplay(false);
+  }
 }
 
 function renderTaskPromptAndOptions(task, onPick) {
@@ -801,6 +807,7 @@ function renderTaskPromptAndOptions(task, onPick) {
 function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
   if (!knowledgeGateModal || !activeProfile) return;
   clearEduModalTimers(true);
+  playtimeTimer.setTaskPaused(true, 'knowledge_gate');
   const targetLvl = getLevelById(targetLevelId);
   pendingGateLevelId = targetLvl.id;
   const session = createKnowledgeGateSession(3);
@@ -860,7 +867,9 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
           showKgNextButton('Tęsti žaidimą →', () => {
             knowledgeGateModal.classList.add('hidden');
             pendingGateLevelId = null;
-            if (autoEnter) enterBattleLevel(unlockedId);
+            playtimeTimer.setTaskPaused(false, 'knowledge_gate');
+            const allowed = playtimeTimer.setActiveGameplay(false);
+            if (allowed && autoEnter) enterBattleLevel(unlockedId);
           });
           return;
         }
@@ -899,6 +908,7 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
 function openSmartUpgradeModal(padIndex) {
   if (!knowledgeGateModal || !activeProfile || !engine.canUseSmartUpgrade(padIndex)) return;
   clearEduModalTimers(false);
+  playtimeTimer.setTaskPaused(true, 'smart_upgrade');
   pendingGateLevelId = null;
 
   smartUpgradeRestorePause = engine.manualPaused;
@@ -1353,12 +1363,18 @@ function showCampaignMapView() {
   document.body.classList.remove('in-battle-mode');
   screenGame?.classList.add('hidden');
   screenCampaign?.classList.remove('hidden');
+  playtimeTimer.setActiveGameplay(false);
   syncTechStarsUI();
   renderCampaignMap();
 }
 
 function enterBattleLevel(mapId) {
   if (!activeProfile) return;
+  if (getRemainingPlaytimeSeconds(activeProfile) <= 0) {
+    playtimeTimer.setActiveGameplay(false);
+    return;
+  }
+  playtimeTimer.setActiveGameplay(true);
   document.body.classList.add('in-battle-mode');
   screenCampaign?.classList.add('hidden');
   screenGame?.classList.remove('hidden');
@@ -1449,6 +1465,9 @@ document.getElementById('btn-result-campaign')?.addEventListener('click', showCa
 document.getElementById('btn-close-kg')?.addEventListener('click', () => {
   clearEduModalTimers(true);
   knowledgeGateModal?.classList.add('hidden');
+  if (isInBattleView() && engine.gameResult && activeProfile && getRemainingPlaytimeSeconds(activeProfile) <= 0) {
+    playtimeTimer.setActiveGameplay(false);
+  }
 });
 
 btnKgNext?.addEventListener('click', () => {
@@ -1464,6 +1483,7 @@ btnResultNextLevel?.addEventListener('click', () => {
   if (!nextId || !activeProfile) return;
   const bucket = saveData[activeProfile];
   if (bucket.unlockedLevels.includes(nextId)) {
+    if (!playtimeTimer.setActiveGameplay(false)) return;
     enterBattleLevel(nextId);
   } else {
     openKnowledgeGateModal(nextId, { autoEnter: true });
@@ -1483,10 +1503,14 @@ btnCallWave?.addEventListener('click', () => {
 });
 
 document.getElementById('btn-restart-map')?.addEventListener('click', () => {
+  if (!playtimeTimer.setActiveGameplay(false)) return;
+  playtimeTimer.setActiveGameplay(true);
   selectMap(engine.mapId);
 });
 
 document.getElementById('btn-result-replay')?.addEventListener('click', () => {
+  if (!playtimeTimer.setActiveGameplay(false)) return;
+  playtimeTimer.setActiveGameplay(true);
   selectMap(engine.mapId);
 });
 

@@ -20,9 +20,12 @@ import {
   drawSecondaryWeapon,
   loadGlobalPlaytime,
   saveGlobalPlaytime,
-  getRemainingPlaytimeSeconds
-} from './garage.js?v=20261121k';
-import { PitStopMath } from './math.js?v=20261121k';
+  getRemainingPlaytimeSeconds,
+  setTaskPaused,
+  isTaskPaused,
+  TASK_PAUSED_LABEL
+} from './garage.js?v=20261121p';
+import { PitStopMath } from './math.js?v=20261121p';
 
 const PARENT_PASSWORD = 'bosas123';
 
@@ -431,7 +434,8 @@ function updateGlobalTimerBadges() {
   const profile = garage.getActiveProfile();
   if (!profile) return;
   const remaining = getRemainingPlaytimeSeconds(profile.driverKey);
-  const formatted = `⏳ Liko: ${formatMMSS(remaining)}`;
+  const pausedForTask = isTaskPaused();
+  const formatted = pausedForTask ? TASK_PAUSED_LABEL : `⏳ Liko: ${formatMMSS(remaining)}`;
 
   const topTimerText = document.getElementById('ui-global-timer');
   const topTimerBtn = document.getElementById('btn-global-timer');
@@ -441,9 +445,15 @@ function updateGlobalTimerBadges() {
   if (topTimerText) topTimerText.textContent = formatted;
   if (hudTimerText) hudTimerText.textContent = formatted;
 
-  const isLow = remaining < 300;
-  if (topTimerBtn) topTimerBtn.classList.toggle('low-time', isLow);
-  if (hudTimerBtn) hudTimerBtn.classList.toggle('low-time', isLow);
+  const isLow = !pausedForTask && remaining < 300;
+  if (topTimerBtn) {
+    topTimerBtn.classList.toggle('task-paused', pausedForTask);
+    topTimerBtn.classList.toggle('low-time', isLow);
+  }
+  if (hudTimerBtn) {
+    hudTimerBtn.classList.toggle('task-paused', pausedForTask);
+    hudTimerBtn.classList.toggle('low-time', isLow);
+  }
 }
 
 function startGlobalPlaytimeTicker() {
@@ -451,7 +461,13 @@ function startGlobalPlaytimeTicker() {
     if (typeof document !== 'undefined' && document.hidden) return;
     updateGlobalTimerBadges();
     const profile = garage.getActiveProfile();
-    if (profile && currentScreen !== 'PROFILES' && getRemainingPlaytimeSeconds(profile.driverKey) <= 0 && !isTimeLimitPaused) {
+    if (
+      profile &&
+      currentScreen !== 'PROFILES' &&
+      getRemainingPlaytimeSeconds(profile.driverKey) <= 0 &&
+      !isTimeLimitPaused &&
+      !isTaskPaused()
+    ) {
       openTimeLimitModal(true);
     }
   };
@@ -465,6 +481,10 @@ function startGlobalPlaytimeTicker() {
   setInterval(() => {
     if (typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden')) return;
     if (currentScreen === 'PROFILES' || isTimeLimitPaused) return;
+    if (isTaskPaused()) {
+      updateGlobalTimerBadges();
+      return;
+    }
     const profile = garage.getActiveProfile();
     if (!profile) return;
 
@@ -561,6 +581,7 @@ function handleParentPasswordExtend() {
 
 // ==================== 0. PRADINIS PROFILIŲ PASIRINKIMO EKRANAS ====================
 function openProfilesScreen() {
+  setTaskPaused(false, 'lenktynes_garage_math');
   isTimeLimitPaused = false;
   document.getElementById('modal-time-limit').classList.add('hidden');
   document.getElementById('modal-pitstop-math').classList.add('hidden');
@@ -1515,6 +1536,8 @@ function startBossMathChallenge(trackDef) {
   }
 
   document.getElementById('math-feedback-msg').textContent = '';
+  setTaskPaused(true, 'lenktynes_garage_math');
+  updateGlobalTimerBadges();
   document.getElementById('modal-pitstop-math').classList.remove('hidden');
 
   loadNextPitStopQuestion();
@@ -1593,6 +1616,8 @@ function startPitStopMathChallenge(mode, targetItem = null) {
   }
 
   document.getElementById('math-feedback-msg').textContent = '';
+  setTaskPaused(true, 'lenktynes_garage_math');
+  updateGlobalTimerBadges();
   document.getElementById('modal-pitstop-math').classList.remove('hidden');
 
   loadNextPitStopQuestion();
@@ -1798,6 +1823,8 @@ function closePitStopModal() {
   if (mathTimerInterval) clearInterval(mathTimerInterval);
   mathChallenge = null;
   document.getElementById('modal-pitstop-math').classList.add('hidden');
+  setTaskPaused(false, 'lenktynes_garage_math');
+  updateGlobalTimerBadges();
 }
 
 // ==================== 2D TOP-DOWN LENKTYNIŲ, DANGŲ FIZIKOS IR 7 GINKLŲ VARIKLIS ====================
