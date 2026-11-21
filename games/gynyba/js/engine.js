@@ -9,6 +9,10 @@ import {
   ENEMY_ARCHETYPES,
   createEnemyInstanceData,
   getStartingCoins,
+  getStartingHearts,
+  createDefaultTechTree,
+  normalizeTechTree,
+  getTechModifiers,
   computeSellRefund,
   computeEarlyWaveBonus,
   calculateStarsForHearts,
@@ -16,16 +20,16 @@ import {
   selectTargetByPriority,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './balance.js?v=20261121h';
+} from './balance.js?v=20261121i';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121h';
-import { renderBattleScene } from './renderer.js?v=20261121h';
-import { audioManager } from './audio.js?v=20261121h';
+} from './towers.js?v=20261121i';
+import { renderBattleScene } from './renderer.js?v=20261121i';
+import { audioManager } from './audio.js?v=20261121i';
 
 let nextEnemyUid = 1;
 
@@ -137,6 +141,7 @@ export class TDEngine {
     this.callbacks = callbacks;
 
     this.profileId = 'lukas';
+    this.techTree = createDefaultTechTree();
     this.mapId = 'bubiai';
     this.map = MAP_DEFINITIONS.bubiai;
     this.pathSplines = [];
@@ -145,6 +150,7 @@ export class TDEngine {
     this.manualPaused = false;
     this.externalLocked = false;
 
+    this.maxHearts = STARTING_HEARTS;
     this.hearts = STARTING_HEARTS;
     this.coins = 200;
     this.wave = 0;
@@ -193,14 +199,36 @@ export class TDEngine {
     this.loadMap(this.mapId, this.profileId);
   }
 
+  setTechTree(techTree) {
+    this.techTree = normalizeTechTree(techTree);
+    const mods = getTechModifiers(this.techTree);
+    for (const tower of this.towers) {
+      if (tower.type === 'mower_barracks' && Array.isArray(tower.units)) {
+        const stats = getTowerStats(tower.type, tower.level, tower.evolutionId);
+        if (stats) {
+          const scaledMaxHp = Math.round(stats.unitMaxHp * mods.mowerHpMultiplier);
+          for (const u of tower.units) {
+            u.maxHp = scaledMaxHp;
+            if (u.respawnTimer <= 0) {
+              u.hp = Math.min(scaledMaxHp, Math.max(u.hp, scaledMaxHp));
+            }
+          }
+        }
+      }
+    }
+    this.recomputeTowerAuras();
+    this.notifyStateChange();
+  }
+
   loadMap(mapId, profileId = this.profileId) {
     this.profileId = profileId === 'linas' ? 'linas' : 'lukas';
     this.mapId = MAP_DEFINITIONS[mapId] ? mapId : 'bubiai';
     this.map = MAP_DEFINITIONS[this.mapId];
     this.pathSplines = this.map.paths.map((wp) => buildSmoothPathSpline(wp, 24));
 
-    this.hearts = STARTING_HEARTS;
-    this.coins = getStartingCoins(this.map.baseCoins, this.profileId);
+    this.maxHearts = getStartingHearts(this.techTree);
+    this.hearts = this.maxHearts;
+    this.coins = getStartingCoins(this.map.baseCoins, this.profileId, this.techTree);
     this.wave = 0;
     this.interWaveTimer = 0;
     this.waveActive = false;
@@ -436,6 +464,8 @@ export class TDEngine {
         tower.rallyPoint = { x: nearest.x, y: nearest.y };
       }
       const targetCount = stats.unitCount || 2;
+      const mods = getTechModifiers(this.techTree);
+      const scaledMaxHp = Math.round(stats.unitMaxHp * mods.mowerHpMultiplier);
       if (!Array.isArray(tower.units)) tower.units = [];
       while (tower.units.length < targetCount) {
         const idx = tower.units.length;
@@ -443,17 +473,17 @@ export class TDEngine {
           slot: idx,
           x: tower.x,
           y: tower.y,
-          hp: stats.unitMaxHp,
-          maxHp: stats.unitMaxHp,
+          hp: scaledMaxHp,
+          maxHp: scaledMaxHp,
           respawnTimer: 0,
           engagedEnemyId: null,
           zapTimer: 0
         });
       }
       for (const u of tower.units) {
-        u.maxHp = stats.unitMaxHp;
+        u.maxHp = scaledMaxHp;
         if (u.respawnTimer <= 0) {
-          u.hp = Math.min(stats.unitMaxHp, Math.max(u.hp, stats.unitMaxHp));
+          u.hp = Math.min(scaledMaxHp, Math.max(u.hp, scaledMaxHp));
         }
       }
     }
@@ -754,7 +784,12 @@ export class TDEngine {
         }
       }
 
-      tower.effectiveRange = Math.round(stats.range * (1 + bestRangeBonus));
+      const techMods = getTechModifiers(this.techTree);
+      const baseRange =
+        tower.type === 'dagilelis_sound'
+          ? stats.range * techMods.dagilelisRangeMultiplier
+          : stats.range;
+      tower.effectiveRange = Math.round(baseRange * (1 + bestRangeBonus));
       tower.effectiveFireRateMult = Math.max(0.35, (1 + bestSpeedBonus) * (1 - jamPenalty));
       tower.rangeAuraPct = Math.round(bestRangeBonus * 100);
       tower.speedAuraPct = Math.round(bestSpeedBonus * 100);
@@ -809,6 +844,9 @@ export class TDEngine {
       hitFlash: 0
     };
     this.enemies.push(enemyObj);
+    if (typeof this.callbacks.onEnemyEncountered === 'function') {
+      this.callbacks.onEnemyEncountered(enemyObj.type || enemyObj.id);
+    }
     if (enemyObj.isBoss) {
       audioManager.playBossHorn();
     }
@@ -1316,12 +1354,16 @@ export class TDEngine {
         Math.hypot(e.x - tower.x, e.y - tower.y) <= range
     );
 
+    const droneSpeedMult = getTechModifiers(this.techTree).droneSpeedMultiplier;
     const droneCount = tower.drones.length || 1;
     for (let i = 0; i < droneCount; i++) {
       const drone = tower.drones[i];
-      drone.orbitAngle += dt * 1.85;
+      drone.orbitAngle += dt * 1.85 * droneSpeedMult;
       if (drone.cooldownLeft > 0) {
-        drone.cooldownLeft = Math.max(0, drone.cooldownLeft - dt * (tower.effectiveFireRateMult || 1));
+        drone.cooldownLeft = Math.max(
+          0,
+          drone.cooldownLeft - dt * (tower.effectiveFireRateMult || 1) * droneSpeedMult
+        );
       }
 
       const target =
@@ -1378,7 +1420,7 @@ export class TDEngine {
       const dx = goalX - drone.x;
       const dy = goalY - drone.y;
       const d = Math.hypot(dx, dy);
-      const droneSpeed = 190 * dt;
+      const droneSpeed = 190 * droneSpeedMult * dt;
       if (d > 1) {
         const move = Math.min(d, droneSpeed);
         drone.x += (dx / d) * move;
@@ -1392,14 +1434,15 @@ export class TDEngine {
     const rally = tower.rallyPoint || { x: tower.x, y: tower.y };
     const unitCount = tower.units.length;
     const spreadRadius = 20;
+    const scaledMaxHp = Math.round(stats.unitMaxHp * getTechModifiers(this.techTree).mowerHpMultiplier);
 
     for (let i = 0; i < unitCount; i++) {
       const unit = tower.units[i];
       if (unit.respawnTimer > 0) {
         unit.respawnTimer = Math.max(0, unit.respawnTimer - dt);
         if (unit.respawnTimer <= 0) {
-          unit.hp = stats.unitMaxHp;
-          unit.maxHp = stats.unitMaxHp;
+          unit.hp = scaledMaxHp;
+          unit.maxHp = scaledMaxHp;
           unit.x = tower.x;
           unit.y = tower.y;
           unit.engagedEnemyId = null;
@@ -1468,9 +1511,9 @@ export class TDEngine {
           unit.respawnTimer = stats.respawnTime || 5.5;
           unit.engagedEnemyId = null;
         }
-      } else if (unit.hp < stats.unitMaxHp) {
+      } else if (unit.hp < scaledMaxHp) {
         // Lėtas savaiminis remontas ramybėje
-        unit.hp = Math.min(stats.unitMaxHp, unit.hp + 12 * dt);
+        unit.hp = Math.min(scaledMaxHp, unit.hp + 12 * dt);
       }
 
       // Elektros Pjovėjų evoliucijos aura

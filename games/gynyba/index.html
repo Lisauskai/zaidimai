@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261121h" />
+  <link rel="stylesheet" href="./style.css?v=20261121i" />
 </head>
 <body>
   <div class="td-bg-glow" aria-hidden="true"></div>
@@ -28,6 +28,12 @@
 
     <div class="top-bar-right">
       <div id="top-playtime-slot" class="top-playtime-slot"></div>
+      <button id="btn-open-encyclopedia" class="top-action-pill" type="button" title="Atidaryti bokštų ir priešų žinyną">
+        📖 Žinynas
+      </button>
+      <button id="btn-open-tech-top" class="top-action-pill tech-pill hidden" type="button" title="Atidaryti Išradimų medį">
+        🔬 Išradimai (<span id="top-avail-stars">0</span>⭐)
+      </button>
       <button id="btn-audio-toggle" class="audio-toggle-btn" type="button" aria-pressed="false" title="Įjungti arba išjungti garsą">
         🔊 Garsas
       </button>
@@ -118,6 +124,12 @@
         <div class="campaign-summary-pills">
           <span class="battle-stat">⭐ Žvaigždutės: <strong id="campaign-total-stars">0 / 45</strong></span>
           <span class="battle-stat">🔓 Atrakinta: <strong id="campaign-unlocked-count">1 / 15</strong></span>
+          <button id="btn-open-tech-tree" class="campaign-action-btn tech-btn" type="button">
+            🔬 Išradimų medis (<span id="campaign-avail-stars">0</span> ⭐)
+          </button>
+          <button id="btn-open-encyclopedia-camp" class="campaign-action-btn" type="button">
+            📖 Žinynas
+          </button>
         </div>
       </div>
 
@@ -162,7 +174,7 @@
 
         <div class="battle-hud">
           <span class="battle-stat stat-hearts" title="Likę širdelės ir žvaigždučių prognozė">
-            ❤️ <strong id="hud-hearts">20</strong>/20 <span id="hud-stars-preview">⭐⭐⭐</span>
+            ❤️ <strong id="hud-hearts">20</strong>/<span id="hud-max-hearts">20</span> <span id="hud-stars-preview">⭐⭐⭐</span>
           </span>
           <span class="battle-stat stat-coins">
             🪙 <strong id="hud-coins">240</strong>
@@ -297,6 +309,50 @@
     </section>
   </main>
 
+  <!-- ==================== IŠRADIMŲ MEDIS (STAR UPGRADES TECH TREE) ==================== -->
+  <div id="tech-tree-modal" class="feature-modal hidden" role="dialog" aria-modal="true" aria-labelledby="tech-modal-title">
+    <div class="feature-modal-card glass-panel">
+      <div class="floating-menu-head">
+        <span class="kg-badge">🔬 IŠRADIMŲ MEDIS</span>
+        <button id="btn-close-tech-modal" class="menu-close-x" type="button" aria-label="Uždaryti">✕</button>
+      </div>
+      <div class="feature-modal-toprow">
+        <div>
+          <h3 id="tech-modal-title">Nuolatiniai Tvirtovės išradimai</h3>
+          <p class="kg-subtitle">Uždirbk žvaigždutes lygiuose ir sustiprink savo armiją. Bet kada gali nemokamai perstatyti!</p>
+        </div>
+        <div class="tech-stars-box">
+          <span class="battle-stat">⭐ Laisva: <strong id="tech-avail-stars">0</strong></span>
+          <button id="btn-reset-tech-stars" class="reset-stars-btn" type="button">
+            🔄 Perstatyti žvaigždutes
+          </button>
+        </div>
+      </div>
+      <div id="tech-tree-grid" class="tech-grid"></div>
+    </div>
+  </div>
+
+  <!-- ==================== ENCIKLOPEDIJA (BOKŠTŲ IR PRIEŠŲ ŽINYNAS) ==================== -->
+  <div id="encyclopedia-modal" class="feature-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ency-modal-title">
+    <div class="feature-modal-card feature-modal-wide glass-panel">
+      <div class="floating-menu-head">
+        <span class="kg-badge">📖 BUBIŲ TVIRTOVĖS ŽINYNAS</span>
+        <button id="btn-close-ency-modal" class="menu-close-x" type="button" aria-label="Uždaryti">✕</button>
+      </div>
+      <div class="feature-modal-toprow">
+        <div>
+          <h3 id="ency-modal-title">Bokštelių ir priešų enciklopedija</h3>
+          <p class="kg-subtitle">Išstudijuok kiekvieno bokštelio stiprybes ir sutiktų priešų silpnąsias vietas!</p>
+        </div>
+        <div class="ency-tabs">
+          <button id="btn-ency-tab-towers" class="ency-tab-btn active" type="button">🏰 Bokšteliai (6)</button>
+          <button id="btn-ency-tab-enemies" class="ency-tab-btn" type="button">👾 Priešai ir Bosai (15)</button>
+        </div>
+      </div>
+      <div id="encyclopedia-content" class="encyclopedia-grid"></div>
+    </div>
+  </div>
+
   <!-- ==================== ŽINIŲ VARTŲ / PROTINGO PATOBULINIMO MODALAS ==================== -->
   <div id="knowledge-gate-modal" class="knowledge-gate-modal hidden" role="dialog" aria-modal="true" aria-labelledby="kg-title">
     <div class="knowledge-gate-card glass-panel">
@@ -322,6 +378,6 @@
     </div>
   </div>
 
-  <script type="module" src="./js/main.js?v=20261121h"></script>
+  <script type="module" src="./js/main.js?v=20261121i"></script>
 </body>
 </html>

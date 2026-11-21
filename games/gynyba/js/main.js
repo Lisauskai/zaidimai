@@ -3,12 +3,19 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121h';
+} from '../../../shared/playtime-timer.js?v=20261121i';
 import {
   TOWER_LIST,
+  ENEMY_LIST,
+  BOSS_LIST,
   TARGETING_PRIORITIES,
   CAMPAIGN_ZONES,
   CAMPAIGN_LEVELS,
+  STAR_TECH_CATALOG,
+  createDefaultTechTree,
+  normalizeTechTree,
+  computeSpentTechStars,
+  computeAvailableTechStars,
   getLevelById,
   getTowerStats,
   getUpgradeCost,
@@ -19,18 +26,21 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121h';
-import { TDEngine } from './engine.js?v=20261121h';
-import { audioManager } from './audio.js?v=20261121h';
+} from './balance.js?v=20261121i';
+import { TDEngine } from './engine.js?v=20261121i';
+import { audioManager } from './audio.js?v=20261121i';
 
 const SAVE_KEY = 'gynyba_save_v1';
+const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'speedy_hedgehog', 'armored_beetle'];
 
 function loadSaveData() {
   const createEmpty = () => ({
     stars: 0,
     bestWave: 0,
     unlockedLevels: ['lvl_1'],
-    levelStars: {}
+    levelStars: {},
+    techTree: createDefaultTechTree(),
+    encounteredEnemies: [...DEFAULT_ENCOUNTERED_ENEMIES]
   });
   const def = { linas: createEmpty(), lukas: createEmpty() };
 
@@ -67,12 +77,21 @@ function loadSaveData() {
         });
       }
 
+      const encounteredSet = new Set(DEFAULT_ENCOUNTERED_ENEMIES);
+      if (Array.isArray(b?.encounteredEnemies)) {
+        b.encounteredEnemies.forEach((id) => {
+          if (typeof id === 'string') encounteredSet.add(id);
+        });
+      }
+
       const totalStars = Object.values(levelStars).reduce((acc, s) => acc + s, 0);
       return {
         stars: Math.max(totalStars, Number(b?.stars) || 0),
         bestWave: Math.max(0, Number(b?.bestWave) || 0),
         unlockedLevels: Array.from(unlockedSet),
-        levelStars
+        levelStars,
+        techTree: normalizeTechTree(b?.techTree),
+        encounteredEnemies: Array.from(encounteredSet)
       };
     };
 
@@ -101,6 +120,22 @@ const topProfilePill = document.getElementById('top-profile-pill');
 const uiActiveProfile = document.getElementById('ui-active-profile');
 const btnSwitchProfile = document.getElementById('btn-switch-profile');
 const btnAudioToggle = document.getElementById('btn-audio-toggle');
+const btnOpenEncyclopedia = document.getElementById('btn-open-encyclopedia');
+const btnOpenTechTop = document.getElementById('btn-open-tech-top');
+const topAvailStars = document.getElementById('top-avail-stars');
+const btnOpenTechTree = document.getElementById('btn-open-tech-tree');
+const campaignAvailStars = document.getElementById('campaign-avail-stars');
+const btnOpenEncyclopediaCamp = document.getElementById('btn-open-encyclopedia-camp');
+
+const techTreeModal = document.getElementById('tech-tree-modal');
+const techAvailStarsEl = document.getElementById('tech-avail-stars');
+const btnResetTechStars = document.getElementById('btn-reset-tech-stars');
+const techTreeGrid = document.getElementById('tech-tree-grid');
+
+const encyclopediaModal = document.getElementById('encyclopedia-modal');
+const encyclopediaContent = document.getElementById('encyclopedia-content');
+const btnEncyTabTowers = document.getElementById('btn-ency-tab-towers');
+const btnEncyTabEnemies = document.getElementById('btn-ency-tab-enemies');
 
 const campaignZonesBar = document.getElementById('campaign-zones-bar');
 const campaignNodesLayer = document.getElementById('campaign-nodes-layer');
@@ -155,11 +190,24 @@ let gateStepTimeoutId = null;
 let victoryGateTimeoutId = null;
 let smartUpgradeRestorePause = null;
 
+let encyActiveTab = 'towers';
+
+function recordEnemyEncounter(enemyId) {
+  if (!activeProfile || !enemyId) return;
+  const bucket = saveData[activeProfile];
+  if (!bucket) return;
+  if (!bucket.encounteredEnemies.includes(enemyId)) {
+    bucket.encounteredEnemies.push(enemyId);
+    persistSaveData(saveData);
+  }
+}
+
 const engine = new TDEngine(canvas, {
   onStateChange: () => syncBattleUI(),
   onSelectionChange: () => syncSelectionUI(),
   onWavePreviewChange: (preview) => renderWavePreviewCard(preview),
-  onGameResult: (result) => handleGameResult(result)
+  onGameResult: (result) => handleGameResult(result),
+  onEnemyEncountered: (enemyId) => recordEnemyEncounter(enemyId)
 });
 
 function isInBattleView() {
@@ -215,17 +263,21 @@ function positionFloatingMenu(menuEl, padX, padY) {
   const px = padX * scaleX;
   const py = padY * scaleY;
 
-  const menuW = menuEl.offsetWidth || 290;
-  const menuH = menuEl.offsetHeight || 220;
+  const menuRect = menuEl.getBoundingClientRect();
+  const menuW = menuRect.width || menuEl.offsetWidth || 320;
+  const menuH = menuRect.height || menuEl.offsetHeight || 240;
 
   let left = px + 26;
-  if (left + menuW > frameRect.width - 8) {
+  if (left + menuW > frameRect.width - 10) {
     left = px - menuW - 26;
   }
-  left = Math.max(8, Math.min(frameRect.width - menuW - 8, left));
+  left = Math.max(10, Math.min(frameRect.width - menuW - 10, left));
 
   let top = py - menuH / 2;
-  top = Math.max(8, Math.min(frameRect.height - menuH - 8, top));
+  if (top + menuH > frameRect.height - 10) {
+    top = frameRect.height - menuH - 10;
+  }
+  top = Math.max(10, Math.min(frameRect.height - menuH - 10, top));
 
   menuEl.style.left = `${Math.round(left)}px`;
   menuEl.style.top = `${Math.round(top)}px`;
@@ -475,11 +527,13 @@ function syncSelectionUI() {
 
 function syncBattleUI() {
   const heartsEl = document.getElementById('hud-hearts');
+  const maxHeartsEl = document.getElementById('hud-max-hearts');
   const starsPreviewEl = document.getElementById('hud-stars-preview');
   const coinsEl = document.getElementById('hud-coins');
   const waveEl = document.getElementById('hud-wave');
 
   if (heartsEl) heartsEl.textContent = String(engine.hearts);
+  if (maxHeartsEl) maxHeartsEl.textContent = String(engine.maxHearts || 20);
   if (starsPreviewEl) {
     const stars = calculateStarsForHearts(engine.hearts);
     starsPreviewEl.textContent = stars > 0 ? '⭐'.repeat(stars) : '💔';
@@ -588,12 +642,13 @@ function handleGameResult(result) {
       bucket.bestWave = Math.max(bucket.bestWave || 0, result.wave);
       persistSaveData(saveData);
       updateProfileCards();
+      syncTechStarsUI();
     }
     if (iconEl) iconEl.textContent = '🏆';
     if (titleEl) titleEl.textContent = `${engine.map.title} APGINTAS!`;
     if (starsEl) starsEl.textContent = '⭐'.repeat(result.stars) + '☆'.repeat(3 - result.stars);
     if (descEl) {
-      descEl.textContent = `Išsaugojai ${result.hearts} / 20 širdelių ir pelnei ${result.stars} žvaigždutę(-es)!`;
+      descEl.textContent = `Išsaugojai ${result.hearts} / ${engine.maxHearts || 20} širdelių ir pelnei ${result.stars} žvaigždutę(-es)!`;
     }
 
     if (btnResultNextLevel && nextLvl && bucket) {
@@ -938,9 +993,220 @@ function renderCampaignMap() {
   }
 }
 
+let modalRestorePause = null;
+
+function syncTechStarsUI() {
+  if (!activeProfile) {
+    btnOpenTechTop?.classList.add('hidden');
+    return;
+  }
+  const bucket = saveData[activeProfile];
+  const avail = computeAvailableTechStars(bucket.stars, bucket.techTree);
+  if (campaignAvailStars) campaignAvailStars.textContent = String(avail);
+  if (topAvailStars) topAvailStars.textContent = String(avail);
+  if (techAvailStarsEl) techAvailStarsEl.textContent = String(avail);
+  btnOpenTechTop?.classList.remove('hidden');
+}
+
+function closeFeatureModals() {
+  techTreeModal?.classList.add('hidden');
+  encyclopediaModal?.classList.add('hidden');
+  if (modalRestorePause !== null) {
+    engine.setPaused(modalRestorePause);
+    modalRestorePause = null;
+  }
+}
+
+function renderTechTreeModal() {
+  if (!activeProfile || !techTreeGrid) return;
+  const bucket = saveData[activeProfile];
+  const avail = computeAvailableTechStars(bucket.stars, bucket.techTree);
+  const spent = computeSpentTechStars(bucket.techTree);
+
+  if (techAvailStarsEl) techAvailStarsEl.textContent = String(avail);
+  if (btnResetTechStars) btnResetTechStars.disabled = spent <= 0;
+
+  techTreeGrid.innerHTML = '';
+  STAR_TECH_CATALOG.forEach((item) => {
+    const rank = bucket.techTree[item.id] || 0;
+    const isMax = rank >= item.maxRank;
+    const nextCost = isMax ? 0 : item.costs[rank];
+
+    const card = document.createElement('div');
+    card.className = `tech-card${isMax ? ' is-maxed' : ''}`;
+    card.innerHTML = `
+      <div class="tech-card-head">
+        <span class="tech-icon">${item.icon}</span>
+        <span class="tech-rank-badge">Rangas ${rank} / ${item.maxRank}</span>
+      </div>
+      <h4>${item.name}</h4>
+      <p>${item.desc}</p>
+    `;
+
+    const buyBtn = document.createElement('button');
+    buyBtn.type = 'button';
+    buyBtn.className = `tech-buy-btn${isMax ? ' is-maxed' : ''}`;
+    if (isMax) {
+      buyBtn.textContent = `✅ Pilnai išmokta (${item.rankLabels[rank - 1]})`;
+      buyBtn.disabled = true;
+    } else {
+      buyBtn.textContent = `⭐ Išmokti (${nextCost} žvaigžd.)`;
+      buyBtn.disabled = avail < nextCost;
+      buyBtn.addEventListener('click', () => buyTechUpgrade(item.id));
+    }
+    card.appendChild(buyBtn);
+    techTreeGrid.appendChild(card);
+  });
+}
+
+function buyTechUpgrade(techId) {
+  if (!activeProfile) return;
+  const bucket = saveData[activeProfile];
+  const item = STAR_TECH_CATALOG.find((t) => t.id === techId);
+  if (!item) return;
+
+  const rank = bucket.techTree[item.id] || 0;
+  if (rank >= item.maxRank) return;
+  const cost = item.costs[rank] || 0;
+  const avail = computeAvailableTechStars(bucket.stars, bucket.techTree);
+  if (avail < cost) return;
+
+  bucket.techTree[item.id] = rank + 1;
+  persistSaveData(saveData);
+  engine.setTechTree(bucket.techTree);
+  if (isInBattleView() && engine.wave === 0 && engine.towers.length === 0) {
+    engine.loadMap(engine.mapId, activeProfile);
+  }
+  audioManager.playTowerUpgrade(3);
+  syncTechStarsUI();
+  renderTechTreeModal();
+}
+
+function resetTechTree() {
+  if (!activeProfile) return;
+  const bucket = saveData[activeProfile];
+  if (computeSpentTechStars(bucket.techTree) <= 0) return;
+
+  bucket.techTree = createDefaultTechTree();
+  persistSaveData(saveData);
+  engine.setTechTree(bucket.techTree);
+  if (isInBattleView() && engine.wave === 0 && engine.towers.length === 0) {
+    engine.loadMap(engine.mapId, activeProfile);
+  }
+  audioManager.playCoinChime();
+  syncTechStarsUI();
+  renderTechTreeModal();
+}
+
+function openTechTreeModal() {
+  if (!activeProfile || !techTreeModal) return;
+  if (isInBattleView() && modalRestorePause === null) {
+    modalRestorePause = engine.manualPaused;
+    engine.setPaused(true);
+  }
+  encyclopediaModal?.classList.add('hidden');
+  syncTechStarsUI();
+  renderTechTreeModal();
+  techTreeModal.classList.remove('hidden');
+}
+
+function getEncounteredSetForEncyclopedia() {
+  if (activeProfile && saveData[activeProfile]) {
+    return new Set(saveData[activeProfile].encounteredEnemies || DEFAULT_ENCOUNTERED_ENEMIES);
+  }
+  return new Set([
+    ...(saveData.linas?.encounteredEnemies || DEFAULT_ENCOUNTERED_ENEMIES),
+    ...(saveData.lukas?.encounteredEnemies || DEFAULT_ENCOUNTERED_ENEMIES)
+  ]);
+}
+
+function renderEncyclopediaTab(tab = 'towers') {
+  encyActiveTab = tab === 'enemies' ? 'enemies' : 'towers';
+  btnEncyTabTowers?.classList.toggle('active', encyActiveTab === 'towers');
+  btnEncyTabEnemies?.classList.toggle('active', encyActiveTab === 'enemies');
+  if (!encyclopediaContent) return;
+
+  encyclopediaContent.innerHTML = '';
+
+  if (encyActiveTab === 'towers') {
+    TOWER_LIST.forEach((towerDef) => {
+      const s1 = getTowerStats(towerDef.id, 1);
+      const evos = getTowerEvolutions(towerDef.id);
+      const evoNames = evos.map((e) => `${e.icon} ${e.name}`).join(' / ');
+
+      const card = document.createElement('article');
+      card.className = 'ency-card';
+      card.innerHTML = `
+        <div class="ency-card-head">
+          <span class="ency-icon">${towerDef.icon}</span>
+          <div>
+            <h4>${towerDef.name}</h4>
+            <div class="ency-meta">Kaina: ${s1.cost} 🪙 • Nuotolis: ${s1.range}</div>
+          </div>
+        </div>
+        <p class="ency-desc">${towerDef.desc}</p>
+        <div class="ency-tip">✨ 4 lygio šakos: ${evoNames}</div>
+      `;
+      encyclopediaContent.appendChild(card);
+    });
+    return;
+  }
+
+  const encounteredSet = getEncounteredSetForEncyclopedia();
+  const allEnemies = [...ENEMY_LIST, ...BOSS_LIST];
+  allEnemies.forEach((enemy) => {
+    const isSeen = encounteredSet.has(enemy.id);
+    const card = document.createElement('article');
+    card.className = `ency-card${enemy.isBoss ? ' is-boss' : ''}${isSeen ? '' : ' is-locked'}`;
+
+    if (!isSeen) {
+      card.innerHTML = `
+        <div class="ency-card-head">
+          <span class="ency-icon">❓</span>
+          <div>
+            <h4>Dar nesutiktas priešas</h4>
+            <div class="ency-meta">${enemy.isBoss ? '👑 Zonos Bosas' : 'Keliauk toliau kampanijoje'}</div>
+          </div>
+        </div>
+        <p class="ency-desc">Šis priešas pasirodys vėlesnėse bangose arba kitoje Bubių Tvirtovės zonoje.</p>
+        <div class="ency-tip">🔒 Sutik priešą kovoje, kad atrakintum jo silpnąsias vietas!</div>
+      `;
+    } else {
+      const attrs = [];
+      if (enemy.armor > 0) attrs.push(`🛡️ ${Math.round(enemy.armor * 100)}% šarvų`);
+      if (enemy.isFlying) attrs.push('🪽 Skraidantis');
+      if (enemy.isCamo) attrs.push('👁️ Nematomas');
+      const attrLine = attrs.length > 0 ? ` • ${attrs.join(' • ')}` : '';
+      card.innerHTML = `
+        <div class="ency-card-head">
+          <span class="ency-icon">${enemy.icon}</span>
+          <div>
+            <h4>${enemy.name}</h4>
+            <div class="ency-meta">❤️ ${enemy.baseHp} baz. HP • 🪙 +${enemy.reward}${attrLine}</div>
+          </div>
+        </div>
+        <div class="ency-tip">${enemy.counterTip || '💡 Derink kelis skirtingus bokštelius prie posūkių!'}</div>
+      `;
+    }
+    encyclopediaContent.appendChild(card);
+  });
+}
+
+function openEncyclopediaModal(defaultTab = 'towers') {
+  if (!encyclopediaModal) return;
+  if (isInBattleView() && modalRestorePause === null) {
+    modalRestorePause = engine.manualPaused;
+    engine.setPaused(true);
+  }
+  techTreeModal?.classList.add('hidden');
+  renderEncyclopediaTab(defaultTab);
+  encyclopediaModal.classList.remove('hidden');
+}
+
 function showCampaignMapView() {
   if (!activeProfile) return;
   clearEduModalTimers(false);
+  closeFeatureModals();
   closePadMenus();
   resultOverlay?.classList.add('hidden');
   knowledgeGateModal?.classList.add('hidden');
@@ -948,6 +1214,7 @@ function showCampaignMapView() {
   document.body.classList.remove('in-battle-mode');
   screenGame?.classList.add('hidden');
   screenCampaign?.classList.remove('hidden');
+  syncTechStarsUI();
   renderCampaignMap();
 }
 
@@ -978,6 +1245,7 @@ function selectProfile(profileId) {
     badgeEl.classList.toggle('is-lukas', activeProfile === 'lukas');
   }
 
+  engine.setTechTree(saveData[activeProfile].techTree);
   engine.setProfile(activeProfile);
   showCampaignMapView();
   const allowed = playtimeTimer.setActiveChild(activeProfile);
@@ -987,6 +1255,7 @@ function selectProfile(profileId) {
 function showProfileScreen() {
   activeProfile = null;
   clearEduModalTimers(false);
+  closeFeatureModals();
   closePadMenus();
   resultOverlay?.classList.add('hidden');
   knowledgeGateModal?.classList.add('hidden');
@@ -997,6 +1266,7 @@ function showProfileScreen() {
   screenProfiles?.classList.remove('hidden');
   topProfilePill?.classList.add('hidden');
   btnSwitchProfile?.classList.add('hidden');
+  syncTechStarsUI();
   updateProfileCards();
 }
 
@@ -1110,14 +1380,26 @@ btnSellTower?.addEventListener('click', () => {
   }
 });
 
-canvas?.addEventListener('click', (event) => {
+canvas?.addEventListener('pointerdown', (event) => {
   if (!activeProfile) return;
+  if (event.pointerType === 'mouse' && event.button !== 0) return;
   const rect = canvas.getBoundingClientRect();
   if (!rect.width || !rect.height) return;
   const mx = ((event.clientX - rect.left) * canvas.width) / rect.width;
   const my = ((event.clientY - rect.top) * canvas.height) / rect.height;
   engine.handleCanvasTap(mx, my);
 });
+
+btnOpenTechTree?.addEventListener('click', openTechTreeModal);
+btnOpenTechTop?.addEventListener('click', openTechTreeModal);
+document.getElementById('btn-close-tech-modal')?.addEventListener('click', closeFeatureModals);
+btnResetTechStars?.addEventListener('click', resetTechTree);
+
+btnOpenEncyclopedia?.addEventListener('click', () => openEncyclopediaModal('towers'));
+btnOpenEncyclopediaCamp?.addEventListener('click', () => openEncyclopediaModal('towers'));
+document.getElementById('btn-close-ency-modal')?.addEventListener('click', closeFeatureModals);
+btnEncyTabTowers?.addEventListener('click', () => renderEncyclopediaTab('towers'));
+btnEncyTabEnemies?.addEventListener('click', () => renderEncyclopediaTab('enemies'));
 
 canvas?.addEventListener('pointermove', (event) => {
   if (!activeProfile || event.pointerType !== 'mouse') return;
