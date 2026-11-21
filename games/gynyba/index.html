@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261121a" />
+  <link rel="stylesheet" href="./style.css?v=20261121b" />
 </head>
 <body>
   <div class="td-bg-glow" aria-hidden="true"></div>
@@ -41,11 +41,11 @@
     <!-- ==================== 1. PROFILIO PASIRINKIMO EKRANAS ==================== -->
     <section id="screen-profiles" class="profiles-screen">
       <div class="hero-card glass-panel">
-        <span class="hero-kicker">🛡️ BOKŠTELIŲ GYNYBOS KARKASAS</span>
+        <span class="hero-kicker">🛡️ KINGDOM RUSH &amp; BLOONS TD 6 STANDARTAS</span>
         <h2>PASIRINK TVIRTOVĖS VADĄ!</h2>
         <p class="hero-desc">
-          Gink tris mūsų krašto tvirtoves nuo įsibrovėlių bangų. Pasirink savo vardą ir klasę –
-          tavo dienos 20 minučių žaidimo laikas ir rezultatai skaičiuojami automatiškai!
+          Gink Bubių kiemą (1 kelias), Kurtuvėnus (2 keliai) ir Dagilėlio aikštę (2 keliai).
+          Pradedi su <strong>20 širdelių</strong>: 18–20 ❤️ = ⭐⭐⭐, 10–17 ❤️ = ⭐⭐, 1–9 ❤️ = ⭐!
         </p>
       </div>
 
@@ -53,12 +53,12 @@
         <!-- LINAS (1 KLASĖ) -->
         <article class="profile-card card-linas glass-panel">
           <div class="profile-card-head">
-            <span class="profile-chip chip-linas">1 KLASĖ</span>
+            <span class="profile-chip chip-linas">1 KLASĖ • LENGVESNIS BALANSAS</span>
             <span class="profile-avatar" aria-hidden="true">🛡️</span>
           </div>
           <h3>Linas (1 klasė)</h3>
           <p class="profile-desc">
-            Lengvesnės priešų bangos, daugiau startinės energijos bokšteliams ir greitesni patobulinimai!
+            Sąžiningas 1 klasės balansas: <strong>+20% pradinių monetų</strong> bokšteliams ir <strong>20% mažiau priešų HP</strong>.
           </p>
           <div class="profile-stats">
             <div class="stat-row">
@@ -78,12 +78,12 @@
         <!-- LUKAS (3 KLASĖ) -->
         <article class="profile-card card-lukas glass-panel">
           <div class="profile-card-head">
-            <span class="profile-chip chip-lukas">3 KLASĖ</span>
+            <span class="profile-chip chip-lukas">3 KLASĖ • STRATEGO REŽIMAS</span>
             <span class="profile-avatar" aria-hidden="true">⚡</span>
           </div>
           <h3>Lukas (3 klasė)</h3>
           <p class="profile-desc">
-            Taktiškesni priešų maršrutai, didesni bokštų deriniai ir papildomos bangos tvirtovės meistrams!
+            Pilnas taktinis režimas: standartinės pradinės monetos ir 100% priešų gyvybių jėga dviejų kelių žemėlapiuose!
           </p>
           <div class="profile-stats">
             <div class="stat-row">
@@ -102,80 +102,132 @@
       </div>
     </section>
 
-    <!-- ==================== 2. TAKTINIS ŽAIDIMO IR ŽEMĖLAPIŲ EKRANAS ==================== -->
+    <!-- ==================== 2. TAKTINIS ŽAIDIMO EKRANAS ==================== -->
     <section id="screen-game" class="game-screen hidden">
-      <!-- Žemėlapių pasirinkimo juosta -->
+      <!-- Žemėlapių pasirinkimas ir gyvas HUD -->
       <div class="map-selector-bar glass-panel">
         <div class="map-tabs" role="tablist" aria-label="Žemėlapiai">
           <button class="map-tab-btn active" data-map-id="bubiai" type="button">
-            🏡 Bubių kiemas
+            🏡 Bubių kiemas (1 kelias)
           </button>
           <button class="map-tab-btn" data-map-id="kurtuvenai" type="button">
-            🌲 Kurtuvėnai
+            🌲 Kurtuvėnai (2 keliai)
           </button>
           <button class="map-tab-btn" data-map-id="dagilelis" type="button">
-            🏛️ Dagilėlio aikštė
+            🏛️ Dagilėlio aikštė (2 keliai)
           </button>
         </div>
 
         <div class="battle-hud">
-          <span class="battle-stat">❤️ Tvirtovė: <strong id="hud-hp">20</strong></span>
-          <span class="battle-stat">⚡ Energija: <strong id="hud-energy">150</strong></span>
-          <span class="battle-stat">🌊 Banga: <strong id="hud-wave">0</strong></span>
+          <span class="battle-stat stat-hearts" title="Likę širdelės ir žvaigždučių prognozė">
+            ❤️ <strong id="hud-hearts">20</strong>/20 <span id="hud-stars-preview">⭐⭐⭐</span>
+          </span>
+          <span class="battle-stat stat-coins">
+            🪙 <strong id="hud-coins">240</strong>
+          </span>
+          <span class="battle-stat stat-wave">
+            🌊 Banga: <strong id="hud-wave">0 / 10</strong>
+          </span>
         </div>
       </div>
 
-      <!-- Taktinė lenta ir bokštų skydelis -->
+      <!-- Taktinė arena -->
       <div class="tactical-workspace glass-panel">
         <div class="workspace-header">
           <div>
-            <h2 id="map-title">🏡 Bubių kiemas</h2>
+            <div class="title-badge-row">
+              <h2 id="map-title">🏡 Bubių kiemas</h2>
+              <span id="ui-profile-balance-badge" class="balance-chip">1 kl. balansas</span>
+            </div>
             <p id="map-subtitle" class="map-subtitle">
-              Paspausk ant švytinčio statybos taško žemėlapyje, kad pastatytum bokštelį!
+              Paspausk ant pažymėtos statybos aikštelės (+), kad pasirinktum bokštelį ir matytum jo veikimo spindulį!
             </p>
           </div>
+
           <div class="wave-actions">
-            <button id="btn-clear-towers" class="secondary-action-btn" type="button">
-              🔄 Išvalyti lentą
+            <button id="btn-speed-toggle" class="control-pill-btn" type="button" title="Perjungti žaidimo greitį 1x arba 2x">
+              ⏩ 1x
             </button>
-            <button id="btn-start-wave" class="primary-wave-btn" type="button">
-              🌊 Paleisti bandomąją bangą
+            <button id="btn-pause-toggle" class="control-pill-btn" type="button" title="Pristabdyti arba tęsti kovą">
+              ⏸ Pauzė
+            </button>
+            <button id="btn-restart-map" class="secondary-action-btn" type="button" title="Pradėti šį žemėlapį iš naujo">
+              🔄 Iš naujo
+            </button>
+            <button id="btn-call-wave" class="primary-wave-btn" type="button">
+              <span id="ui-call-wave-label">🔔 Kviesti bangą dabar!</span>
+              <span id="ui-early-wave-bonus" class="early-bonus-pill hidden">+0 🪙</span>
             </button>
           </div>
         </div>
 
-        <div class="canvas-frame">
-          <canvas id="gynyba-canvas" width="900" height="480" aria-label="Bubių Tvirtovės taktinis žemėlapis"></canvas>
+        <!-- Drobė su iškylančiais statybos ir bokšto valdymo meniu -->
+        <div id="canvas-frame" class="canvas-frame">
+          <canvas id="gynyba-canvas" width="900" height="500" aria-label="Bubių Tvirtovės taktinis žemėlapis"></canvas>
+
+          <!-- Kompaktiškas radialinis statybos meniu ant tuščios aikštelės -->
+          <div id="pad-build-menu" class="floating-pad-menu hidden" role="dialog" aria-label="Bokštelio statyba">
+            <div class="floating-menu-head">
+              <span>🏗️ Statyti bokštelį</span>
+              <button id="btn-close-build-menu" class="menu-close-x" type="button" aria-label="Uždaryti">✕</button>
+            </div>
+            <div id="pad-build-options" class="radial-build-grid"></div>
+          </div>
+
+          <!-- Bokštelio inspektorius: taikymo prioritetai, tobulinimas ir pardavimas (75%) -->
+          <div id="tower-inspector-menu" class="floating-pad-menu inspector-menu hidden" role="dialog" aria-label="Bokštelio valdymas">
+            <div class="floating-menu-head">
+              <span id="inspector-tower-title">🔦 Lazerio bokštas • Lyg. 1</span>
+              <button id="btn-close-inspector" class="menu-close-x" type="button" aria-label="Uždaryti">✕</button>
+            </div>
+
+            <div id="inspector-tower-stats" class="inspector-stats-line">
+              Žala: 22 • Spindulys: 155 • Greitis: 0.45s
+            </div>
+
+            <div class="priority-section">
+              <span class="priority-heading">🎯 Taikymo prioritetas (BTD6):</span>
+              <div id="inspector-priority-grid" class="priority-grid"></div>
+            </div>
+
+            <div class="inspector-actions">
+              <button id="btn-upgrade-tower" class="insp-btn insp-upgrade" type="button">
+                ⬆️ Tobulinti (65 🪙)
+              </button>
+              <button id="btn-sell-tower" class="insp-btn insp-sell" type="button">
+                💰 Parduoti (+53 🪙)
+              </button>
+            </div>
+          </div>
+
+          <!-- Žemėlapio pabaigos (Pergalės / Pralaimėjimo) langas -->
+          <div id="battle-result-overlay" class="battle-result-overlay hidden" role="dialog" aria-modal="true">
+            <div class="battle-result-card">
+              <div id="result-icon" class="result-icon" aria-hidden="true">🏆</div>
+              <h3 id="result-title">TVIRTOVĖ APGINTA!</h3>
+              <div id="result-stars" class="result-stars">⭐⭐⭐</div>
+              <p id="result-desc" class="result-desc">
+                Išsaugojai 20 / 20 širdelių ir uždirbai 3 žvaigždutes!
+              </p>
+              <div class="result-actions">
+                <button id="btn-result-replay" class="primary-wave-btn" type="button">
+                  🔄 Žaisti dar kartą
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <!-- Bokštų pasirinkimo įrankinė -->
-        <div class="tower-toolbar" aria-label="Bokštelių pasirinkimas">
-          <button class="tower-btn active" data-tower="laser" type="button">
-            <span class="tower-emoji">🔦</span>
-            <span>
-              <strong>Lazerio bokštas</strong>
-              <small>50 ⚡ • Greitas šviesos spindulys</small>
-            </span>
-          </button>
-          <button class="tower-btn" data-tower="acorn" type="button">
-            <span class="tower-emoji">🌰</span>
-            <span>
-              <strong>Kurtuvėnų svaidyklė</strong>
-              <small>65 ⚡ • Toli šaudo galingais riešutais</small>
-            </span>
-          </button>
-          <button class="tower-btn" data-tower="sonic" type="button">
-            <span class="tower-emoji">🔔</span>
-            <span>
-              <strong>Dagilėlio rezonatorius</strong>
-              <small>80 ⚡ • Sulėtina priešus garso banga</small>
-            </span>
-          </button>
+        <!-- Apatinė trumpa atmintinė / legenda -->
+        <div class="td-legend-bar">
+          <span>💡 <strong>Aikštelės (+):</strong> paspausk aikštelę, pasirink bokštą ir pamatysi tikslų šūvio spindulį.</span>
+          <span>🎯 <strong>Prioritetai:</strong> Pirmas • Stipriausias • Paskutinis • Arčiausias.</span>
+          <span>💰 <strong>Ekonomika:</strong> pardavus grįžta 75% monetų • ankstyva banga duoda premiją!</span>
         </div>
       </div>
     </section>
   </main>
 
-  <script type="module" src="./js/main.js?v=20261121a"></script>
+  <script type="module" src="./js/main.js?v=20261121b"></script>
 </body>
 </html>

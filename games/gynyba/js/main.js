@@ -1,148 +1,52 @@
-// ==================== BUBIŲ TVIRTOVĖ (TOWER DEFENSE KARKASAS) ====================
+// ==================== BUBIŲ TVIRTOVĖ: PAGRINDINIS VALDIKLIS ====================
 import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121a';
+} from '../../../shared/playtime-timer.js?v=20261121b';
+import {
+  TOWER_LIST,
+  TARGETING_PRIORITIES,
+  getTowerStats,
+  getUpgradeCost,
+  computeSellRefund,
+  calculateStarsForHearts,
+  getProfileModifier
+} from './balance.js?v=20261121b';
+import { TDEngine } from './engine.js?v=20261121b';
 
 const SAVE_KEY = 'gynyba_save_v1';
 
-const MAPS = {
-  bubiai: {
-    id: 'bubiai',
-    title: '🏡 Bubių kiemas',
-    subtitle: 'Paspausk ant švytinčio statybos taško kieme, kad pastatytum bokštelį!',
-    bgTop: '#0d261c',
-    bgBottom: '#071411',
-    pathColor: '#92744a',
-    pathBorder: '#5b4528',
-    waypoints: [
-      { x: 0, y: 240 },
-      { x: 180, y: 240 },
-      { x: 180, y: 115 },
-      { x: 450, y: 115 },
-      { x: 450, y: 365 },
-      { x: 700, y: 365 },
-      { x: 700, y: 220 },
-      { x: 845, y: 220 }
-    ],
-    pads: [
-      { x: 115, y: 165 },
-      { x: 260, y: 185 },
-      { x: 370, y: 185 },
-      { x: 525, y: 245 },
-      { x: 615, y: 295 },
-      { x: 770, y: 145 }
-    ]
-  },
-  kurtuvenai: {
-    id: 'kurtuvenai',
-    title: '🌲 Kurtuvėnai',
-    subtitle: 'Saugok Kurtuvėnų pušynų taką – pastatyk svaidykles posūkiuose!',
-    bgTop: '#0b2229',
-    bgBottom: '#071319',
-    pathColor: '#6d5c46',
-    pathBorder: '#3e3326',
-    waypoints: [
-      { x: 0, y: 120 },
-      { x: 240, y: 120 },
-      { x: 310, y: 360 },
-      { x: 560, y: 360 },
-      { x: 620, y: 135 },
-      { x: 845, y: 135 }
-    ],
-    pads: [
-      { x: 140, y: 195 },
-      { x: 315, y: 210 },
-      { x: 435, y: 285 },
-      { x: 515, y: 215 },
-      { x: 685, y: 225 },
-      { x: 760, y: 70 }
-    ]
-  },
-  dagilelis: {
-    id: 'dagilelis',
-    title: '🏛️ Dagilėlio aikštė',
-    subtitle: 'Apsaugok Dagilėlio aikštės centrinę tvirtovę lazeriais ir rezonatoriais!',
-    bgTop: '#181a38',
-    bgBottom: '#090c1f',
-    pathColor: '#64748b',
-    pathBorder: '#334155',
-    waypoints: [
-      { x: 0, y: 360 },
-      { x: 180, y: 360 },
-      { x: 180, y: 130 },
-      { x: 390, y: 130 },
-      { x: 390, y: 255 },
-      { x: 610, y: 255 },
-      { x: 610, y: 125 },
-      { x: 760, y: 125 },
-      { x: 760, y: 310 },
-      { x: 845, y: 310 }
-    ],
-    pads: [
-      { x: 110, y: 250 },
-      { x: 270, y: 205 },
-      { x: 320, y: 330 },
-      { x: 495, y: 180 },
-      { x: 520, y: 335 },
-      { x: 685, y: 220 }
-    ]
-  }
-};
-
-const TOWER_TYPES = {
-  laser: {
-    id: 'laser',
-    name: 'Lazerio bokštas',
-    cost: 50,
-    range: 160,
-    cooldown: 0.45,
-    damage: 18,
-    color: '#38bdf8',
-    icon: '🔦'
-  },
-  acorn: {
-    id: 'acorn',
-    name: 'Kurtuvėnų svaidyklė',
-    cost: 65,
-    range: 210,
-    cooldown: 0.85,
-    damage: 34,
-    color: '#fbbf24',
-    icon: '🌰'
-  },
-  sonic: {
-    id: 'sonic',
-    name: 'Dagilėlio rezonatorius',
-    cost: 80,
-    range: 145,
-    cooldown: 0.7,
-    damage: 20,
-    slowFactor: 0.55,
-    color: '#fb7185',
-    icon: '🔔'
-  }
-};
-
 function loadSaveData() {
-  const def = {
-    linas: { stars: 0, bestWave: 0 },
-    lukas: { stars: 0, bestWave: 0 }
-  };
+  const createEmpty = () => ({
+    stars: 0,
+    bestWave: 0,
+    mapStars: { bubiai: 0, kurtuvenai: 0, dagilelis: 0 }
+  });
+  const def = { linas: createEmpty(), lukas: createEmpty() };
+
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return def;
     const parsed = JSON.parse(raw);
+
+    const normalizeBucket = (b) => {
+      const mapStars = {
+        bubiai: Math.max(0, Number(b?.mapStars?.bubiai) || 0),
+        kurtuvenai: Math.max(0, Number(b?.mapStars?.kurtuvenai) || 0),
+        dagilelis: Math.max(0, Number(b?.mapStars?.dagilelis) || 0)
+      };
+      const summedMapStars = mapStars.bubiai + mapStars.kurtuvenai + mapStars.dagilelis;
+      return {
+        stars: Math.max(summedMapStars, Number(b?.stars) || 0),
+        bestWave: Math.max(0, Number(b?.bestWave) || 0),
+        mapStars
+      };
+    };
+
     return {
-      linas: {
-        stars: Math.max(0, Number(parsed?.linas?.stars) || 0),
-        bestWave: Math.max(0, Number(parsed?.linas?.bestWave) || 0)
-      },
-      lukas: {
-        stars: Math.max(0, Number(parsed?.lukas?.stars) || 0),
-        bestWave: Math.max(0, Number(parsed?.lukas?.bestWave) || 0)
-      }
+      linas: normalizeBucket(parsed?.linas),
+      lukas: normalizeBucket(parsed?.lukas)
     };
   } catch (e) {
     return def;
@@ -157,39 +61,55 @@ function persistSaveData(data) {
   }
 }
 
-// ==================== BŪSENA ====================
-let saveData = loadSaveData();
-let activeProfile = null; // 'linas' | 'lukas'
-let currentMapId = 'bubiai';
-let selectedTowerType = 'laser';
-let hp = 20;
-let energy = 150;
-let wave = 0;
-let placedTowers = []; // { padIndex, type, x, y, cooldownLeft, beamTarget, beamTimer }
-let enemies = []; // { hp, maxHp, speed, waypointIdx, x, y, slowTimer }
-let waveActive = false;
-let spawnRemaining = 0;
-let spawnTimer = 0;
-let lastFrameTime = 0;
-
 // ==================== DOM NUORODOS ====================
 const screenProfiles = document.getElementById('screen-profiles');
 const screenGame = document.getElementById('screen-game');
 const topProfilePill = document.getElementById('top-profile-pill');
 const uiActiveProfile = document.getElementById('ui-active-profile');
 const btnSwitchProfile = document.getElementById('btn-switch-profile');
+
+const canvasFrame = document.getElementById('canvas-frame');
 const canvas = document.getElementById('gynyba-canvas');
-const ctx = canvas ? canvas.getContext('2d') : null;
+const padBuildMenu = document.getElementById('pad-build-menu');
+const padBuildOptions = document.getElementById('pad-build-options');
+const towerInspectorMenu = document.getElementById('tower-inspector-menu');
+const inspectorPriorityGrid = document.getElementById('inspector-priority-grid');
+const resultOverlay = document.getElementById('battle-result-overlay');
+
+const btnSpeedToggle = document.getElementById('btn-speed-toggle');
+const btnPauseToggle = document.getElementById('btn-pause-toggle');
+const btnCallWave = document.getElementById('btn-call-wave');
+const uiCallWaveLabel = document.getElementById('ui-call-wave-label');
+const uiEarlyWaveBonus = document.getElementById('ui-early-wave-bonus');
+const btnUpgradeTower = document.getElementById('btn-upgrade-tower');
+const btnSellTower = document.getElementById('btn-sell-tower');
+
+let saveData = loadSaveData();
+let activeProfile = null;
+let lastFrameTimestamp = 0;
+
+const engine = new TDEngine(canvas, {
+  onStateChange: () => syncBattleUI(),
+  onSelectionChange: () => syncSelectionUI(),
+  onGameResult: (result) => handleGameResult(result)
+});
 
 const playtimeTimer = initPlaytimeTimer({
   containerSelector: '#top-playtime-slot',
   portalUrl: '../../index.html',
-  shouldCount: () => Boolean(activeProfile),
+  shouldCount: () => Boolean(activeProfile) && !engine.isPaused(),
   onSwitchProfile: () => showProfileScreen(),
-  onTick: () => updateProfileTimeCards()
+  onLock: () => {
+    engine.setExternalLocked(true);
+    closePadMenus();
+  },
+  onUnlock: () => {
+    engine.setExternalLocked(false);
+  },
+  onTick: () => updateProfileCards()
 });
 
-function updateProfileTimeCards() {
+function updateProfileCards() {
   const linasTimeEl = document.getElementById('linas-time-left');
   const lukasTimeEl = document.getElementById('lukas-time-left');
   const linasStatsEl = document.getElementById('linas-save-stats');
@@ -213,333 +133,322 @@ function updateProfileTimeCards() {
   }
 }
 
-function updateBattleHud() {
-  const hpEl = document.getElementById('hud-hp');
-  const energyEl = document.getElementById('hud-energy');
-  const waveEl = document.getElementById('hud-wave');
-  if (hpEl) hpEl.textContent = String(hp);
-  if (energyEl) energyEl.textContent = String(energy);
-  if (waveEl) waveEl.textContent = String(wave);
+function positionFloatingMenu(menuEl, padX, padY) {
+  if (!menuEl || !canvasFrame || !canvas) return;
+  const frameRect = canvasFrame.getBoundingClientRect();
+  if (!frameRect.width) return;
+
+  const scaleX = frameRect.width / canvas.width;
+  const scaleY = frameRect.height / canvas.height;
+  const px = padX * scaleX;
+  const py = padY * scaleY;
+
+  const menuW = menuEl.offsetWidth || 290;
+  const menuH = menuEl.offsetHeight || 220;
+
+  let left = px + 26;
+  if (left + menuW > frameRect.width - 8) {
+    left = px - menuW - 26;
+  }
+  left = Math.max(8, Math.min(frameRect.width - menuW - 8, left));
+
+  let top = py - menuH / 2;
+  top = Math.max(8, Math.min(frameRect.height - menuH - 8, top));
+
+  menuEl.style.left = `${Math.round(left)}px`;
+  menuEl.style.top = `${Math.round(top)}px`;
 }
 
-function resetBoardState() {
-  hp = activeProfile === 'linas' ? 25 : 20;
-  energy = activeProfile === 'linas' ? 180 : 150;
-  wave = 0;
-  placedTowers = [];
-  enemies = [];
-  waveActive = false;
-  spawnRemaining = 0;
-  spawnTimer = 0;
-  updateBattleHud();
+function closePadMenus() {
+  padBuildMenu?.classList.add('hidden');
+  towerInspectorMenu?.classList.add('hidden');
+}
+
+function syncBuildMenuAffordability() {
+  if (!padBuildOptions || padBuildMenu?.classList.contains('hidden')) return;
+  padBuildOptions.querySelectorAll('.build-option-btn').forEach((btn) => {
+    const cost = Number(btn.dataset.cost) || 0;
+    btn.disabled = engine.coins < cost;
+  });
+}
+
+function renderPadBuildMenu(pad) {
+  if (!padBuildMenu || !padBuildOptions) return;
+  padBuildOptions.innerHTML = '';
+
+  TOWER_LIST.forEach((towerDef) => {
+    const stats = getTowerStats(towerDef.id, 1);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'build-option-btn';
+    btn.dataset.towerId = towerDef.id;
+    btn.dataset.cost = String(stats.cost);
+    btn.disabled = engine.coins < stats.cost;
+    btn.title = `${towerDef.name}: ${towerDef.desc}`;
+    btn.innerHTML = `
+      <span class="build-option-icon">${towerDef.icon}</span>
+      <span class="build-option-name">${towerDef.shortName}</span>
+      <span class="build-option-meta">${stats.cost} 🪙 • R:${stats.range}</span>
+    `;
+
+    btn.addEventListener('pointerenter', () => {
+      engine.setPreviewTowerType(towerDef.id);
+    });
+    btn.addEventListener('focus', () => {
+      engine.setPreviewTowerType(towerDef.id);
+    });
+    btn.addEventListener('click', () => {
+      engine.setPreviewTowerType(towerDef.id);
+      if (engine.buildTowerOnSelectedPad(towerDef.id)) {
+        closePadMenus();
+      }
+    });
+
+    padBuildOptions.appendChild(btn);
+  });
+
+  towerInspectorMenu?.classList.add('hidden');
+  padBuildMenu.classList.remove('hidden');
+  positionFloatingMenu(padBuildMenu, pad.x, pad.y);
+}
+
+function renderTowerInspectorMenu(pad, tower) {
+  if (!towerInspectorMenu || !inspectorPriorityGrid) return;
+  const stats = getTowerStats(tower.type, tower.level);
+  const titleEl = document.getElementById('inspector-tower-title');
+  const statsEl = document.getElementById('inspector-tower-stats');
+
+  if (titleEl) {
+    titleEl.textContent = `${stats.icon} ${stats.name} • Lyg. ${tower.level}/3`;
+  }
+  if (statsEl) {
+    const slowText = stats.slowFactor ? ` • Sulėtinimas ${Math.round((1 - stats.slowFactor) * 100)}%` : '';
+    statsEl.textContent = `Žala: ${stats.damage} • Spindulys: ${stats.range} • Greitis: ${stats.cooldown.toFixed(2)}s${slowText}`;
+  }
+
+  inspectorPriorityGrid.innerHTML = '';
+  TARGETING_PRIORITIES.forEach((prio) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `priority-btn${tower.priority === prio.id ? ' active' : ''}`;
+    btn.title = prio.desc;
+    btn.textContent = `${prio.icon} ${prio.label}`;
+    btn.addEventListener('click', () => {
+      engine.setTowerPriority(tower.padIndex, prio.id);
+    });
+    inspectorPriorityGrid.appendChild(btn);
+  });
+
+  const upgradeCost = getUpgradeCost(tower.type, tower.level);
+  if (btnUpgradeTower) {
+    if (upgradeCost === null) {
+      btnUpgradeTower.textContent = '✅ Maks. lygis';
+      btnUpgradeTower.disabled = true;
+    } else {
+      btnUpgradeTower.textContent = `⬆️ Tobulinti (${upgradeCost} 🪙)`;
+      btnUpgradeTower.disabled = engine.coins < upgradeCost;
+    }
+  }
+
+  if (btnSellTower) {
+    const refund = computeSellRefund(tower.totalInvested);
+    btnSellTower.textContent = `💰 Parduoti (+${refund} 🪙)`;
+  }
+
+  padBuildMenu?.classList.add('hidden');
+  towerInspectorMenu.classList.remove('hidden');
+  positionFloatingMenu(towerInspectorMenu, pad.x, pad.y);
+}
+
+function syncSelectionUI() {
+  if (engine.selectedPadIndex === null) {
+    closePadMenus();
+    return;
+  }
+  const pad = engine.map.pads[engine.selectedPadIndex];
+  if (!pad) {
+    closePadMenus();
+    return;
+  }
+  const tower = engine.getTowerAtPad(engine.selectedPadIndex);
+  if (tower) {
+    renderTowerInspectorMenu(pad, tower);
+  } else {
+    renderPadBuildMenu(pad);
+  }
+}
+
+function syncBattleUI() {
+  const heartsEl = document.getElementById('hud-hearts');
+  const starsPreviewEl = document.getElementById('hud-stars-preview');
+  const coinsEl = document.getElementById('hud-coins');
+  const waveEl = document.getElementById('hud-wave');
+
+  if (heartsEl) heartsEl.textContent = String(engine.hearts);
+  if (starsPreviewEl) {
+    const stars = calculateStarsForHearts(engine.hearts);
+    starsPreviewEl.textContent = stars > 0 ? '⭐'.repeat(stars) : '💔';
+  }
+  if (coinsEl) coinsEl.textContent = String(engine.coins);
+  if (waveEl) waveEl.textContent = `${engine.wave} / ${engine.map.maxWaves}`;
+
+  if (btnSpeedToggle) {
+    btnSpeedToggle.textContent = `⏩ ${engine.speedMultiplier}x`;
+    btnSpeedToggle.classList.toggle('is-active', engine.speedMultiplier === 2);
+  }
+  if (btnPauseToggle) {
+    btnPauseToggle.textContent = engine.manualPaused ? '▶️ Tęsti' : '⏸ Pauzė';
+    btnPauseToggle.classList.toggle('is-active', engine.manualPaused);
+  }
+
+  if (btnCallWave && uiCallWaveLabel && uiEarlyWaveBonus) {
+    const canCall = engine.canCallWaveEarly();
+    btnCallWave.disabled = !canCall;
+
+    if (engine.wave >= engine.map.maxWaves) {
+      uiCallWaveLabel.textContent = engine.gameResult ? '🏁 Kova baigta' : `⚔️ Paskutinė banga (${engine.wave}/${engine.map.maxWaves})`;
+      uiEarlyWaveBonus.classList.add('hidden');
+    } else if (engine.wave === 0) {
+      uiCallWaveLabel.textContent = '🌊 Pradėti 1-ąją bangą!';
+      uiEarlyWaveBonus.classList.add('hidden');
+    } else if (canCall) {
+      const nextWave = engine.wave + 1;
+      const bonus = engine.getEarlyWaveBonusCoins();
+      const secText = engine.interWaveTimer > 0 ? ` (${Math.ceil(engine.interWaveTimer)}s)` : '';
+      uiCallWaveLabel.textContent = `🔔 Kviesti ${nextWave}-ąją bangą${secText}`;
+      if (bonus > 0) {
+        uiEarlyWaveBonus.textContent = `+${bonus} 🪙`;
+        uiEarlyWaveBonus.classList.remove('hidden');
+      } else {
+        uiEarlyWaveBonus.classList.add('hidden');
+      }
+    } else {
+      uiCallWaveLabel.textContent = `⚔️ Vyksta ${engine.wave}/${engine.map.maxWaves} banga...`;
+      uiEarlyWaveBonus.classList.add('hidden');
+    }
+  }
+
+  // Jei atidarytas statybos ar inspektoriaus langas – atnaujiname įperkamumo būseną
+  syncBuildMenuAffordability();
+  if (towerInspectorMenu && !towerInspectorMenu.classList.contains('hidden') && engine.selectedPadIndex !== null) {
+    const t = engine.getTowerAtPad(engine.selectedPadIndex);
+    if (t && btnUpgradeTower) {
+      const upCost = getUpgradeCost(t.type, t.level);
+      btnUpgradeTower.disabled = upCost === null || engine.coins < upCost;
+    }
+  }
+
+  // Išsaugome pasiektą geriausią bangą
+  if (activeProfile && engine.wave > (saveData[activeProfile]?.bestWave || 0)) {
+    saveData[activeProfile].bestWave = engine.wave;
+    persistSaveData(saveData);
+    updateProfileCards();
+  }
+}
+
+function handleGameResult(result) {
+  if (!result || !resultOverlay) return;
+  closePadMenus();
+
+  const iconEl = document.getElementById('result-icon');
+  const titleEl = document.getElementById('result-title');
+  const starsEl = document.getElementById('result-stars');
+  const descEl = document.getElementById('result-desc');
+
+  if (result.status === 'victory') {
+    if (activeProfile) {
+      const bucket = saveData[activeProfile];
+      bucket.mapStars[engine.mapId] = Math.max(bucket.mapStars[engine.mapId] || 0, result.stars);
+      bucket.stars =
+        (bucket.mapStars.bubiai || 0) +
+        (bucket.mapStars.kurtuvenai || 0) +
+        (bucket.mapStars.dagilelis || 0);
+      bucket.bestWave = Math.max(bucket.bestWave || 0, result.wave);
+      persistSaveData(saveData);
+      updateProfileCards();
+    }
+    if (iconEl) iconEl.textContent = '🏆';
+    if (titleEl) titleEl.textContent = `${engine.map.title} APGINTAS!`;
+    if (starsEl) starsEl.textContent = '⭐'.repeat(result.stars) + '☆'.repeat(3 - result.stars);
+    if (descEl) {
+      descEl.textContent = `Išsaugojai ${result.hearts} / 20 širdelių ir pelnei ${result.stars} žvaigždutę(-es)!`;
+    }
+  } else {
+    if (iconEl) iconEl.textContent = '💔';
+    if (titleEl) titleEl.textContent = 'TVIRTOVĖ NEATLAIKĖ!';
+    if (starsEl) starsEl.textContent = '☆☆☆';
+    if (descEl) {
+      descEl.textContent = `Pasiekei ${result.wave}-ąją bangą. Pakeisk bokštelių taikymo prioritetus arba statyk prie sankirtos ir bandyk dar kartą!`;
+    }
+  }
+
+  resultOverlay.classList.remove('hidden');
 }
 
 function selectProfile(profileId) {
-  activeProfile = profileId === 'lukas' ? 'lukas' : 'linas';
+  activeProfile = profileId === 'linas' ? 'linas' : 'lukas';
+  const mod = getProfileModifier(activeProfile);
+
   screenProfiles?.classList.add('hidden');
   screenGame?.classList.remove('hidden');
   topProfilePill?.classList.remove('hidden');
   btnSwitchProfile?.classList.remove('hidden');
+  resultOverlay?.classList.add('hidden');
 
   if (uiActiveProfile) {
-    uiActiveProfile.textContent =
-      activeProfile === 'linas' ? '👤 Linas (1 klasė)' : '👤 Lukas (3 klasė)';
+    uiActiveProfile.textContent = `👤 ${mod.label}`;
   }
 
-  resetBoardState();
-  selectMap(currentMapId);
-  playtimeTimer.setActiveChild(activeProfile);
+  const badgeEl = document.getElementById('ui-profile-balance-badge');
+  if (badgeEl) {
+    badgeEl.textContent = mod.badgeText;
+    badgeEl.classList.toggle('is-lukas', activeProfile === 'lukas');
+  }
+
+  engine.setProfile(activeProfile);
+  selectMap(engine.mapId);
+  const allowed = playtimeTimer.setActiveChild(activeProfile);
+  engine.setExternalLocked(!allowed);
 }
 
 function showProfileScreen() {
   activeProfile = null;
-  waveActive = false;
-  enemies = [];
+  closePadMenus();
+  resultOverlay?.classList.add('hidden');
   playtimeTimer.clearActiveChild();
   screenGame?.classList.add('hidden');
   screenProfiles?.classList.remove('hidden');
   topProfilePill?.classList.add('hidden');
   btnSwitchProfile?.classList.add('hidden');
-  updateProfileTimeCards();
+  updateProfileCards();
 }
 
 function selectMap(mapId) {
-  if (!MAPS[mapId]) return;
-  currentMapId = mapId;
-  const map = MAPS[mapId];
+  closePadMenus();
+  resultOverlay?.classList.add('hidden');
+  engine.loadMap(mapId, activeProfile || 'lukas');
 
   document.querySelectorAll('.map-tab-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.mapId === mapId);
+    btn.classList.toggle('active', btn.dataset.mapId === engine.mapId);
   });
 
   const titleEl = document.getElementById('map-title');
   const subEl = document.getElementById('map-subtitle');
-  if (titleEl) titleEl.textContent = map.title;
-  if (subEl) subEl.textContent = map.subtitle;
-
-  resetBoardState();
+  if (titleEl) titleEl.textContent = engine.map.title;
+  if (subEl) subEl.textContent = engine.map.subtitle;
 }
 
-function startTestWave() {
-  if (!activeProfile || playtimeTimer.isLocked() || waveActive) return;
-  wave += 1;
-  waveActive = true;
-  spawnRemaining = 5 + wave * 2;
-  spawnTimer = 0.2;
-  updateBattleHud();
-}
+function animationLoop(timestamp) {
+  if (!lastFrameTimestamp) lastFrameTimestamp = timestamp;
+  const rawDt = Math.min(0.05, (timestamp - lastFrameTimestamp) / 1000);
+  lastFrameTimestamp = timestamp;
 
-function handleCanvasClick(event) {
-  if (!canvas || !activeProfile || playtimeTimer.isLocked()) return;
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const mx = (event.clientX - rect.left) * scaleX;
-  const my = (event.clientY - rect.top) * scaleY;
-
-  const map = MAPS[currentMapId];
-  const padIndex = map.pads.findIndex((pad) => Math.hypot(pad.x - mx, pad.y - my) <= 28);
-  if (padIndex === -1) return;
-
-  const existing = placedTowers.find((t) => t.padIndex === padIndex);
-  if (existing) return;
-
-  const towerDef = TOWER_TYPES[selectedTowerType];
-  if (!towerDef || energy < towerDef.cost) return;
-
-  energy -= towerDef.cost;
-  placedTowers.push({
-    padIndex,
-    type: towerDef.id,
-    x: map.pads[padIndex].x,
-    y: map.pads[padIndex].y,
-    cooldownLeft: 0,
-    beamTarget: null,
-    beamTimer: 0
-  });
-  updateBattleHud();
-}
-
-function updateSimulation(dt) {
-  if (!activeProfile || playtimeTimer.isLocked()) return;
-  const map = MAPS[currentMapId];
-
-  if (waveActive && spawnRemaining > 0) {
-    spawnTimer -= dt;
-    if (spawnTimer <= 0) {
-      const startPt = map.waypoints[0];
-      const baseHp = (activeProfile === 'linas' ? 40 : 52) + wave * 14;
-      enemies.push({
-        hp: baseHp,
-        maxHp: baseHp,
-        speed: (activeProfile === 'linas' ? 68 : 78) + wave * 4,
-        waypointIdx: 1,
-        x: startPt.x,
-        y: startPt.y,
-        slowTimer: 0
-      });
-      spawnRemaining -= 1;
-      spawnTimer = 0.9;
-    }
+  if (activeProfile) {
+    engine.update(rawDt);
+    engine.render();
   }
 
-  for (let i = enemies.length - 1; i >= 0; i--) {
-    const enemy = enemies[i];
-    if (enemy.slowTimer > 0) enemy.slowTimer = Math.max(0, enemy.slowTimer - dt);
-    const target = map.waypoints[enemy.waypointIdx];
-    if (!target) {
-      enemies.splice(i, 1);
-      hp = Math.max(0, hp - 1);
-      updateBattleHud();
-      continue;
-    }
-
-    const dx = target.x - enemy.x;
-    const dy = target.y - enemy.y;
-    const dist = Math.hypot(dx, dy);
-    const speedNow = enemy.slowTimer > 0 ? enemy.speed * 0.55 : enemy.speed;
-    const step = speedNow * dt;
-
-    if (dist <= step) {
-      enemy.x = target.x;
-      enemy.y = target.y;
-      enemy.waypointIdx += 1;
-    } else if (dist > 0) {
-      enemy.x += (dx / dist) * step;
-      enemy.y += (dy / dist) * step;
-    }
-  }
-
-  for (const tower of placedTowers) {
-    const def = TOWER_TYPES[tower.type];
-    if (tower.cooldownLeft > 0) tower.cooldownLeft = Math.max(0, tower.cooldownLeft - dt);
-    if (tower.beamTimer > 0) tower.beamTimer = Math.max(0, tower.beamTimer - dt);
-
-    if (tower.cooldownLeft <= 0 && enemies.length > 0) {
-      const target = enemies.find((e) => Math.hypot(e.x - tower.x, e.y - tower.y) <= def.range);
-      if (target) {
-        target.hp -= def.damage;
-        if (def.slowFactor) {
-          target.slowTimer = 1.4;
-        }
-        tower.cooldownLeft = def.cooldown;
-        tower.beamTarget = { x: target.x, y: target.y };
-        tower.beamTimer = 0.16;
-
-        if (target.hp <= 0) {
-          const idx = enemies.indexOf(target);
-          if (idx !== -1) enemies.splice(idx, 1);
-          energy += 15;
-          updateBattleHud();
-        }
-      }
-    }
-  }
-
-  if (waveActive && spawnRemaining === 0 && enemies.length === 0) {
-    waveActive = false;
-    energy += 40;
-    const bucket = saveData[activeProfile];
-    if (wave > bucket.bestWave) {
-      bucket.bestWave = wave;
-      bucket.stars += 1;
-      persistSaveData(saveData);
-    }
-    updateBattleHud();
-  }
-}
-
-function renderCanvas() {
-  if (!ctx || !canvas) return;
-  const map = MAPS[currentMapId];
-  const w = canvas.width;
-  const h = canvas.height;
-
-  // Fonas
-  const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-  bgGrad.addColorStop(0, map.bgTop);
-  bgGrad.addColorStop(1, map.bgBottom);
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, w, h);
-
-  // Subtilus taktinis tinklelis
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
-  ctx.lineWidth = 1;
-  for (let gx = 0; gx < w; gx += 45) {
-    ctx.beginPath();
-    ctx.moveTo(gx, 0);
-    ctx.lineTo(gx, h);
-    ctx.stroke();
-  }
-  for (let gy = 0; gy < h; gy += 45) {
-    ctx.beginPath();
-    ctx.moveTo(0, gy);
-    ctx.lineTo(w, gy);
-    ctx.stroke();
-  }
-
-  // Kelias
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.strokeStyle = map.pathBorder;
-  ctx.lineWidth = 46;
-  ctx.beginPath();
-  map.waypoints.forEach((pt, idx) => {
-    if (idx === 0) ctx.moveTo(pt.x, pt.y);
-    else ctx.lineTo(pt.x, pt.y);
-  });
-  ctx.stroke();
-
-  ctx.strokeStyle = map.pathColor;
-  ctx.lineWidth = 34;
-  ctx.stroke();
-
-  // Tvirtovė maršruto gale
-  const endPt = map.waypoints[map.waypoints.length - 1];
-  ctx.fillStyle = '#1e293b';
-  ctx.strokeStyle = '#38bdf8';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.arc(endPt.x, endPt.y, 28, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.font = '24px Outfit, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('🏰', endPt.x, endPt.y + 1);
-
-  // Bokštelių statybos taškai
-  map.pads.forEach((pad, idx) => {
-    const built = placedTowers.find((t) => t.padIndex === idx);
-    if (!built) {
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.16)';
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.75)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(pad.x, pad.y, 20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#bae6fd';
-      ctx.font = 'bold 18px Outfit, sans-serif';
-      ctx.fillText('+', pad.x, pad.y + 1);
-    }
-  });
-
-  // Pastatyti bokšteliai ir šūviai
-  placedTowers.forEach((tower) => {
-    const def = TOWER_TYPES[tower.type];
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.14)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(tower.x, tower.y, def.range, 0, Math.PI * 2);
-    ctx.stroke();
-
-    if (tower.beamTimer > 0 && tower.beamTarget) {
-      ctx.strokeStyle = def.color;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(tower.x, tower.y);
-      ctx.lineTo(tower.beamTarget.x, tower.beamTarget.y);
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = '#0f172a';
-    ctx.strokeStyle = def.color;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(tower.x, tower.y, 21, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.font = '20px Outfit, sans-serif';
-    ctx.fillText(def.icon, tower.x, tower.y + 1);
-  });
-
-  // Priešai
-  enemies.forEach((enemy) => {
-    ctx.fillStyle = enemy.slowTimer > 0 ? '#38bdf8' : '#f43f5e';
-    ctx.strokeStyle = '#fecdd3';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(enemy.x, enemy.y, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    const ratio = Math.max(0, enemy.hp / enemy.maxHp);
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(enemy.x - 14, enemy.y - 22, 28, 5);
-    ctx.fillStyle = '#4ade80';
-    ctx.fillRect(enemy.x - 14, enemy.y - 22, 28 * ratio, 5);
-  });
-}
-
-function gameLoop(timestamp) {
-  if (!lastFrameTime) lastFrameTime = timestamp;
-  const dt = Math.min(0.05, (timestamp - lastFrameTime) / 1000);
-  lastFrameTime = timestamp;
-
-  updateSimulation(dt);
-  renderCanvas();
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(animationLoop);
 }
 
 // ==================== ĮVYKIŲ SUSIEJIMAS ====================
@@ -553,23 +462,54 @@ document.querySelectorAll('.map-tab-btn').forEach((btn) => {
   });
 });
 
-document.querySelectorAll('.tower-btn').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    const type = btn.dataset.tower;
-    if (!type || !TOWER_TYPES[type]) return;
-    selectedTowerType = type;
-    document.querySelectorAll('.tower-btn').forEach((b) => {
-      b.classList.toggle('active', b.dataset.tower === type);
-    });
-  });
+btnSpeedToggle?.addEventListener('click', () => {
+  engine.toggleSpeed();
 });
 
-document.getElementById('btn-start-wave')?.addEventListener('click', startTestWave);
-document.getElementById('btn-clear-towers')?.addEventListener('click', () => {
-  if (playtimeTimer.isLocked()) return;
-  resetBoardState();
+btnPauseToggle?.addEventListener('click', () => {
+  engine.togglePause();
 });
-canvas?.addEventListener('click', handleCanvasClick);
 
-updateProfileTimeCards();
-requestAnimationFrame(gameLoop);
+btnCallWave?.addEventListener('click', () => {
+  engine.callNextWaveEarly();
+});
+
+document.getElementById('btn-restart-map')?.addEventListener('click', () => {
+  selectMap(engine.mapId);
+});
+
+document.getElementById('btn-result-replay')?.addEventListener('click', () => {
+  selectMap(engine.mapId);
+});
+
+document.getElementById('btn-close-build-menu')?.addEventListener('click', () => {
+  engine.clearSelection();
+});
+
+document.getElementById('btn-close-inspector')?.addEventListener('click', () => {
+  engine.clearSelection();
+});
+
+btnUpgradeTower?.addEventListener('click', () => {
+  if (engine.selectedPadIndex !== null) {
+    engine.upgradeTower(engine.selectedPadIndex);
+  }
+});
+
+btnSellTower?.addEventListener('click', () => {
+  if (engine.selectedPadIndex !== null) {
+    engine.sellTower(engine.selectedPadIndex);
+  }
+});
+
+canvas?.addEventListener('click', (event) => {
+  if (!activeProfile) return;
+  const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const mx = ((event.clientX - rect.left) * canvas.width) / rect.width;
+  const my = ((event.clientY - rect.top) * canvas.height) / rect.height;
+  engine.handleCanvasTap(mx, my);
+});
+
+updateProfileCards();
+requestAnimationFrame(animationLoop);
