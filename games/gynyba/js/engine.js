@@ -20,16 +20,16 @@ import {
   selectTargetByPriority,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './balance.js?v=20261121q';
+} from './balance.js?v=20261121r';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121q';
-import { renderBattleScene, getMapBonusZones } from './renderer.js?v=20261121q';
-import { audioManager } from './audio.js?v=20261121q';
+} from './towers.js?v=20261121r';
+import { renderBattleScene, getMapBonusZones } from './renderer.js?v=20261121r';
+import { audioManager } from './audio.js?v=20261121r';
 
 let nextEnemyUid = 1;
 
@@ -141,6 +141,7 @@ export class TDEngine {
     this.callbacks = callbacks;
 
     this.profileId = 'lukas';
+    this.veteranMode = false;
     this.techTree = createDefaultTechTree();
     this.mapId = 'bubiai';
     this.map = MAP_DEFINITIONS.bubiai;
@@ -226,13 +227,14 @@ export class TDEngine {
     this.notifyStateChange();
   }
 
-  loadMap(mapId, profileId = this.profileId) {
+  loadMap(mapId, profileId = this.profileId, options = {}) {
     this.profileId = profileId === 'linas' ? 'linas' : 'lukas';
+    this.veteranMode = Boolean(options?.veteranMode);
     this.mapId = MAP_DEFINITIONS[mapId] ? mapId : 'bubiai';
     this.map = MAP_DEFINITIONS[this.mapId];
     this.pathSplines = this.map.paths.map((wp) => buildSmoothPathSpline(wp, 24));
 
-    this.maxHearts = getStartingHearts(this.techTree);
+    this.maxHearts = getStartingHearts(this.techTree, this.veteranMode);
     this.hearts = this.maxHearts;
     this.coins = getStartingCoins(this.map.baseCoins, this.profileId, this.techTree);
     this.wave = 0;
@@ -278,12 +280,18 @@ export class TDEngine {
   }
 
   getWaveOptions() {
+    const zoneId = this.map.zoneId || 1;
+    const isBossLevel = Boolean(
+      this.map.isBossLevel || (zoneId <= 5 ? this.map.levelInZone === 3 : this.map.levelInZone === 5)
+    );
     return {
       maxWaves: this.map.maxWaves,
-      zoneId: this.map.zoneId || 1,
+      zoneId,
       levelInZone: this.map.levelInZone,
       levelNumber: this.map.levelNumber,
-      mapId: this.map.id
+      mapId: this.map.id,
+      isBossLevel,
+      veteranMode: Boolean(this.veteranMode)
     };
   }
 
@@ -934,6 +942,7 @@ export class TDEngine {
       periodicCamoActiveTimer: 0,
       silenceTowerTimer: 0,
       healTimer: 0,
+      shieldShiftTimer: 0,
       phase: 1,
       phase2Triggered: false,
       phase2ShieldTimer: 0,
@@ -951,8 +960,12 @@ export class TDEngine {
     return enemyObj;
   }
 
+  getActiveBosses() {
+    return this.enemies.filter((e) => e.isBoss && e.hp > 0);
+  }
+
   getActiveBoss() {
-    return this.enemies.find((e) => e.isBoss && e.hp > 0) || null;
+    return this.getActiveBosses()[0] || null;
   }
 
   triggerBossPhase2(boss) {
@@ -981,12 +994,13 @@ export class TDEngine {
     });
 
     // Iškviečia 4–5 teminius palydovus
+    const vetScale = this.veteranMode ? 1.35 : 1.0;
     const escorts = Array.isArray(boss.phase2Escorts) && boss.phase2Escorts.length > 0
       ? boss.phase2Escorts
       : ['garden_slug', 'rushing_hedgehog', 'armored_beetle', 'garden_slug'];
     for (let i = 0; i < escorts.length; i++) {
       const arch = ENEMY_ARCHETYPES[escorts[i]] || ENEMY_ARCHETYPES.garden_slug;
-      const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, boss.pathIndex, 0, 0.62);
+      const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, boss.pathIndex, 0, 0.62 * vetScale);
       const offsetDist = Math.max(0, boss.distance - (i + 1) * 14);
       this.spawnEnemyRuntime(minion, offsetDist);
     }
@@ -1013,8 +1027,35 @@ export class TDEngine {
         item.tower.silencedTimer = Math.max(item.tower.silencedTimer || 0, 4.0);
         this.addFloatingText(item.tower.x, item.tower.y - 28, '🔇 Užtildytas 4s!', '#fda4af');
       }
-    } else if (boss.type === 'boss_cyber_mega' && boss.maxShield > 0) {
+    } else if ((boss.type === 'boss_cyber_mega' || boss.type === 'boss_iron_titan') && boss.maxShield > 0) {
       boss.shield = boss.maxShield;
+    } else if (boss.type === 'boss_swamp_lord') {
+      boss.isCamo = true;
+      boss.periodicCamoActiveTimer = 4.0;
+      this.pulses.push({ x: boss.x, y: boss.y, maxRadius: 140, color: '#2dd4bf', life: 0.55, maxLife: 0.55, isHealWave: true });
+      for (const ally of this.enemies) {
+        if (ally !== boss && ally.hp > 0 && Math.hypot(ally.x - boss.x, ally.y - boss.y) <= 140) {
+          ally.hp = Math.min(ally.maxHp, ally.hp + Math.round(ally.maxHp * 0.15));
+        }
+      }
+    } else if (boss.type === 'boss_limestone_colossus') {
+      boss.shieldShiftInterval = 6.0;
+      boss.shieldShiftTimer = 0;
+      const toMirror = boss.shieldShiftMode !== 'mirror';
+      boss.shieldShiftMode = toMirror ? 'mirror' : 'physical';
+      boss.armor = toMirror ? 0.05 : 0.75;
+      boss.energyResist = toMirror ? 0.80 : 0.0;
+      this.addFloatingText(boss.x, boss.y - 22, toMirror ? '🪞 Veidrodžio skydas!' : '🛡️ Klinčių šarvas!', toMirror ? '#38bdf8' : '#e2e8f0');
+    } else if (boss.type === 'boss_shadow_architect') {
+      boss.isCamo = true;
+      boss.periodicCamoActiveTimer = 3.5;
+      const nearestOne = [...this.towers]
+        .map((t) => ({ tower: t, d: Math.hypot(t.x - boss.x, t.y - boss.y) }))
+        .sort((a, b) => a.d - b.d)[0];
+      if (nearestOne) {
+        nearestOne.tower.silencedTimer = Math.max(nearestOne.tower.silencedTimer || 0, 3.5);
+        this.addFloatingText(nearestOne.tower.x, nearestOne.tower.y - 28, '🔇 Užtildytas 3.5s!', '#c084fc');
+      }
     }
 
     this.notifyStateChange();
@@ -1142,15 +1183,17 @@ export class TDEngine {
           enemy.summonTimer = 0;
           const arch = ENEMY_ARCHETYPES[enemy.summonType] || ENEMY_ARCHETYPES.garden_slug;
           const count = enemy.summonCount || 2;
+          const vetScale = this.veteranMode ? 1.35 : 1.0;
           for (let s = 0; s < count; s++) {
-            const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, enemy.pathIndex, 0, 0.55);
+            const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, enemy.pathIndex, 0, 0.55 * vetScale);
             this.spawnEnemyRuntime(minion, Math.max(0, enemy.distance - (s + 1) * 14));
           }
-          this.addFloatingText(enemy.x, enemy.y - 26, '🐌 +Šliužai!', '#bef264');
+          const summonTxt = enemy.summonType === 'forest_healer' ? '🌿 +Gydytojas!' : '🐌 +Šliužai!';
+          this.addFloatingText(enemy.x, enemy.y - 26, summonTxt, '#bef264');
         }
       }
 
-      // 3 Zonos Bosas: Girios Šešėlių Valdovas tampa nematomas kas 6s
+      // 3 ir 6 Zonos Bosai: tampa nematomi kas 5.5–6s
       if (enemy.periodicCamoInterval > 0 && !enemy.permanentUncamo) {
         if (enemy.periodicCamoActiveTimer > 0) {
           enemy.periodicCamoActiveTimer = Math.max(0, enemy.periodicCamoActiveTimer - dt);
@@ -1168,7 +1211,7 @@ export class TDEngine {
         }
       }
 
-      // 4 Zonos Bosas: Klaidingų Natų Baubas užtildo artimiausią bokštą
+      // 4 ir 8 Zonos Bosai: užtildo artimiausią bokštą
       if (enemy.silenceTowerInterval > 0) {
         enemy.silenceTowerTimer += dt;
         if (enemy.silenceTowerTimer >= enemy.silenceTowerInterval) {
@@ -1190,11 +1233,37 @@ export class TDEngine {
         }
       }
 
-      // 5 Zonos Bosas: Kibernetinio Mega-Bosuko regeneruojantis skydas
+      // 5 ir 8 Zonos Bosai: regeneruojantis energijos skydas
       if (enemy.maxShield > 0) {
         enemy.timeSinceLastHit += dt;
         if (enemy.shield < enemy.maxShield && enemy.timeSinceLastHit >= (enemy.shieldRegenDelay || 2.8)) {
           enemy.shield = Math.min(enemy.maxShield, enemy.shield + (enemy.shieldRegenPerSec || 28) * dt);
+        }
+      }
+
+      // 7 Zonos Bosas (Klinčių Kolosas): kas 8s (2 fazėje 6s) keičia skydą tarp fizinių šarvų (75%) ir veidrodžio (80%)
+      if (enemy.shieldShiftInterval > 0) {
+        enemy.shieldShiftTimer = (enemy.shieldShiftTimer || 0) + dt;
+        if (enemy.shieldShiftTimer >= enemy.shieldShiftInterval) {
+          enemy.shieldShiftTimer = 0;
+          const toMirror = enemy.shieldShiftMode !== 'mirror';
+          enemy.shieldShiftMode = toMirror ? 'mirror' : 'physical';
+          enemy.armor = toMirror ? 0.05 : 0.75;
+          enemy.energyResist = toMirror ? 0.80 : 0.0;
+          this.pulses.push({
+            x: enemy.x,
+            y: enemy.y,
+            maxRadius: 72,
+            color: toMirror ? '#38bdf8' : '#e2e8f0',
+            life: 0.45,
+            maxLife: 0.45
+          });
+          this.addFloatingText(
+            enemy.x,
+            enemy.y - 30,
+            toMirror ? '🪞 Veidrodžio skydas (80%)!' : '🛡️ Klinčių šarvai (75%)!',
+            toMirror ? '#38bdf8' : '#e2e8f0'
+          );
         }
       }
 
@@ -1262,7 +1331,8 @@ export class TDEngine {
             status: 'defeat',
             stars: 0,
             wave: this.wave,
-            hearts: 0
+            hearts: 0,
+            veteranMode: Boolean(this.veteranMode)
           };
           audioManager.playDefeatTone();
           this.notifyGameResult();
@@ -1409,7 +1479,8 @@ export class TDEngine {
           status: 'victory',
           stars,
           wave: this.wave,
-          hearts: this.hearts
+          hearts: this.hearts,
+          veteranMode: Boolean(this.veteranMode)
         };
         audioManager.playVictoryFanfare();
         this.notifyGameResult();
@@ -1465,7 +1536,8 @@ export class TDEngine {
       tower.lockTimers.set(target.uid, newTime);
 
       const ramp = Math.min(stats.maxRamp || 2.5, 1 + newTime * (stats.rampRatePerSec || 0.65));
-      const dmg = stats.dps * ramp * (tower.effectiveFireRateMult || 1) * dt;
+      const laserMult = this.techModifiers?.laserDamageMultiplier || 1;
+      const dmg = stats.dps * ramp * (tower.effectiveFireRateMult || 1) * laserMult * dt;
 
       tower.activeBeams.push({
         x1: tower.x,
@@ -1778,6 +1850,7 @@ export class TDEngine {
     const freezeShot =
       Boolean(stats.freezeEveryNShots) && tower.shotCounter % stats.freezeEveryNShots === 0;
     const burstCount = stats.burstCount || 1;
+    const catapultDmg = Math.round(stats.damage * (this.techModifiers?.catapultDamageMultiplier || 1));
 
     for (let b = 0; b < burstCount; b++) {
       const burstTarget = candidates[b % candidates.length] || target;
@@ -1796,7 +1869,7 @@ export class TDEngine {
         elapsed: 0,
         flightTime: 0.48 + b * 0.06,
         arcHeight: stats.arcHeight || 66,
-        damage: stats.damage,
+        damage: catapultDmg,
         splashRadius: stats.splashRadius || 68,
         slowPercentage: stats.slowPercentage || 0.35,
         slowDuration: stats.slowDuration || 2.5,

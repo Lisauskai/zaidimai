@@ -1,5 +1,5 @@
 // ==================== BUBIŲ TVIRTOVĖ: VEKTORINIŲ SVG SPRAITŲ BIBLIOTEKA ====================
-// 10 priešų + 5 bosai + 6 bokšteliai (1–4 lygis ir 12 evoliucijų) + dronų/vejapjovių vienetai.
+// 12 priešų + 9 bosai + 6 bokšteliai (1–4 lygis ir 12 evoliucijų) + dronų/vejapjovių vienetai.
 // Kiekvienas spraitas talpinamas Map talpykloje (data:image/svg+xml -> Image) su Canvas atsarginiu piešimu.
 
 export const ENEMY_SPRITE_IDS = [
@@ -22,7 +22,11 @@ export const BOSS_SPRITE_IDS = [
   'boss_iron_mole',
   'boss_shadow_lord',
   'boss_wrong_notes',
-  'boss_cyber_mega'
+  'boss_cyber_mega',
+  'boss_swamp_lord',
+  'boss_limestone_colossus',
+  'boss_iron_titan',
+  'boss_shadow_architect'
 ];
 
 export const TOWER_SPRITE_IDS = [
@@ -503,6 +507,89 @@ const ENEMY_SVG_BUILDERS = {
     <rect x="57" y="73" width="18" height="10" rx="4" fill="#334155" stroke="#0f172a" stroke-width="2.6"/>
     `,
     `<linearGradient id="cyberBossGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#334155"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>`
+  ),
+
+  boss_swamp_lord: () => wrapSvg(
+    `
+    <!-- Pelkės rūko ir šaknų aura -->
+    <circle cx="48" cy="52" r="41" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-dasharray="6 5" opacity="0.55"/>
+    <path d="M16 74 C22 52, 26 48, 30 68 C40 76, 56 76, 66 68 C70 48, 74 52, 80 74 Z" fill="#064e3b" stroke="#0f172a" stroke-width="2.6"/>
+    <!-- Samanotas korpusas -->
+    <path d="M23 40 C23 22, 73 22, 73 40 L76 69 C76 78, 63 83, 48 83 C33 83, 20 78, 20 69 Z" fill="url(#swampBossGrad)" stroke="#0f172a" stroke-width="3.4"/>
+    <!-- Nendrių ir spanguolių karūna -->
+    <polygon points="31,30 27,13 40,21 48,9 56,21 69,13 65,30" fill="#10b981" stroke="#0f172a" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="37" cy="21" r="3.4" fill="#ef4444" stroke="#0f172a" stroke-width="1.4"/>
+    <circle cx="59" cy="21" r="3.4" fill="#ef4444" stroke="#0f172a" stroke-width="1.4"/>
+    <!-- Švytinčios pelkių akys -->
+    <ellipse cx="38" cy="43" rx="6" ry="4" fill="#0f172a"/>
+    <ellipse cx="58" cy="43" rx="6" ry="4" fill="#0f172a"/>
+    <circle cx="38" cy="43" r="3.2" fill="#2dd4bf"/>
+    <circle cx="58" cy="43" r="3.2" fill="#2dd4bf"/>
+    <!-- Spanguolių ir gydymo runa ant krūtinės -->
+    <circle cx="48" cy="61" r="9" fill="#042f2e" stroke="#2dd4bf" stroke-width="2"/>
+    <path d="M44 61 H52 M48 57 V65" stroke="#4ade80" stroke-width="3" stroke-linecap="round"/>
+    `,
+    `<linearGradient id="swampBossGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#14b8a6"/><stop offset="100%" stop-color="#064e3b"/></linearGradient>`
+  ),
+
+  boss_limestone_colossus: () => wrapSvg(
+    `
+    <!-- Klinčių pečių uolos -->
+    <polygon points="10,44 26,28 34,54 14,62" fill="#cbd5e1" stroke="#0f172a" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="86,44 70,28 62,54 82,62" fill="#cbd5e1" stroke="#0f172a" stroke-width="3" stroke-linejoin="round"/>
+    <!-- Pagrindinis akmens titano kūnas -->
+    <polygon points="28,26 68,26 76,58 64,82 32,82 20,58" fill="url(#limestoneGrad)" stroke="#0f172a" stroke-width="3.5" stroke-linejoin="round"/>
+    <!-- Karūna -->
+    <polygon points="34,26 37,11 48,18 59,11 62,26" fill="#fde047" stroke="#0f172a" stroke-width="2.5" stroke-linejoin="round"/>
+    <!-- Švytintis turkio kristalo širdis -->
+    <polygon points="48,47 59,58 48,70 37,58" fill="#0ea5e9" stroke="#0f172a" stroke-width="2.4"/>
+    <polygon points="48,51 54,58 48,65 42,58" fill="#bae6fd"/>
+    <!-- Akys -->
+    <rect x="34" y="34" width="10" height="5" rx="2" fill="#0284c7" stroke="#0f172a" stroke-width="1.6"/>
+    <rect x="52" y="34" width="10" height="5" rx="2" fill="#0284c7" stroke="#0f172a" stroke-width="1.6"/>
+    `,
+    `<linearGradient id="limestoneGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f8fafc"/><stop offset="55%" stop-color="#cbd5e1"/><stop offset="100%" stop-color="#64748b"/></linearGradient>`
+  ),
+
+  boss_iron_titan: () => wrapSvg(
+    `
+    <!-- Plazminė kosminė aura -->
+    <circle cx="48" cy="50" r="41" fill="none" stroke="#fbbf24" stroke-width="2.4" stroke-dasharray="10 5" opacity="0.72"/>
+    <!-- Pečių raketų blokai -->
+    <rect x="13" y="22" width="18" height="16" rx="4" fill="#475569" stroke="#0f172a" stroke-width="2.8"/>
+    <rect x="65" y="22" width="18" height="16" rx="4" fill="#475569" stroke="#0f172a" stroke-width="2.8"/>
+    <circle cx="22" cy="30" r="4" fill="#fb923c"/>
+    <circle cx="74" cy="30" r="4" fill="#fb923c"/>
+    <!-- Šarvuotas Mega-Titano korpusas -->
+    <path d="M22 32 L48 22 L74 32 L79 68 L63 82 L33 82 L17 68 Z" fill="url(#ironTitanGrad)" stroke="#0f172a" stroke-width="3.5" stroke-linejoin="round"/>
+    <!-- Auksinė imperatoriaus karūna -->
+    <polygon points="32,26 35,10 44,18 48,7 52,18 61,10 64,26" fill="#facc15" stroke="#0f172a" stroke-width="2.6" stroke-linejoin="round"/>
+    <!-- Saulės reaktorius ir vizorius -->
+    <rect x="33" y="32" width="30" height="9" rx="4" fill="#020617" stroke="#fbbf24" stroke-width="1.8"/>
+    <rect x="37" y="35" width="22" height="3.5" rx="1.5" fill="#f97316"/>
+    <circle cx="48" cy="59" r="12" fill="#f97316" stroke="#0f172a" stroke-width="2.8"/>
+    <circle cx="48" cy="59" r="6" fill="#fef08a"/>
+    `,
+    `<linearGradient id="ironTitanGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#334155"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>`
+  ),
+
+  boss_shadow_architect: () => wrapSvg(
+    `
+    <!-- Kosminio šešėlio žiedas -->
+    <ellipse cx="48" cy="52" rx="39" ry="34" fill="none" stroke="#c084fc" stroke-width="2.2" stroke-dasharray="7 5" opacity="0.72"/>
+    <!-- Astralinis apsiaustas -->
+    <path d="M48 16 L76 42 L82 78 L62 72 L48 84 L34 72 L14 78 L20 42 Z" fill="url(#shadowArchGrad)" stroke="#0f172a" stroke-width="3.3" stroke-linejoin="round"/>
+    <!-- Gobtuvas ir švytinti trečioji akis -->
+    <circle cx="48" cy="39" r="14" fill="#090d1f" stroke="#a855f7" stroke-width="2.4"/>
+    <polygon points="38,23 48,9 58,23" fill="#fde047" stroke="#0f172a" stroke-width="2.3" stroke-linejoin="round"/>
+    <ellipse cx="42" cy="40" rx="4" ry="2.6" fill="#22d3ee"/>
+    <ellipse cx="54" cy="40" rx="4" ry="2.6" fill="#22d3ee"/>
+    <circle cx="48" cy="31" r="2.8" fill="#f472b6"/>
+    <!-- Orbituojančios kristalų sferos -->
+    <circle cx="21" cy="53" r="5" fill="#a855f7" stroke="#e9d5ff" stroke-width="1.6"/>
+    <circle cx="75" cy="53" r="5" fill="#a855f7" stroke="#e9d5ff" stroke-width="1.6"/>
+    `,
+    `<linearGradient id="shadowArchGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6b21a8"/><stop offset="100%" stop-color="#090d1f"/></linearGradient>`
   ),
 
   burrowed_mound: () => wrapSvg(
@@ -1099,6 +1186,18 @@ export function drawEnemySprite(ctx, enemy, animClock = 0) {
     ctx.arc(0, 0, drawSize * 0.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+  }
+
+  // 7 zonos boso (Klinčių Kolosas) kintantis skydas: metalinis fizinių šarvų vs žydras veidrodžio
+  if (enemy.shieldShiftMode) {
+    const isMirror = enemy.shieldShiftMode === 'mirror';
+    ctx.strokeStyle = isMirror ? 'rgba(56, 189, 248, 0.92)' : 'rgba(226, 232, 240, 0.9)';
+    ctx.lineWidth = 2.8;
+    ctx.setLineDash(isMirror ? [6, 4] : []);
+    ctx.beginPath();
+    ctx.arc(0, 0, drawSize * 0.48, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
   }
 
   ctx.restore();

@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121q';
+} from '../../../shared/playtime-timer.js?v=20261121r';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -27,9 +27,9 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121q';
-import { TDEngine } from './engine.js?v=20261121q';
-import { audioManager } from './audio.js?v=20261121q';
+} from './balance.js?v=20261121r';
+import { TDEngine } from './engine.js?v=20261121r';
+import { audioManager } from './audio.js?v=20261121r';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];
@@ -40,6 +40,7 @@ function loadSaveData() {
     bestWave: 0,
     unlockedLevels: ['lvl_1'],
     levelStars: {},
+    veteranClearedLevels: [],
     techTree: createDefaultTechTree(),
     encounteredEnemies: [...DEFAULT_ENCOUNTERED_ENEMIES]
   });
@@ -78,6 +79,13 @@ function loadSaveData() {
         });
       }
 
+      const veteranSet = new Set();
+      if (Array.isArray(b?.veteranClearedLevels)) {
+        b.veteranClearedLevels.forEach((id) => {
+          if (typeof id === 'string') veteranSet.add(id);
+        });
+      }
+
       const encounteredSet = new Set(DEFAULT_ENCOUNTERED_ENEMIES);
       if (Array.isArray(b?.encounteredEnemies)) {
         b.encounteredEnemies.forEach((id) => {
@@ -85,12 +93,14 @@ function loadSaveData() {
         });
       }
 
-      const totalStars = Object.values(levelStars).reduce((acc, s) => acc + s, 0);
+      const levelStarsTotal = Object.values(levelStars).reduce((acc, s) => acc + s, 0);
+      const totalStars = levelStarsTotal + veteranSet.size;
       return {
         stars: Math.max(totalStars, Number(b?.stars) || 0),
         bestWave: Math.max(0, Number(b?.bestWave) || 0),
         unlockedLevels: Array.from(unlockedSet),
         levelStars,
+        veteranClearedLevels: Array.from(veteranSet),
         techTree: normalizeTechTree(b?.techTree),
         encounteredEnemies: Array.from(encounteredSet)
       };
@@ -140,11 +150,17 @@ const btnEncyTabEnemies = document.getElementById('btn-ency-tab-enemies');
 const btnEncyTabWorld = document.getElementById('btn-ency-tab-world');
 
 const campaignZonesBar = document.getElementById('campaign-zones-bar');
+const campaignJourneyMap = document.getElementById('campaign-journey-map');
+const campaignZoneRects = document.getElementById('campaign-zone-rects');
 const campaignNodesLayer = document.getElementById('campaign-nodes-layer');
 const campaignRoadShadow = document.getElementById('campaign-road-shadow');
 const campaignRoadLine = document.getElementById('campaign-road-line');
 const campaignTotalStars = document.getElementById('campaign-total-stars');
+const campaignVeteranCount = document.getElementById('campaign-veteran-count');
 const campaignUnlockedCount = document.getElementById('campaign-unlocked-count');
+const btnCampTab1 = document.getElementById('btn-camp-tab-1');
+const btnCampTab2 = document.getElementById('btn-camp-tab-2');
+const btnVeteranToggle = document.getElementById('btn-veteran-toggle');
 
 const knowledgeGateModal = document.getElementById('knowledge-gate-modal');
 const kgBadgeEl = document.getElementById('kg-badge');
@@ -224,6 +240,8 @@ let victoryGateTimeoutId = null;
 let smartUpgradeRestorePause = null;
 
 let encyActiveTab = 'towers';
+let activeCampaignAct = 'act1';
+let veteranModeSelected = false;
 let modalRestorePause = null;
 let engine = null;
 
@@ -615,35 +633,44 @@ function syncSelectionUI() {
 
 function syncBossHpBarUI() {
   if (!bossHpBar) return;
-  const boss = activeProfile && isInBattleView() ? engine?.getActiveBoss() : null;
-  if (!boss) {
+  const bosses = activeProfile && isInBattleView() ? (engine?.getActiveBosses?.() || []) : [];
+  if (bosses.length === 0) {
     bossHpBar.classList.add('hidden');
     bossHpBar.classList.remove('is-phase-2');
     return;
   }
 
   bossHpBar.classList.remove('hidden');
-  const isPhase2 = boss.phase === 2 || Boolean(boss.phase2Triggered);
-  bossHpBar.classList.toggle('is-phase-2', isPhase2);
+  const anyPhase2 = bosses.some((b) => b.phase === 2 || Boolean(b.phase2Triggered));
+  bossHpBar.classList.toggle('is-phase-2', anyPhase2);
 
   if (bossHpName) {
-    bossHpName.textContent = `${boss.icon || '👑'} ${boss.name}`;
+    bossHpName.textContent = bosses.map((b) => `${b.icon || '👑'} ${b.name}`).join(' + ');
   }
   if (bossHpPhase) {
-    const hasShield = (boss.phase2ShieldTimer || 0) > 0;
-    bossHpPhase.textContent = isPhase2
-      ? (hasShield ? '⚡ 2 FAZĖ • 🛡️ SKYDAS' : '⚡ 2 FAZĖ')
-      : '1 FAZĖ';
+    const anyPhaseShield = bosses.some((b) => (b.phase2ShieldTimer || 0) > 0);
+    const shiftBoss = bosses.find((b) => b.shieldShiftMode);
+    let label = anyPhase2 ? '⚡ 2 FAZĖ' : '1 FAZĖ';
+    if (shiftBoss) {
+      label += shiftBoss.shieldShiftMode === 'mirror' ? ' • 🪞 VEIDRODIS' : ' • 🛡️ ŠARVAI';
+    }
+    if (anyPhaseShield) {
+      label += ' • 🛡️ SKYDAS';
+    }
+    bossHpPhase.textContent = label;
   }
-  const hp = Math.max(0, Math.ceil(boss.hp));
-  const maxHp = Math.max(1, Math.ceil(boss.maxHp));
+
+  const totalHp = bosses.reduce((sum, b) => sum + Math.max(0, Math.ceil(b.hp)), 0);
+  const totalMaxHp = Math.max(1, bosses.reduce((sum, b) => sum + Math.max(1, Math.ceil(b.maxHp)), 0));
+  const totalShield = bosses.reduce((sum, b) => sum + Math.max(0, Math.ceil(b.shield || 0)), 0);
+
   if (bossHpNumbers) {
-    bossHpNumbers.textContent = (boss.shield || 0) > 0
-      ? `${hp} + 🛡️${Math.ceil(boss.shield)} / ${maxHp}`
-      : `${hp} / ${maxHp}`;
+    bossHpNumbers.textContent = totalShield > 0
+      ? `${totalHp} + 🛡️${totalShield} / ${totalMaxHp}`
+      : `${totalHp} / ${totalMaxHp}`;
   }
   if (bossHpFill) {
-    const pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+    const pct = Math.max(0, Math.min(100, (totalHp / totalMaxHp) * 100));
     bossHpFill.style.width = `${pct.toFixed(1)}%`;
   }
 }
@@ -660,8 +687,12 @@ function syncBattleUI() {
   if (heartsEl) heartsEl.textContent = String(engine.hearts);
   if (maxHeartsEl) maxHeartsEl.textContent = String(engine.maxHearts || 20);
   if (starsPreviewEl) {
-    const stars = calculateStarsForHearts(engine.hearts);
-    starsPreviewEl.textContent = stars > 0 ? '⭐'.repeat(stars) : '💔';
+    if (engine.veteranMode) {
+      starsPreviewEl.textContent = '🔥 👑';
+    } else {
+      const stars = calculateStarsForHearts(engine.hearts);
+      starsPreviewEl.textContent = stars > 0 ? '⭐'.repeat(stars) : '💔';
+    }
   }
   if (coinsEl) coinsEl.textContent = String(engine.coins);
   if (waveEl) waveEl.textContent = `${engine.wave} / ${engine.map.maxWaves}`;
@@ -772,19 +803,44 @@ function handleGameResult(result) {
       : null;
 
   if (result.status === 'victory') {
+    const isVeteran = Boolean(result.veteranMode || engine.veteranMode);
+    let newlyClearedVeteran = false;
     if (bucket) {
-      bucket.levelStars[engine.mapId] = Math.max(bucket.levelStars[engine.mapId] || 0, result.stars);
-      bucket.stars = Object.values(bucket.levelStars).reduce((acc, s) => acc + s, 0);
+      if (!Array.isArray(bucket.veteranClearedLevels)) bucket.veteranClearedLevels = [];
+      if (isVeteran) {
+        if (!bucket.veteranClearedLevels.includes(engine.mapId)) {
+          bucket.veteranClearedLevels.push(engine.mapId);
+          newlyClearedVeteran = true;
+        }
+      } else {
+        bucket.levelStars[engine.mapId] = Math.max(bucket.levelStars[engine.mapId] || 0, result.stars);
+      }
+      const levelStarsSum = Object.values(bucket.levelStars).reduce((acc, s) => acc + s, 0);
+      bucket.stars = levelStarsSum + bucket.veteranClearedLevels.length;
       bucket.bestWave = Math.max(bucket.bestWave || 0, result.wave);
       persistSaveData(saveData);
       updateProfileCards();
       syncTechStarsUI();
     }
-    if (iconEl) iconEl.textContent = '🏆';
-    if (titleEl) titleEl.textContent = `${engine.map.title} APGINTAS!`;
-    if (starsEl) starsEl.textContent = '⭐'.repeat(result.stars) + '☆'.repeat(3 - result.stars);
+    if (iconEl) iconEl.textContent = isVeteran ? '👑' : '🏆';
+    if (titleEl) {
+      titleEl.textContent = isVeteran
+        ? `${engine.map.title} – VETERANO PERGALĖ!`
+        : `${engine.map.title} APGINTAS!`;
+    }
+    if (starsEl) {
+      starsEl.textContent = isVeteran
+        ? '👑🔥👑'
+        : '⭐'.repeat(result.stars) + '☆'.repeat(3 - result.stars);
+    }
     if (descEl) {
-      descEl.textContent = `Išsaugojai ${result.hearts} / ${engine.maxHearts || 20} širdelių ir pelnei ${result.stars} žvaigždutę(-es)!`;
+      descEl.textContent = isVeteran
+        ? `Atlaikei su ${result.hearts} / ${engine.maxHearts || 10} širdelių (+35% priešų HP)!${
+            newlyClearedVeteran
+              ? ' Užsidėta auksinė karūnėlė 👑 ir pridėta +1 ⭐ Išradimų Medžiui!'
+              : ' Auksinė karūnėlė 👑 apginta dar kartą!'
+          }`
+        : `Išsaugojai ${result.hearts} / ${engine.maxHearts || 20} širdelių ir pelnei ${result.stars} žvaigždutę(-es)!`;
     }
 
     if (btnResultNextLevel && nextLvl && bucket) {
@@ -1030,17 +1086,45 @@ function openSmartUpgradeModal(padIndex) {
 function renderCampaignMap() {
   if (!activeProfile) return;
   const bucket = saveData[activeProfile];
+  const veteranSet = new Set(Array.isArray(bucket.veteranClearedLevels) ? bucket.veteranClearedLevels : []);
+  const beatenCount = Object.values(bucket.levelStars).filter((s) => s > 0).length;
+
+  if (beatenCount === 0) {
+    veteranModeSelected = false;
+  }
 
   if (campaignTotalStars) {
     campaignTotalStars.textContent = `${bucket.stars} / ${CAMPAIGN_LEVELS.length * 3}`;
+  }
+  if (campaignVeteranCount) {
+    campaignVeteranCount.textContent = `${veteranSet.size} / ${CAMPAIGN_LEVELS.length}`;
   }
   if (campaignUnlockedCount) {
     campaignUnlockedCount.textContent = `${bucket.unlockedLevels.length} / ${CAMPAIGN_LEVELS.length}`;
   }
 
+  const isAct2 = activeCampaignAct === 'act2';
+  btnCampTab1?.classList.toggle('active', !isAct2);
+  btnCampTab1?.setAttribute('aria-selected', !isAct2 ? 'true' : 'false');
+  btnCampTab2?.classList.toggle('active', isAct2);
+  btnCampTab2?.setAttribute('aria-selected', isAct2 ? 'true' : 'false');
+  campaignJourneyMap?.classList.toggle('is-act-2', isAct2);
+
+  if (btnVeteranToggle) {
+    btnVeteranToggle.disabled = beatenCount === 0;
+    btnVeteranToggle.classList.toggle('is-active', veteranModeSelected);
+    btnVeteranToggle.setAttribute('aria-pressed', veteranModeSelected ? 'true' : 'false');
+    btnVeteranToggle.textContent = veteranModeSelected
+      ? '🔥 Veterano iššūkis: ĮJUNGTA (10 ❤️, +35% HP)'
+      : '🔥 Veterano iššūkis: IŠJUNGTA';
+  }
+
+  const visibleZones = CAMPAIGN_ZONES.filter((z) => (isAct2 ? z.zoneId >= 5 : z.zoneId <= 4));
+  const visibleLevels = CAMPAIGN_LEVELS.filter((l) => (isAct2 ? l.zoneId >= 5 : l.zoneId <= 4));
+
   if (campaignZonesBar) {
     campaignZonesBar.innerHTML = '';
-    CAMPAIGN_ZONES.forEach((z) => {
+    visibleZones.forEach((z) => {
       const pill = document.createElement('div');
       pill.className = 'campaign-zone-pill';
       pill.style.borderColor = z.accent;
@@ -1052,12 +1136,46 @@ function renderCampaignMap() {
     });
   }
 
-  // Kelio SVG linija per visus 15 lygių taškų
-  if (campaignRoadShadow && campaignRoadLine) {
-    const pts = CAMPAIGN_LEVELS.map((l) => ({
-      x: (l.campaignPos.x / 100) * 1000,
-      y: (l.campaignPos.y / 100) * 520
-    }));
+  if (campaignZoneRects) {
+    const rects = isAct2
+      ? [
+          { x: 0, w: 180, fill: 'rgba(251, 191, 36, 0.09)' },
+          { x: 180, w: 275, fill: 'rgba(45, 212, 191, 0.09)' },
+          { x: 455, w: 275, fill: 'rgba(56, 189, 248, 0.09)' },
+          { x: 730, w: 270, fill: 'rgba(168, 85, 247, 0.10)' }
+        ]
+      : [
+          { x: 0, w: 250, fill: 'rgba(34, 197, 94, 0.08)' },
+          { x: 250, w: 250, fill: 'rgba(56, 189, 248, 0.08)' },
+          { x: 500, w: 250, fill: 'rgba(16, 185, 129, 0.08)' },
+          { x: 750, w: 250, fill: 'rgba(244, 63, 94, 0.08)' }
+        ];
+    campaignZoneRects.innerHTML = rects
+      .map((r) => `<rect x="${r.x}" y="0" width="${r.w}" height="520" fill="${r.fill}"/>`)
+      .join('');
+  }
+
+  const getTabPos = (idx, count) => {
+    if (!isAct2) {
+      const yAct1 = [74, 42, 72, 34, 68, 38, 74, 34, 68, 36, 72, 32];
+      return {
+        x: 6 + (idx / Math.max(1, count - 1)) * 88,
+        y: yAct1[idx] ?? 50
+      };
+    }
+    const yAct2 = [68, 34, 72, 28, 66, 38, 76, 26, 62, 34, 74, 28, 64, 34, 74, 26, 66, 30];
+    return {
+      x: 4.8 + (idx / Math.max(1, count - 1)) * 90.4,
+      y: yAct2[idx] ?? 50
+    };
+  };
+
+  // Kelio SVG linija per aktyvaus skirtuko lygius
+  if (campaignRoadShadow && campaignRoadLine && visibleLevels.length > 0) {
+    const pts = visibleLevels.map((_, idx) => {
+      const p = getTabPos(idx, visibleLevels.length);
+      return { x: (p.x / 100) * 1000, y: (p.y / 100) * 520 };
+    });
     let d = `M ${pts[0].x} ${pts[0].y}`;
     for (let i = 1; i < pts.length; i++) {
       const prev = pts[i - 1];
@@ -1071,15 +1189,19 @@ function renderCampaignMap() {
 
   if (campaignNodesLayer) {
     campaignNodesLayer.innerHTML = '';
-    CAMPAIGN_LEVELS.forEach((lvl, idx) => {
+    visibleLevels.forEach((lvl, idx) => {
+      const globalIdx = CAMPAIGN_LEVELS.findIndex((l) => l.id === lvl.id);
       const isUnlocked = bucket.unlockedLevels.includes(lvl.id);
       const stars = bucket.levelStars[lvl.id] || 0;
       const isBeaten = stars > 0;
-      const prevLvl = idx > 0 ? CAMPAIGN_LEVELS[idx - 1] : null;
+      const isVeteranCleared = veteranSet.has(lvl.id);
+      const isVeteranReady = Boolean(veteranModeSelected && isBeaten);
+      const prevLvl = globalIdx > 0 ? CAMPAIGN_LEVELS[globalIdx - 1] : null;
       const prevBeaten = !prevLvl || (bucket.levelStars[prevLvl.id] || 0) > 0;
       const isGateReady = !isUnlocked && prevBeaten;
-      const isBoss = lvl.levelInZone === 3;
+      const isBoss = Boolean(lvl.isBossLevel || (lvl.zoneId <= 5 ? lvl.levelInZone === 3 : lvl.levelInZone === 5));
       const zone = CAMPAIGN_ZONES.find((z) => z.zoneId === lvl.zoneId);
+      const pos = getTabPos(idx, visibleLevels.length);
 
       const node = document.createElement('button');
       node.type = 'button';
@@ -1091,15 +1213,17 @@ function renderCampaignMap() {
           : isGateReady
             ? 'is-gate-ready'
             : 'is-locked'
-      }${isBoss ? ' is-boss' : ''}`;
-      node.style.left = `${lvl.campaignPos.x}%`;
-      node.style.top = `${lvl.campaignPos.y}%`;
+      }${isBoss ? ' is-boss' : ''}${isVeteranCleared ? ' is-veteran-cleared' : ''}${
+        isVeteranReady ? ' is-veteran-ready' : ''
+      }`;
+      node.style.left = `${pos.x.toFixed(2)}%`;
+      node.style.top = `${pos.y.toFixed(2)}%`;
       if (isUnlocked && zone) {
         node.style.borderColor = isBeaten ? '#4ade80' : zone.accent;
       }
 
       node.title = isUnlocked
-        ? `${lvl.title} (${lvl.maxWaves} bangos)`
+        ? `${lvl.title} (${lvl.maxWaves} bangos)${isVeteranReady ? ' – 🔥 VETERANO REŽIMAS!' : ''}`
         : isGateReady
           ? `Pasiruošęs atrakinti: ${lvl.title} – spausk ir įveik Žinių Vartus!`
           : `Užrakinta – pirmiausia įveik ${lvl.levelNumber - 1}-ąjį lygį`;
@@ -1116,7 +1240,12 @@ function renderCampaignMap() {
           ? 'ŽIN. VARTAI'
           : 'UŽRAKINTA';
 
+      const crownHtml = isVeteranCleared
+        ? '<span class="node-veteran-crown" title="Įveiktas Veterano režimu">👑</span>'
+        : '';
+
       node.innerHTML = `
+        ${crownHtml}
         <span class="node-num">${statusBadge}</span>
         <span class="node-stars">${starsText}</span>
         <span class="node-waves">${lvl.maxWaves} bang.</span>
@@ -1124,7 +1253,7 @@ function renderCampaignMap() {
 
       node.addEventListener('click', () => {
         if (isUnlocked) {
-          enterBattleLevel(lvl.id);
+          enterBattleLevel(lvl.id, { veteranMode: veteranModeSelected && isBeaten });
         } else if (isGateReady) {
           openKnowledgeGateModal(lvl.id);
         }
@@ -1216,7 +1345,7 @@ function buyTechUpgrade(techId) {
   persistSaveData(saveData);
   engine.setTechTree(bucket.techTree);
   if (isInBattleView() && engine.wave === 0 && engine.towers.length === 0) {
-    engine.loadMap(engine.mapId, activeProfile);
+    engine.loadMap(engine.mapId, activeProfile, { veteranMode: Boolean(engine.veteranMode) });
   }
   audioManager.playTowerUpgrade(3);
   syncTechStarsUI();
@@ -1232,7 +1361,7 @@ function resetTechTree() {
   persistSaveData(saveData);
   engine.setTechTree(bucket.techTree);
   if (isInBattleView() && engine.wave === 0 && engine.towers.length === 0) {
-    engine.loadMap(engine.mapId, activeProfile);
+    engine.loadMap(engine.mapId, activeProfile, { veteranMode: Boolean(engine.veteranMode) });
   }
   audioManager.playCoinChime();
   syncTechStarsUI();
@@ -1382,6 +1511,7 @@ function renderEncyclopediaTab(tab = 'towers') {
       if (enemy.armor > 0) attrs.push(`🛡️ ${Math.round(enemy.armor * 100)}% šarvų`);
       if ((enemy.energyResist || 0) > 0) attrs.push(`🪞 ${Math.round(enemy.energyResist * 100)}% prieš energiją`);
       if ((enemy.healInterval || 0) > 0) attrs.push(`💚 Gydo (+${Math.round((enemy.healPctNormal || 0.12) * 100)}%)`);
+      if (enemy.shieldShiftInterval > 0) attrs.push('🔄 Kintantis skydas (8s)');
       if (enemy.isFlying) attrs.push('🪽 Skraidantis');
       if (enemy.isCamo) attrs.push('👁️ Nematomas');
       if (enemy.isBoss) attrs.push('👑 2 fazių bosas');
@@ -1429,7 +1559,7 @@ function showCampaignMapView() {
   renderCampaignMap();
 }
 
-function enterBattleLevel(mapId) {
+function enterBattleLevel(mapId, opts = {}) {
   if (!activeProfile) return;
   if (getRemainingPlaytimeSeconds(activeProfile) <= 0) {
     playtimeTimer.setActiveGameplay(false);
@@ -1439,12 +1569,18 @@ function enterBattleLevel(mapId) {
   document.body.classList.add('in-battle-mode');
   screenCampaign?.classList.add('hidden');
   screenGame?.classList.remove('hidden');
-  selectMap(mapId);
+  selectMap(mapId, opts);
 }
 
 function selectProfile(profileId) {
   activeProfile = profileId === 'linas' ? 'linas' : 'lukas';
   const mod = getProfileModifier(activeProfile);
+  veteranModeSelected = false;
+  const maxUnlockedNum = saveData[activeProfile].unlockedLevels.reduce((mx, id) => {
+    const n = getLevelById(id)?.levelNumber || 1;
+    return Math.max(mx, n);
+  }, 1);
+  activeCampaignAct = maxUnlockedNum >= 13 ? 'act2' : 'act1';
 
   screenProfiles?.classList.add('hidden');
   topProfilePill?.classList.remove('hidden');
@@ -1487,16 +1623,17 @@ function showProfileScreen() {
   updateProfileCards();
 }
 
-function selectMap(mapId) {
+function selectMap(mapId, opts = {}) {
   clearEduModalTimers(false);
   knowledgeGateModal?.classList.add('hidden');
   closePadMenus();
   resultOverlay?.classList.add('hidden');
-  engine.loadMap(mapId, activeProfile || 'lukas');
+  engine.loadMap(mapId, activeProfile || 'lukas', { veteranMode: Boolean(opts?.veteranMode) });
 
   const badgeEl = document.getElementById('ui-active-level-badge');
   if (badgeEl) {
-    badgeEl.textContent = engine.map.badge;
+    badgeEl.textContent = engine.veteranMode ? `🔥 VETERANAS • ${engine.map.badge}` : engine.map.badge;
+    badgeEl.classList.toggle('is-veteran', Boolean(engine.veteranMode));
   }
 
   const titleEl = document.getElementById('map-title');
@@ -1568,13 +1705,32 @@ btnCallWave?.addEventListener('click', () => {
 document.getElementById('btn-restart-map')?.addEventListener('click', () => {
   if (!playtimeTimer.setActiveGameplay(false)) return;
   playtimeTimer.setActiveGameplay(true);
-  selectMap(engine.mapId);
+  selectMap(engine.mapId, { veteranMode: Boolean(engine.veteranMode) });
 });
 
 document.getElementById('btn-result-replay')?.addEventListener('click', () => {
   if (!playtimeTimer.setActiveGameplay(false)) return;
   playtimeTimer.setActiveGameplay(true);
-  selectMap(engine.mapId);
+  selectMap(engine.mapId, { veteranMode: Boolean(engine.veteranMode) });
+});
+
+btnCampTab1?.addEventListener('click', () => {
+  activeCampaignAct = 'act1';
+  renderCampaignMap();
+});
+
+btnCampTab2?.addEventListener('click', () => {
+  activeCampaignAct = 'act2';
+  renderCampaignMap();
+});
+
+btnVeteranToggle?.addEventListener('click', () => {
+  if (!activeProfile) return;
+  const bucket = saveData[activeProfile];
+  const beatenCount = Object.values(bucket?.levelStars || {}).filter((s) => s > 0).length;
+  if (beatenCount === 0) return;
+  veteranModeSelected = !veteranModeSelected;
+  renderCampaignMap();
 });
 
 document.getElementById('btn-close-build-menu')?.addEventListener('click', () => {

@@ -40,6 +40,30 @@ export const CAMPAIGN_ZONES = [
     theme: 'solar_future_base',
     accent: '#fbbf24',
     desc: 'Metalinės plokštės ir du visiškai atskiri keliai su daug strateginių kryžkelių!'
+  },
+  {
+    zoneId: 6,
+    name: 'Mūšos tyrelio pelkynas',
+    icon: '🌿',
+    theme: 'musa_swamp',
+    accent: '#2dd4bf',
+    desc: 'Samanota pelkė, tamsūs ežerėliai, medinių lentų pažintinis takas, kylantis rūkas ir spanguolių kupstai.'
+  },
+  {
+    zoneId: 7,
+    name: 'Karpėnų klinčių karjeras',
+    icon: '🪨',
+    theme: 'karpenai_quarry',
+    accent: '#38bdf8',
+    desc: 'Šviesios baltos ir smėlio klinčių uolų terasos, ryškiai žydras karjero vanduo ir kanjonų posūkiai.'
+  },
+  {
+    zoneId: 8,
+    name: 'Kosminė Saulės Jėgainė',
+    icon: '☀️',
+    theme: 'cosmic_solar_plant',
+    accent: '#a855f7',
+    desc: 'Futuristinė elektrinė su milžiniškomis saulės baterijų eilėmis, energijos tiltais ir 2–3 keliais!'
   }
 ];
 
@@ -745,6 +769,774 @@ export const CAMPAIGN_LEVELS = [
       { id: 'p10', x: 695, y: 385 },
       { id: 'p11', x: 825, y: 250 }
     ]
+  },
+
+  // ==================== 6 ZONA: MŪŠOS TYRELIO PELKYNAS (16–20 LYGIAI) ====================
+  {
+    id: 'lvl_16',
+    levelNumber: 16,
+    zoneId: 6,
+    levelInZone: 1,
+    theme: 'musa_swamp',
+    title: '16. Samanotasis pažintinis takas',
+    badge: '6 Zona • 14 bangų • Lentų takas',
+    subtitle: 'Medinis lentų takas per Mūšos tyrelį. Nematomi priešai ir Gamtos Gydytojai – statyk Dronų Angarus!',
+    baseCoins: 380,
+    maxWaves: 14,
+    bgTop: '#0d2b26',
+    bgBottom: '#061513',
+    pathColor: '#7c5332',
+    pathBorder: '#3b2412',
+    accentColor: '#2dd4bf',
+    campaignPos: { x: 10, y: 74 },
+    fortress: { x: 848, y: 260 },
+    paths: [
+      [
+        { x: 24, y: 130 },
+        { x: 210, y: 130 },
+        { x: 210, y: 360 },
+        { x: 460, y: 360 },
+        { x: 460, y: 130 },
+        { x: 690, y: 130 },
+        { x: 690, y: 260 },
+        { x: 848, y: 260 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 120, y: 205 },
+      { id: 'p2', x: 120, y: 65 },
+      { id: 'p3', x: 285, y: 245 },
+      { id: 'p4', x: 385, y: 245 },
+      { id: 'p5', x: 335, y: 440 },
+      { id: 'p6', x: 535, y: 245 },
+      { id: 'p7', x: 575, y: 65 },
+      { id: 'p8', x: 615, y: 345 },
+      { id: 'p9', x: 770, y: 185 },
+      { id: 'p10', x: 770, y: 340 }
+    ]
+  },
+  {
+    id: 'lvl_17',
+    levelNumber: 17,
+    zoneId: 6,
+    levelInZone: 2,
+    theme: 'musa_swamp',
+    title: '17. Spanguolių kupstų kilpa',
+    badge: '6 Zona • 14 bangų • Pelkės sankirta',
+    subtitle: 'Du samanoti takai susikerta pelkės centre prie spanguolynų – idealu Katapultai ir Lazeriui.',
+    baseCoins: 390,
+    maxWaves: 14,
+    bgTop: '#0d2b26',
+    bgBottom: '#061513',
+    pathColor: '#7c5332',
+    pathBorder: '#3b2412',
+    accentColor: '#2dd4bf',
+    campaignPos: { x: 18, y: 54 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 115 },
+        { x: 250, y: 115 },
+        { x: 390, y: 250 },
+        { x: 620, y: 250 },
+        { x: 730, y: 175 },
+        { x: 848, y: 175 }
+      ],
+      [
+        { x: 24, y: 385 },
+        { x: 250, y: 385 },
+        { x: 390, y: 250 },
+        { x: 620, y: 250 },
+        { x: 730, y: 325 },
+        { x: 848, y: 325 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 145, y: 190 },
+      { id: 'p2', x: 145, y: 310 },
+      { id: 'p3', x: 245, y: 250 },
+      { id: 'p4', x: 345, y: 120 },
+      { id: 'p5', x: 345, y: 380 },
+      { id: 'p6', x: 495, y: 175 },
+      { id: 'p7', x: 495, y: 325 },
+      { id: 'p8', x: 605, y: 175 },
+      { id: 'p9', x: 605, y: 325 },
+      { id: 'p10', x: 765, y: 250 }
+    ]
+  },
+  {
+    id: 'lvl_18',
+    levelNumber: 18,
+    zoneId: 6,
+    levelInZone: 3,
+    theme: 'musa_swamp',
+    title: '18. Ežerėlių lieptai',
+    badge: '6 Zona • 15 bangų • Du takai',
+    subtitle: 'Tarp tamsių pelkės ežerėlių vingiuoja du lentų takai. Saugokis nematomų bangų!',
+    baseCoins: 400,
+    maxWaves: 15,
+    bgTop: '#0d2b26',
+    bgBottom: '#061513',
+    pathColor: '#7c5332',
+    pathBorder: '#3b2412',
+    accentColor: '#2dd4bf',
+    campaignPos: { x: 26, y: 35 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 105 },
+        { x: 235, y: 105 },
+        { x: 335, y: 195 },
+        { x: 585, y: 195 },
+        { x: 685, y: 115 },
+        { x: 848, y: 115 }
+      ],
+      [
+        { x: 24, y: 395 },
+        { x: 235, y: 395 },
+        { x: 335, y: 305 },
+        { x: 585, y: 305 },
+        { x: 685, y: 385 },
+        { x: 848, y: 385 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 135, y: 180 },
+      { id: 'p2', x: 135, y: 320 },
+      { id: 'p3', x: 245, y: 250 },
+      { id: 'p4', x: 460, y: 120 },
+      { id: 'p5', x: 460, y: 250 },
+      { id: 'p6', x: 460, y: 380 },
+      { id: 'p7', x: 560, y: 120 },
+      { id: 'p8', x: 560, y: 380 },
+      { id: 'p9', x: 745, y: 205 },
+      { id: 'p10', x: 745, y: 295 }
+    ]
+  },
+  {
+    id: 'lvl_19',
+    levelNumber: 19,
+    zoneId: 6,
+    levelInZone: 4,
+    theme: 'musa_swamp',
+    title: '19. Rūko labirintas',
+    badge: '6 Zona • 15 bangų • Kryžminiai takai',
+    subtitle: 'Tirštame rūke susikertantys takai reikalauja greito gydytojų naikinimo su prioritetu „Stipriausias“.',
+    baseCoins: 410,
+    maxWaves: 15,
+    bgTop: '#0d2b26',
+    bgBottom: '#061513',
+    pathColor: '#7c5332',
+    pathBorder: '#3b2412',
+    accentColor: '#2dd4bf',
+    campaignPos: { x: 34, y: 58 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 145 },
+        { x: 225, y: 145 },
+        { x: 345, y: 355 },
+        { x: 565, y: 355 },
+        { x: 685, y: 155 },
+        { x: 848, y: 155 }
+      ],
+      [
+        { x: 24, y: 355 },
+        { x: 225, y: 355 },
+        { x: 345, y: 145 },
+        { x: 565, y: 145 },
+        { x: 685, y: 345 },
+        { x: 848, y: 345 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 130, y: 250 },
+      { id: 'p2', x: 215, y: 250 },
+      { id: 'p3', x: 455, y: 250 },
+      { id: 'p4', x: 345, y: 75 },
+      { id: 'p5', x: 345, y: 425 },
+      { id: 'p6', x: 535, y: 75 },
+      { id: 'p7', x: 535, y: 425 },
+      { id: 'p8', x: 685, y: 250 },
+      { id: 'p9', x: 765, y: 90 },
+      { id: 'p10', x: 765, y: 250 },
+      { id: 'p11', x: 765, y: 415 }
+    ]
+  },
+  {
+    id: 'lvl_20',
+    levelNumber: 20,
+    zoneId: 6,
+    levelInZone: 5,
+    isBossLevel: true,
+    theme: 'musa_swamp',
+    title: '20. Mūšos tyrelio širdis (Bosas)',
+    badge: '6 Zona • 16 bangų • 👑 Pelkių Valdovas',
+    subtitle: 'Šakoti pelkės takai suveda priešus į centrą. 16-oje bangoje – Pelkių Valdovas!',
+    baseCoins: 430,
+    maxWaves: 16,
+    bgTop: '#0d2b26',
+    bgBottom: '#061513',
+    pathColor: '#7c5332',
+    pathBorder: '#3b2412',
+    accentColor: '#2dd4bf',
+    campaignPos: { x: 42, y: 40 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 105 },
+        { x: 205, y: 105 },
+        { x: 325, y: 250 },
+        { x: 575, y: 250 },
+        { x: 705, y: 150 },
+        { x: 848, y: 250 }
+      ],
+      [
+        { x: 24, y: 395 },
+        { x: 205, y: 395 },
+        { x: 325, y: 250 },
+        { x: 575, y: 250 },
+        { x: 705, y: 350 },
+        { x: 848, y: 250 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 130, y: 190 },
+      { id: 'p2', x: 130, y: 310 },
+      { id: 'p3', x: 245, y: 250 },
+      { id: 'p4', x: 385, y: 165 },
+      { id: 'p5', x: 385, y: 335 },
+      { id: 'p6', x: 495, y: 165 },
+      { id: 'p7', x: 495, y: 335 },
+      { id: 'p8', x: 605, y: 150 },
+      { id: 'p9', x: 605, y: 350 },
+      { id: 'p10', x: 715, y: 250 },
+      { id: 'p11', x: 450, y: 80 }
+    ]
+  },
+
+  // ==================== 7 ZONA: KARPĖNŲ KLINČIŲ KARJERAS (21–25 LYGIAI) ====================
+  {
+    id: 'lvl_21',
+    levelNumber: 21,
+    zoneId: 7,
+    levelInZone: 1,
+    theme: 'karpenai_quarry',
+    title: '21. Baltojo klinčių kanjono vartai',
+    badge: '7 Zona • 15 bangų • Serpantinas',
+    subtitle: 'Ilgas uolų terasos serpantinas. Derink Saulės Lazerį prieš šarvus ir Katapultą prieš Veidrodinius Kristalus!',
+    baseCoins: 420,
+    maxWaves: 15,
+    bgTop: '#243b55',
+    bgBottom: '#141e30',
+    pathColor: '#cbd5e1',
+    pathBorder: '#64748b',
+    accentColor: '#38bdf8',
+    campaignPos: { x: 50, y: 68 },
+    fortress: { x: 848, y: 395 },
+    paths: [
+      [
+        { x: 24, y: 110 },
+        { x: 700, y: 110 },
+        { x: 700, y: 250 },
+        { x: 160, y: 250 },
+        { x: 160, y: 395 },
+        { x: 848, y: 395 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 250, y: 180 },
+      { id: 'p2', x: 400, y: 180 },
+      { id: 'p3', x: 550, y: 180 },
+      { id: 'p4', x: 825, y: 180 },
+      { id: 'p5', x: 250, y: 322 },
+      { id: 'p6', x: 400, y: 322 },
+      { id: 'p7', x: 550, y: 322 },
+      { id: 'p8', x: 785, y: 315 },
+      { id: 'p9', x: 400, y: 452 },
+      { id: 'p10', x: 360, y: 52 }
+    ]
+  },
+  {
+    id: 'lvl_22',
+    levelNumber: 22,
+    zoneId: 7,
+    levelInZone: 2,
+    theme: 'karpenai_quarry',
+    title: '22. Žydrosios lagūnos terasos',
+    badge: '7 Zona • 15 bangų • Dvi terasos',
+    subtitle: 'Šarvuotų Vabalų ir Veidrodžių kolonos kartu su Kibernetiniais Varnais – būtini Dronai ir Lazeris!',
+    baseCoins: 430,
+    maxWaves: 15,
+    bgTop: '#243b55',
+    bgBottom: '#141e30',
+    pathColor: '#cbd5e1',
+    pathBorder: '#64748b',
+    accentColor: '#38bdf8',
+    campaignPos: { x: 56, y: 45 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 115 },
+        { x: 290, y: 115 },
+        { x: 445, y: 195 },
+        { x: 655, y: 195 },
+        { x: 765, y: 120 },
+        { x: 848, y: 120 }
+      ],
+      [
+        { x: 24, y: 385 },
+        { x: 290, y: 385 },
+        { x: 445, y: 305 },
+        { x: 655, y: 305 },
+        { x: 765, y: 380 },
+        { x: 848, y: 380 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 145, y: 190 },
+      { id: 'p2', x: 145, y: 310 },
+      { id: 'p3', x: 280, y: 250 },
+      { id: 'p4', x: 445, y: 110 },
+      { id: 'p5', x: 445, y: 390 },
+      { id: 'p6', x: 555, y: 110 },
+      { id: 'p7', x: 555, y: 250 },
+      { id: 'p8', x: 555, y: 390 },
+      { id: 'p9', x: 675, y: 110 },
+      { id: 'p10', x: 675, y: 390 },
+      { id: 'p11', x: 765, y: 250 }
+    ]
+  },
+  {
+    id: 'lvl_23',
+    levelNumber: 23,
+    zoneId: 7,
+    levelInZone: 3,
+    theme: 'karpenai_quarry',
+    title: '23. Ekskavatorių šlaitai',
+    badge: '7 Zona • 16 bangų • Kanjonų X',
+    subtitle: 'Dvigubos kanjono kryžkelės leidžia vienu metu dengti abu kelius iš vidurinių aikštelių.',
+    baseCoins: 440,
+    maxWaves: 16,
+    bgTop: '#243b55',
+    bgBottom: '#141e30',
+    pathColor: '#cbd5e1',
+    pathBorder: '#64748b',
+    accentColor: '#38bdf8',
+    campaignPos: { x: 62, y: 70 },
+    fortress: { x: 848, y: 245 },
+    paths: [
+      [
+        { x: 24, y: 120 },
+        { x: 210, y: 120 },
+        { x: 320, y: 340 },
+        { x: 590, y: 145 },
+        { x: 725, y: 340 },
+        { x: 848, y: 340 }
+      ],
+      [
+        { x: 24, y: 365 },
+        { x: 210, y: 365 },
+        { x: 320, y: 145 },
+        { x: 590, y: 340 },
+        { x: 725, y: 145 },
+        { x: 848, y: 145 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 120, y: 242 },
+      { id: 'p2', x: 205, y: 242 },
+      { id: 'p3', x: 325, y: 65 },
+      { id: 'p4', x: 325, y: 425 },
+      { id: 'p5', x: 455, y: 145 },
+      { id: 'p6', x: 455, y: 340 },
+      { id: 'p7', x: 590, y: 65 },
+      { id: 'p8', x: 590, y: 425 },
+      { id: 'p9', x: 785, y: 242 },
+      { id: 'p10', x: 590, y: 242 },
+      { id: 'p11', x: 455, y: 430 }
+    ]
+  },
+  {
+    id: 'lvl_24',
+    levelNumber: 24,
+    zoneId: 7,
+    levelInZone: 4,
+    theme: 'karpenai_quarry',
+    title: '24. Karjero krioklių slėnis',
+    badge: '7 Zona • 16 bangų • Posūkių slėnis',
+    subtitle: 'Kiekvienas posūkis apsuptas baltų uolų – sustatyk Saulės Stoties auras šalia pagrindinės gynybos!',
+    baseCoins: 455,
+    maxWaves: 16,
+    bgTop: '#243b55',
+    bgBottom: '#141e30',
+    pathColor: '#cbd5e1',
+    pathBorder: '#64748b',
+    accentColor: '#38bdf8',
+    campaignPos: { x: 68, y: 42 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 105 },
+        { x: 250, y: 105 },
+        { x: 350, y: 245 },
+        { x: 550, y: 115 },
+        { x: 725, y: 245 },
+        { x: 848, y: 145 }
+      ],
+      [
+        { x: 24, y: 395 },
+        { x: 250, y: 395 },
+        { x: 350, y: 255 },
+        { x: 550, y: 385 },
+        { x: 725, y: 255 },
+        { x: 848, y: 355 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 140, y: 250 },
+      { id: 'p2', x: 245, y: 250 },
+      { id: 'p3', x: 445, y: 95 },
+      { id: 'p4', x: 445, y: 250 },
+      { id: 'p5', x: 445, y: 405 },
+      { id: 'p6', x: 560, y: 250 },
+      { id: 'p7', x: 650, y: 100 },
+      { id: 'p8', x: 650, y: 400 },
+      { id: 'p9', x: 770, y: 105 },
+      { id: 'p10', x: 770, y: 395 },
+      { id: 'p11', x: 140, y: 175 }
+    ]
+  },
+  {
+    id: 'lvl_25',
+    levelNumber: 25,
+    zoneId: 7,
+    levelInZone: 5,
+    isBossLevel: true,
+    theme: 'karpenai_quarry',
+    title: '25. Klinčių kanjono viršūnė (Bosas)',
+    badge: '7 Zona • 17 bangų • 👑 Klinčių Kolosas',
+    subtitle: '17-oje bangoje žengia Klinčių Kolosas, kas 8 sek. keičiantis skydą tarp šarvų ir veidrodžio!',
+    baseCoins: 470,
+    maxWaves: 17,
+    bgTop: '#243b55',
+    bgBottom: '#141e30',
+    pathColor: '#cbd5e1',
+    pathBorder: '#64748b',
+    accentColor: '#38bdf8',
+    campaignPos: { x: 74, y: 64 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 100 },
+        { x: 245, y: 100 },
+        { x: 325, y: 220 },
+        { x: 505, y: 120 },
+        { x: 635, y: 250 },
+        { x: 848, y: 250 }
+      ],
+      [
+        { x: 24, y: 400 },
+        { x: 245, y: 400 },
+        { x: 325, y: 280 },
+        { x: 505, y: 380 },
+        { x: 635, y: 250 },
+        { x: 848, y: 250 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 135, y: 190 },
+      { id: 'p2', x: 135, y: 310 },
+      { id: 'p3', x: 240, y: 250 },
+      { id: 'p4', x: 425, y: 250 },
+      { id: 'p5', x: 515, y: 250 },
+      { id: 'p6', x: 410, y: 95 },
+      { id: 'p7', x: 410, y: 405 },
+      { id: 'p8', x: 615, y: 155 },
+      { id: 'p9', x: 615, y: 345 },
+      { id: 'p10', x: 740, y: 175 },
+      { id: 'p11', x: 740, y: 325 },
+      { id: 'p12', x: 740, y: 85 }
+    ]
+  },
+
+  // ==================== 8 ZONA: KOSMINĖ SAULĖS JĖGAINĖ (26–30 LYGIAI) ====================
+  {
+    id: 'lvl_26',
+    levelNumber: 26,
+    zoneId: 8,
+    levelInZone: 1,
+    theme: 'cosmic_solar_plant',
+    title: '26. Orbitinis energijos tiltas',
+    badge: '8 Zona • 16 bangų • Energijos tiltai',
+    subtitle: 'Kosminės Saulės Jėgainės prieigos su 12 priešų rūšių atakomis per du energijos tiltus!',
+    baseCoins: 460,
+    maxWaves: 16,
+    bgTop: '#191339',
+    bgBottom: '#070617',
+    pathColor: '#3b336b',
+    pathBorder: '#7c3aed',
+    accentColor: '#a855f7',
+    campaignPos: { x: 80, y: 36 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 110 },
+        { x: 215, y: 110 },
+        { x: 345, y: 185 },
+        { x: 605, y: 185 },
+        { x: 725, y: 145 },
+        { x: 848, y: 145 }
+      ],
+      [
+        { x: 24, y: 390 },
+        { x: 215, y: 390 },
+        { x: 345, y: 315 },
+        { x: 605, y: 315 },
+        { x: 725, y: 355 },
+        { x: 848, y: 355 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 120, y: 190 },
+      { id: 'p2', x: 120, y: 310 },
+      { id: 'p3', x: 235, y: 250 },
+      { id: 'p4', x: 350, y: 95 },
+      { id: 'p5', x: 350, y: 405 },
+      { id: 'p6', x: 465, y: 105 },
+      { id: 'p7', x: 465, y: 250 },
+      { id: 'p8', x: 465, y: 395 },
+      { id: 'p9', x: 590, y: 105 },
+      { id: 'p10', x: 590, y: 395 },
+      { id: 'p11', x: 605, y: 250 },
+      { id: 'p12', x: 755, y: 250 }
+    ]
+  },
+  {
+    id: 'lvl_27',
+    levelNumber: 27,
+    zoneId: 8,
+    levelInZone: 2,
+    theme: 'cosmic_solar_plant',
+    title: '27. Kolektorių matrica',
+    badge: '8 Zona • 17 bangų • Kryžminiai tiltai',
+    subtitle: 'Spindulių kryžkelės tarp milžiniškų saulės baterijų! Naudok 4-o lygio evoliucijas abiem kryptims.',
+    baseCoins: 480,
+    maxWaves: 17,
+    bgTop: '#191339',
+    bgBottom: '#070617',
+    pathColor: '#3b336b',
+    pathBorder: '#7c3aed',
+    accentColor: '#a855f7',
+    campaignPos: { x: 84, y: 68 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 110 },
+        { x: 205, y: 110 },
+        { x: 315, y: 365 },
+        { x: 555, y: 135 },
+        { x: 715, y: 365 },
+        { x: 848, y: 365 }
+      ],
+      [
+        { x: 24, y: 385 },
+        { x: 205, y: 385 },
+        { x: 315, y: 135 },
+        { x: 555, y: 365 },
+        { x: 715, y: 135 },
+        { x: 848, y: 135 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 120, y: 250 },
+      { id: 'p2', x: 205, y: 250 },
+      { id: 'p3', x: 325, y: 65 },
+      { id: 'p4', x: 325, y: 435 },
+      { id: 'p5', x: 435, y: 140 },
+      { id: 'p6', x: 435, y: 360 },
+      { id: 'p7', x: 555, y: 65 },
+      { id: 'p8', x: 555, y: 435 },
+      { id: 'p9', x: 555, y: 250 },
+      { id: 'p10', x: 765, y: 250 },
+      { id: 'p11', x: 120, y: 175 },
+      { id: 'p12', x: 765, y: 65 }
+    ]
+  },
+  {
+    id: 'lvl_28',
+    levelNumber: 28,
+    zoneId: 8,
+    levelInZone: 3,
+    theme: 'cosmic_solar_plant',
+    title: '28. Trys energijos magistralės',
+    badge: '8 Zona • 18 bangų • 3 keliai',
+    subtitle: 'Pirmą kartą vienu metu veikia 3 atskiri keliai! „Dagilėlio“ greičio aura tarp juostų – raktas į pergalę.',
+    baseCoins: 500,
+    maxWaves: 18,
+    bgTop: '#191339',
+    bgBottom: '#070617',
+    pathColor: '#3b336b',
+    pathBorder: '#7c3aed',
+    accentColor: '#a855f7',
+    campaignPos: { x: 88, y: 42 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 85 },
+        { x: 290, y: 85 },
+        { x: 455, y: 115 },
+        { x: 655, y: 85 },
+        { x: 848, y: 145 }
+      ],
+      [
+        { x: 24, y: 250 },
+        { x: 290, y: 250 },
+        { x: 455, y: 250 },
+        { x: 655, y: 250 },
+        { x: 848, y: 250 }
+      ],
+      [
+        { x: 24, y: 415 },
+        { x: 290, y: 415 },
+        { x: 455, y: 385 },
+        { x: 655, y: 415 },
+        { x: 848, y: 355 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 120, y: 170 },
+      { id: 'p2', x: 245, y: 170 },
+      { id: 'p3', x: 375, y: 180 },
+      { id: 'p4', x: 535, y: 178 },
+      { id: 'p5', x: 665, y: 170 },
+      { id: 'p6', x: 775, y: 190 },
+      { id: 'p7', x: 120, y: 330 },
+      { id: 'p8', x: 245, y: 330 },
+      { id: 'p9', x: 375, y: 320 },
+      { id: 'p10', x: 535, y: 322 },
+      { id: 'p11', x: 665, y: 330 },
+      { id: 'p12', x: 775, y: 312 }
+    ]
+  },
+  {
+    id: 'lvl_29',
+    levelNumber: 29,
+    zoneId: 8,
+    levelInZone: 4,
+    theme: 'cosmic_solar_plant',
+    title: '29. Plazmos reaktoriaus žiedas',
+    badge: '8 Zona • 19 bangų • 3 keliai',
+    subtitle: '19 intensyvių bangų per 3 kosminius kelius – paruošk Saulės Stotis, Dronus ir Katapultas prieš finalą!',
+    baseCoins: 520,
+    maxWaves: 19,
+    bgTop: '#191339',
+    bgBottom: '#070617',
+    pathColor: '#3b336b',
+    pathBorder: '#7c3aed',
+    accentColor: '#a855f7',
+    campaignPos: { x: 92, y: 70 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 90 },
+        { x: 245, y: 90 },
+        { x: 380, y: 150 },
+        { x: 610, y: 90 },
+        { x: 755, y: 155 },
+        { x: 848, y: 155 }
+      ],
+      [
+        { x: 24, y: 250 },
+        { x: 310, y: 250 },
+        { x: 460, y: 250 },
+        { x: 650, y: 250 },
+        { x: 848, y: 250 }
+      ],
+      [
+        { x: 24, y: 410 },
+        { x: 245, y: 410 },
+        { x: 380, y: 350 },
+        { x: 610, y: 410 },
+        { x: 755, y: 345 },
+        { x: 848, y: 345 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 130, y: 170 },
+      { id: 'p2', x: 130, y: 330 },
+      { id: 'p3', x: 245, y: 170 },
+      { id: 'p4', x: 245, y: 330 },
+      { id: 'p5', x: 375, y: 75 },
+      { id: 'p6', x: 375, y: 425 },
+      { id: 'p7', x: 495, y: 180 },
+      { id: 'p8', x: 495, y: 320 },
+      { id: 'p9', x: 635, y: 172 },
+      { id: 'p10', x: 635, y: 328 },
+      { id: 'p11', x: 755, y: 75 },
+      { id: 'p12', x: 755, y: 425 }
+    ]
+  },
+  {
+    id: 'lvl_30',
+    levelNumber: 30,
+    zoneId: 8,
+    levelInZone: 5,
+    isBossLevel: true,
+    dualBoss: true,
+    theme: 'cosmic_solar_plant',
+    title: '30. Kosminės Jėgainės Finalas (Dvigubas Bosas)',
+    badge: '8 Zona • 20 bangų • 👑👑 Dvigubas Bosas',
+    subtitle: 'Didysis finalas! 20-oje bangoje 1-u keliu žengia Geležinis Mega-Titanas, o 2-u – Šešėlių Architektas!',
+    baseCoins: 560,
+    maxWaves: 20,
+    bgTop: '#191339',
+    bgBottom: '#070617',
+    pathColor: '#3b336b',
+    pathBorder: '#7c3aed',
+    accentColor: '#a855f7',
+    campaignPos: { x: 96, y: 26 },
+    fortress: { x: 848, y: 250 },
+    paths: [
+      [
+        { x: 24, y: 95 },
+        { x: 250, y: 95 },
+        { x: 395, y: 155 },
+        { x: 620, y: 95 },
+        { x: 765, y: 165 },
+        { x: 848, y: 240 }
+      ],
+      [
+        { x: 24, y: 250 },
+        { x: 225, y: 250 },
+        { x: 455, y: 250 },
+        { x: 675, y: 250 },
+        { x: 848, y: 250 }
+      ],
+      [
+        { x: 24, y: 405 },
+        { x: 250, y: 405 },
+        { x: 395, y: 345 },
+        { x: 620, y: 405 },
+        { x: 765, y: 335 },
+        { x: 848, y: 260 }
+      ]
+    ],
+    pads: [
+      { id: 'p1', x: 125, y: 172 },
+      { id: 'p2', x: 125, y: 328 },
+      { id: 'p3', x: 245, y: 172 },
+      { id: 'p4', x: 245, y: 328 },
+      { id: 'p5', x: 390, y: 72 },
+      { id: 'p6', x: 390, y: 428 },
+      { id: 'p7', x: 505, y: 180 },
+      { id: 'p8', x: 505, y: 320 },
+      { id: 'p9', x: 635, y: 175 },
+      { id: 'p10', x: 635, y: 325 },
+      { id: 'p11', x: 755, y: 75 },
+      { id: 'p12', x: 755, y: 425 },
+      { id: 'p13', x: 505, y: 68 }
+    ]
   }
 ];
 
@@ -933,6 +1725,25 @@ export function renderMapThemeDecorations(ctx, map, animClock = 0) {
         ctx.arc(gx + 8, gy + 84, 2, 0, Math.PI * 2);
         ctx.arc(gx + 110, gy + 84, 2, 0, Math.PI * 2);
         ctx.fill();
+      }
+    }
+  } else if (theme === 'musa_swamp') {
+    ctx.fillStyle = 'rgba(20, 184, 166, 0.16)';
+    ctx.beginPath();
+    ctx.ellipse(260, 260, 120, 68, 0, 0, Math.PI * 2);
+    ctx.ellipse(620, 240, 110, 62, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (theme === 'karpenai_quarry') {
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.24)';
+    ctx.beginPath();
+    ctx.ellipse(460, 250, 130, 74, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (theme === 'cosmic_solar_plant') {
+    ctx.strokeStyle = 'rgba(168, 85, 247, 0.22)';
+    ctx.lineWidth = 1.6;
+    for (let gx = 45; gx < 860; gx += 135) {
+      for (let gy = 30; gy < 460; gy += 110) {
+        ctx.strokeRect(gx, gy, 118, 92);
       }
     }
   }

@@ -6,7 +6,7 @@ export function scaleEnemyHp(baseHp, waveNumber = 1, profileId = 'lukas') {
   const w = Math.max(1, Number(waveNumber) || 1);
   // 3 kl. (Lukas): +35% stipresni; 1 kl. (Linas): ~25% mažiau HP nei 3 kl. (1.0125 / 1.35 = 0.75)
   const profileMult = profileId === 'linas' ? 1.0125 : 1.35;
-  const waveScale = 1 + (w - 1) * 0.32 + Math.pow(Math.max(0, w - 3), 1.42) * 0.095;
+  const waveScale = 1 + (w - 1) * 0.24 + Math.pow(Math.max(0, w - 3), 1.22) * 0.055;
   return Math.max(10, Math.round(baseHp * waveScale * profileMult));
 }
 
@@ -264,7 +264,7 @@ export const ZONE_BOSSES = {
     zone: 1,
     name: 'Milžiniškas Šliužų Karalius',
     icon: '🐌',
-    baseHp: 2450,
+    baseHp: 4600,
     speed: 38,
     reward: 90,
     heartCost: 5,
@@ -292,7 +292,7 @@ export const ZONE_BOSSES = {
     zone: 2,
     name: 'Geležinis Kurmis',
     icon: '⛏️',
-    baseHp: 2900,
+    baseHp: 5600,
     speed: 42,
     reward: 100,
     heartCost: 5,
@@ -319,7 +319,7 @@ export const ZONE_BOSSES = {
     zone: 3,
     name: 'Girios Šešėlių Valdovas',
     icon: '🌑',
-    baseHp: 3250,
+    baseHp: 11500,
     speed: 45,
     reward: 115,
     heartCost: 5,
@@ -345,7 +345,7 @@ export const ZONE_BOSSES = {
     zone: 4,
     name: 'Klaidingų Natų Baubas',
     icon: '🎺',
-    baseHp: 3700,
+    baseHp: 11000,
     speed: 42,
     reward: 125,
     heartCost: 5,
@@ -372,7 +372,7 @@ export const ZONE_BOSSES = {
     zone: 5,
     name: 'Kibernetinis Mega-Bosukas',
     icon: '🤖',
-    baseHp: 4450,
+    baseHp: 15500,
     speed: 40,
     reward: 160,
     heartCost: 5,
@@ -382,7 +382,7 @@ export const ZONE_BOSSES = {
     slowResistance: 0.75,
     maxSlowPct: 0.20,
     stunImmune: true,
-    maxShield: 720,
+    maxShield: 1600,
     shieldRegenPerSec: 42,
     shieldRegenDelay: 2.6,
     phase2Escorts: ['cyber_raven', 'cyber_raven', 'mirror_beetle', 'mirror_beetle', 'forest_healer'],
@@ -393,20 +393,139 @@ export const ZONE_BOSSES = {
     isCamo: false,
     isFlying: false,
     counterTip: '🤖👑 5 Zonos Dvifazis Bosas: atsinaujinantis skydas ir ties 50% HP galingas elitinis būrys!'
+  },
+  6: {
+    id: 'boss_swamp_lord',
+    zone: 6,
+    name: 'Pelkių Valdovas',
+    icon: '🌿',
+    baseHp: 13000,
+    speed: 37,
+    reward: 190,
+    heartCost: 6,
+    armor: 0.35,
+    energyResist: 0.20,
+    soundResist: 0,
+    slowResistance: 0.75,
+    maxSlowPct: 0.20,
+    stunImmune: true,
+    periodicCamoInterval: 5.5,
+    periodicCamoDuration: 3.0,
+    summonInterval: 6.5,
+    summonType: 'forest_healer',
+    summonCount: 1,
+    phase2Escorts: ['forest_healer', 'forest_healer', 'forest_shadow', 'forest_shadow', 'weed_golem'],
+    radius: 24,
+    color: '#0f766e',
+    borderColor: '#2dd4bf',
+    isBoss: true,
+    isCamo: false,
+    isFlying: false,
+    counterTip: '🌿👑 6 Zonos Bosas: slepiasi rūke (Camo) ir kviečia Gamtos Gydytojus – būtini Dronai!'
+  },
+  7: {
+    id: 'boss_limestone_colossus',
+    zone: 7,
+    name: 'Klinčių Kolosas',
+    icon: '🪨',
+    baseHp: 16000,
+    speed: 34,
+    reward: 220,
+    heartCost: 6,
+    armor: 0.75,
+    energyResist: 0,
+    soundResist: 0,
+    shieldShiftInterval: 8.0,
+    shieldShiftMode: 'physical',
+    slowResistance: 0.75,
+    maxSlowPct: 0.20,
+    stunImmune: true,
+    phase2Escorts: ['armored_beetle', 'armored_beetle', 'mirror_beetle', 'mirror_beetle', 'cyber_raven'],
+    radius: 25,
+    color: '#cbd5e1',
+    borderColor: '#38bdf8',
+    isBoss: true,
+    isCamo: false,
+    isFlying: false,
+    counterTip: '🪨👑 7 Zonos Bosas: kas 8s keičia skydą tarp fizinių šarvų (75%) ir veidrodžio (80%) – derink Lazerį su Katapulta!'
+  },
+  8: {
+    id: 'boss_iron_titan',
+    zone: 8,
+    name: 'Geležinis Mega-Titanas',
+    icon: '🦾',
+    baseHp: 4700,
+    speed: 28,
+    reward: 260,
+    heartCost: 6,
+    armor: 0.65,
+    energyResist: 0.10,
+    soundResist: 0,
+    slowResistance: 0.75,
+    maxSlowPct: 0.20,
+    stunImmune: true,
+    maxShield: 1000,
+    shieldRegenPerSec: 52,
+    shieldRegenDelay: 2.8,
+    phase2Escorts: ['armored_beetle', 'cyber_raven', 'cyber_raven', 'exploding_beetle'],
+    radius: 25,
+    color: '#1e293b',
+    borderColor: '#fbbf24',
+    isBoss: true,
+    isCamo: false,
+    isFlying: false,
+    counterTip: '🦾👑 8 Zonos Finalinis Titanas: storas šarvas ir atsinaujinantis skydas – koncentruok Saulės Lazerius!'
   }
 };
 
-export const BOSS_LIST = Object.values(ZONE_BOSSES);
+export const ZONE_CO_BOSSES = {
+  8: {
+    id: 'boss_shadow_architect',
+    zone: 8,
+    name: 'Šešėlių Architektas',
+    icon: '👁️',
+    baseHp: 4600,
+    speed: 32,
+    reward: 260,
+    heartCost: 6,
+    armor: 0.15,
+    energyResist: 0.55,
+    soundResist: 0,
+    slowResistance: 0.75,
+    maxSlowPct: 0.20,
+    stunImmune: true,
+    periodicCamoInterval: 5.5,
+    periodicCamoDuration: 2.5,
+    silenceTowerInterval: 6.5,
+    silenceTowerDuration: 2.2,
+    silenceRange: 215,
+    phase2Escorts: ['forest_shadow', 'forest_shadow', 'mirror_beetle', 'mirror_beetle'],
+    radius: 24,
+    color: '#4c1d95',
+    borderColor: '#fde047',
+    isBoss: true,
+    isCamo: false,
+    isFlying: false,
+    counterTip: '👁️👑 8 Zonos Antrasis Bosas: atsparus lazeriui (55%), tampa nematomas ir užtildo bokštus – mušk Dronais ir Katapultomis!'
+  }
+};
+
+export const BOSS_LIST = [...Object.values(ZONE_BOSSES), ...Object.values(ZONE_CO_BOSSES)];
 
 export function getZoneBoss(zoneNumber = 1) {
-  const z = Math.max(1, Math.min(5, Number(zoneNumber) || 1));
+  const z = Math.max(1, Math.min(8, Number(zoneNumber) || 1));
   return ZONE_BOSSES[z] || ZONE_BOSSES[1];
 }
 
 export function createEnemyInstanceData(archetype, waveNumber, profileId, pathIndex = 0, delay = 0.7, hpScale = 1) {
-  const scaledHp = Math.max(8, Math.round(scaleEnemyHp(archetype.baseHp, waveNumber, profileId) * hpScale));
+  const bossProfileScale = profileId === 'linas' ? 0.75 : 1.0;
+  const scaledHp = archetype.isBoss
+    ? Math.max(200, Math.round(archetype.baseHp * bossProfileScale * hpScale))
+    : Math.max(8, Math.round(scaleEnemyHp(archetype.baseHp, waveNumber, profileId) * hpScale));
   const scaledShield = archetype.maxShield
-    ? Math.max(40, Math.round(scaleEnemyHp(archetype.maxShield, waveNumber, profileId) * 0.45))
+    ? archetype.isBoss
+      ? Math.max(100, Math.round(archetype.maxShield * bossProfileScale * hpScale))
+      : Math.max(40, Math.round(scaleEnemyHp(archetype.maxShield, waveNumber, profileId) * 0.45))
     : 0;
 
   return {
@@ -430,6 +549,8 @@ export function createEnemyInstanceData(archetype, waveNumber, profileId, pathIn
     healPctNormal: archetype.healPctNormal || 0,
     healPctBoss: archetype.healPctBoss || 0,
     phase2Escorts: Array.isArray(archetype.phase2Escorts) ? [...archetype.phase2Escorts] : [],
+    shieldShiftInterval: archetype.shieldShiftInterval || 0,
+    shieldShiftMode: archetype.shieldShiftMode || null,
     radius: archetype.radius || 13,
     color: archetype.color,
     borderColor: archetype.borderColor || '#ffffff',
@@ -463,7 +584,66 @@ export function createEnemyInstanceData(archetype, waveNumber, profileId, pathIn
 
 function getWavePlanTypes(waveNumber, options = {}) {
   const zoneId = Number(options.zoneId) || 1;
-  const effectiveWave = Math.min(16, Math.max(1, waveNumber + (zoneId > 1 ? zoneId - 1 : 0)));
+  const w = Math.max(1, Number(waveNumber) || 1);
+
+  if (zoneId === 6) {
+    const z6Plans = [
+      ['forest_shadow', 'garden_slug', 'weed_golem'],
+      ['forest_shadow', 'forest_healer', 'rushing_hedgehog'],
+      ['forest_shadow', 'hornet_swarm', 'forest_healer', 'tunnel_mole'],
+      ['weed_golem', 'forest_shadow', 'mirror_beetle', 'forest_healer'],
+      ['forest_shadow', 'tunnel_mole', 'forest_healer', 'armored_beetle'],
+      ['cyber_raven', 'forest_shadow', 'forest_healer', 'mirror_beetle', 'weed_golem']
+    ];
+    if (w <= 4) return z6Plans[w - 1];
+    if (w <= 10) return z6Plans[(w - 1) % z6Plans.length];
+    return ['forest_shadow', 'forest_healer', 'cyber_raven', 'mirror_beetle', 'tunnel_mole', 'weed_golem'];
+  }
+
+  if (zoneId === 7) {
+    const z7Plans = [
+      ['armored_beetle', 'mirror_beetle', 'rushing_hedgehog'],
+      ['armored_beetle', 'mirror_beetle', 'hornet_swarm'],
+      ['cyber_raven', 'armored_beetle', 'mirror_beetle', 'weed_golem'],
+      ['cyber_raven', 'mirror_beetle', 'forest_healer', 'armored_beetle'],
+      ['exploding_beetle', 'armored_beetle', 'mirror_beetle', 'cyber_raven'],
+      ['cyber_raven', 'mirror_beetle', 'armored_beetle', 'forest_healer', 'exploding_beetle']
+    ];
+    if (w <= 4) return z7Plans[w - 1];
+    if (w <= 11) return z7Plans[(w - 1) % z7Plans.length];
+    return ['cyber_raven', 'armored_beetle', 'mirror_beetle', 'forest_healer', 'exploding_beetle', 'weed_golem'];
+  }
+
+  if (zoneId === 8) {
+    const z8All12 = [
+      ['garden_slug', 'rushing_hedgehog', 'armored_beetle', 'mirror_beetle', 'hornet_swarm'],
+      ['forest_shadow', 'forest_healer', 'tunnel_mole', 'weed_golem'],
+      ['noise_goblin', 'exploding_beetle', 'cyber_raven', 'mirror_beetle'],
+      ['cyber_raven', 'armored_beetle', 'mirror_beetle', 'forest_shadow', 'forest_healer'],
+      ['exploding_beetle', 'tunnel_mole', 'hornet_swarm', 'noise_goblin', 'weed_golem'],
+      ['garden_slug', 'rushing_hedgehog', 'armored_beetle', 'mirror_beetle', 'forest_healer', 'forest_shadow'],
+      ['hornet_swarm', 'tunnel_mole', 'weed_golem', 'noise_goblin', 'exploding_beetle', 'cyber_raven']
+    ];
+    if (w >= 16) {
+      return [
+        'garden_slug',
+        'rushing_hedgehog',
+        'armored_beetle',
+        'mirror_beetle',
+        'forest_healer',
+        'forest_shadow',
+        'hornet_swarm',
+        'tunnel_mole',
+        'weed_golem',
+        'noise_goblin',
+        'exploding_beetle',
+        'cyber_raven'
+      ];
+    }
+    return z8All12[(w - 1) % z8All12.length];
+  }
+
+  const effectiveWave = Math.min(16, Math.max(1, w + (zoneId > 1 ? zoneId - 1 : 0)));
   const plans = {
     1: ['garden_slug', 'rushing_hedgehog'],
     2: ['garden_slug', 'rushing_hedgehog', 'armored_beetle'],
@@ -485,16 +665,22 @@ function getWavePlanTypes(waveNumber, options = {}) {
   return plans[effectiveWave] || plans[16];
 }
 
-function resolveBossForWave(waveNumber, options = {}) {
+function resolveBossesForWave(waveNumber, pathCount = 1, options = {}) {
   const maxWaves = options.maxWaves || MAX_WAVES_DEFAULT;
   const zoneId = Number(options.zoneId) || 1;
-  const isBossLevel = options.levelInZone === undefined || options.levelInZone === 3;
+  const defaultBossFlag = zoneId <= 5 ? options.levelInZone === 3 : options.levelInZone === 5;
+  const isBossLevel = options.isBossLevel !== undefined ? Boolean(options.isBossLevel) : (options.levelInZone === undefined || defaultBossFlag);
 
   if (waveNumber === maxWaves && isBossLevel) {
-    // 5 Teminiai Dvifaziai Bosai pasirodo kiekvienos zonos 3-iojo lygio paskutinėje bangoje (3, 6, 9, 12, 15 lyg.)
-    return getZoneBoss(zoneId);
+    if (zoneId === 8) {
+      return [
+        { boss: ZONE_BOSSES[8], pathIndex: 0, delay: 1.4 },
+        { boss: ZONE_CO_BOSSES[8], pathIndex: pathCount > 1 ? 1 : 0, delay: 1.8 }
+      ];
+    }
+    return [{ boss: getZoneBoss(zoneId), pathIndex: 0, delay: 1.4 }];
   }
-  return null;
+  return [];
 }
 
 export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas', options = {}) {
@@ -502,10 +688,11 @@ export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas
   const paths = Math.max(1, Number(pathCount) || 1);
   const levelNum = Math.max(1, Number(options.levelNumber) || 1);
   const zoneId = Math.max(1, Number(options.zoneId) || 1);
-  const levelHpScale = 1 + (levelNum - 1) * 0.045 + (zoneId - 1) * 0.08;
+  const veteranMult = options.veteranMode ? 1.35 : 1.0;
+  const levelHpScale = (1 + (levelNum - 1) * 0.024 + (zoneId - 1) * 0.045) * veteranMult;
   const planTypes = getWavePlanTypes(w, options);
-  const totalUnits = Math.min(46, 7 + Math.round(w * 2.4));
-  const intervalBase = Math.max(0.32, 0.92 - w * 0.038);
+  const totalUnits = Math.min(54, 7 + Math.round(w * 2.4));
+  const intervalBase = Math.max(0.28, 0.92 - w * 0.036);
 
   const spawns = [];
   for (let i = 0; i < totalUnits; i++) {
@@ -516,9 +703,9 @@ export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas
     );
   }
 
-  const bossArch = resolveBossForWave(w, options);
-  if (bossArch) {
-    spawns.push(createEnemyInstanceData(bossArch, w, profileId, 0, 1.4, levelHpScale));
+  const waveBosses = resolveBossesForWave(w, paths, options);
+  for (const entry of waveBosses) {
+    spawns.push(createEnemyInstanceData(entry.boss, w, profileId, entry.pathIndex, entry.delay, veteranMult));
   }
 
   return spawns;
@@ -548,7 +735,8 @@ export function getWavePreviewInfo(waveNumber, pathCount = 1, profileId = 'lukas
   }
 
   const groups = Array.from(grouped.values()).sort((a, b) => Number(b.isBoss) - Number(a.isBoss));
-  const bossGroup = groups.find((g) => g.isBoss);
+  const bossGroups = groups.filter((g) => g.isBoss);
+  const bossGroup = bossGroups[0] || null;
   const hasFlying = groups.some((g) => g.isFlying);
   const hasCamo = groups.some((g) => g.isCamo);
   const hasArmor = groups.some((g) => g.hasArmor);
@@ -563,7 +751,9 @@ export function getWavePreviewInfo(waveNumber, pathCount = 1, profileId = 'lukas
   if (hasHealer) warnings.push('💚 Gydo!');
 
   let headline = `🌊 ${waveNumber}-oji banga pasirengusi!`;
-  if (bossGroup) {
+  if (bossGroups.length >= 2) {
+    headline = `👑👑 DVIGUBAS BOSAS: ${bossGroups[0].name} ir ${bossGroups[1].name}!`;
+  } else if (bossGroup) {
     headline = `👑 ATEINA BOSAS: ${bossGroup.name}!`;
   } else if (hasMirror) {
     headline = '🪞 Ateina Veidrodiniai Kristalai – reikia Katapultos / Barakų!';
@@ -596,6 +786,6 @@ export function getWavePreviewInfo(waveNumber, pathCount = 1, profileId = 'lukas
     hasArmor,
     hasMirror,
     hasHealer,
-    hasBoss: Boolean(bossGroup)
+    hasBoss: bossGroups.length > 0
   };
 }

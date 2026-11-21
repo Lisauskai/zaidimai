@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261121q" />
+  <link rel="stylesheet" href="./style.css?v=20261121r" />
 </head>
 <body>
   <div class="td-bg-glow" aria-hidden="true"></div>
@@ -28,7 +28,7 @@
         <span class="brand-icon" aria-hidden="true">🏰⚡</span>
         <div>
           <h1>BUBIŲ TVIRTOVĖ</h1>
-          <span class="brand-sub">Strateginė bokštelių gynyba: Bubių kiemas, Kurtuvėnai ir Dagilėlio aikštė!</span>
+          <span class="brand-sub">Strateginė bokštelių gynyba: Bubių kiemas, Mūšos tyrelis, Karpėnai ir Kosminė jėgainė!</span>
         </div>
       </div>
     </div>
@@ -58,10 +58,10 @@
     <!-- ==================== 1. PROFILIO PASIRINKIMO EKRANAS ==================== -->
     <section id="screen-profiles" class="profiles-screen">
       <div class="hero-card glass-panel">
-        <span class="hero-kicker">🛡️ 5 ZONOS • 15 LYGIŲ • 6 BOKŠTAI</span>
+        <span class="hero-kicker">🛡️ 8 ZONOS • 30 LYGIŲ • 6 BOKŠTAI</span>
         <h2>PASIRINK TVIRTOVĖS VADĄ!</h2>
         <p class="hero-desc">
-          Keliauk per 5 zonas ir 15 unikalių žemėlapių – nuo Bubių kiemo ir šiltnamio iki Ateities bazės!
+          Keliauk per 8 zonas ir 30 unikalių žemėlapių – nuo Bubių kiemo ir Mūšos tyrelio iki Kosminės Saulės Jėgainės!
           Pradedi su <strong>20 širdelių</strong>: 18–20 ❤️ = ⭐⭐⭐, 10–17 ❤️ = ⭐⭐, 1–9 ❤️ = ⭐!
         </p>
       </div>
@@ -75,7 +75,7 @@
           </div>
           <h3>Linas (1 klasė)</h3>
           <p class="profile-desc">
-            Sąžiningas 1 klasės balansas: <strong>+20% pradinių monetų</strong> bokšteliams ir <strong>20% mažiau priešų HP</strong>.
+            Sąžiningas 1 klasės balansas: <strong>+15% pradinių monetų</strong> bokšteliams ir <strong>25% mažiau priešų HP</strong> nei 3 kl.
           </p>
           <div class="profile-stats">
             <div class="stat-row">
@@ -100,7 +100,7 @@
           </div>
           <h3>Lukas (3 klasė)</h3>
           <p class="profile-desc">
-            Pilnas taktinis režimas: standartinės pradinės monetos ir 100% priešų gyvybių jėga dviejų kelių žemėlapiuose!
+            Pilnas taktinis režimas: standartinės pradinės monetos ir <strong>+35% priešų gyvybių jėga</strong> kelių kryžkelėse!
           </p>
           <div class="profile-stats">
             <div class="stat-row">
@@ -119,19 +119,20 @@
       </div>
     </section>
 
-    <!-- ==================== 2. KAMPANIJOS PASAULIO ŽEMĖLAPIS (15 LYGIŲ) ==================== -->
+    <!-- ==================== 2. KAMPANIJOS PASAULIO ŽEMĖLAPIS (30 LYGIŲ) ==================== -->
     <section id="screen-campaign" class="campaign-screen hidden">
       <div class="campaign-header glass-panel">
         <div>
-          <span class="hero-kicker">🗺️ KAMPANIJOS ŽEMĖLAPIS • 5 ZONOS • 15 LYGIŲ</span>
-          <h2>KELIONĖ NUO BUBIŲ KIEMO IKI ATEITIES BAZĖS</h2>
+          <span class="hero-kicker">🗺️ KAMPANIJOS ŽEMĖLAPIS • 8 ZONOS • 30 LYGIŲ</span>
+          <h2>KELIONĖ NUO BUBIŲ KIEMO IKI KOSMINĖS JĖGAINĖS</h2>
           <p class="campaign-sub">
-            Įveik lygį ir atrakink naują kelio etapą įveikęs <strong>Žinių Vartus</strong>! Kiekvienos zonos 3-iajame lygyje laukia Bosas.
+            Įveik lygį ir atrakink naują etapą per <strong>Žinių Vartus</strong>! Kiekvienoje zonoje laukia Bosas, o įveiktus lygius gali peržaisti 🔥 Veterano režimu!
           </p>
         </div>
         <div class="campaign-summary-pills">
-          <span class="battle-stat">⭐ Žvaigždutės: <strong id="campaign-total-stars">0 / 45</strong></span>
-          <span class="battle-stat">🔓 Atrakinta: <strong id="campaign-unlocked-count">1 / 15</strong></span>
+          <span class="battle-stat">⭐ Žvaigždutės: <strong id="campaign-total-stars">0 / 90</strong></span>
+          <span class="battle-stat">👑 Veteranas: <strong id="campaign-veteran-count">0 / 30</strong></span>
+          <span class="battle-stat">🔓 Atrakinta: <strong id="campaign-unlocked-count">1 / 30</strong></span>
           <button id="btn-open-tech-tree" class="campaign-action-btn tech-btn" type="button">
             🔬 Išradimų medis (<span id="campaign-avail-stars">0</span> ⭐)
           </button>
@@ -139,6 +140,26 @@
             📖 Žinynas
           </button>
         </div>
+      </div>
+
+      <div class="campaign-controls-row glass-panel">
+        <div class="campaign-act-tabs" role="tablist" aria-label="Kampanijos zonos">
+          <button id="btn-camp-tab-1" class="camp-tab-btn active" type="button" role="tab" aria-selected="true">
+            🗺️ 1–4 zonos (1–12 lyg.)
+          </button>
+          <button id="btn-camp-tab-2" class="camp-tab-btn" type="button" role="tab" aria-selected="false">
+            🚀 5–8 zonos (13–30 lyg.)
+          </button>
+        </div>
+        <button
+          id="btn-veteran-toggle"
+          class="veteran-toggle-btn"
+          type="button"
+          aria-pressed="false"
+          title="Įjungus: tik 10 širdelių ir +35% priešų HP jau įveiktuose lygiuose (apdovanojama 👑 ir +1 ⭐)"
+        >
+          🔥 Veterano iššūkis: IŠJUNGTA
+        </button>
       </div>
 
       <div id="campaign-zones-bar" class="campaign-zones-bar"></div>
@@ -149,18 +170,18 @@
             <defs>
               <linearGradient id="campRoadGrad" x1="0" y1="0" x2="1000" y2="0" gradientUnits="userSpaceOnUse">
                 <stop offset="0%" stop-color="#4ade80"/>
-                <stop offset="28%" stop-color="#38bdf8"/>
-                <stop offset="52%" stop-color="#34d399"/>
-                <stop offset="76%" stop-color="#fb7185"/>
-                <stop offset="100%" stop-color="#fbbf24"/>
+                <stop offset="33%" stop-color="#38bdf8"/>
+                <stop offset="66%" stop-color="#2dd4bf"/>
+                <stop offset="100%" stop-color="#a855f7"/>
               </linearGradient>
             </defs>
-            <!-- Zonos foninės sritys -->
-            <rect x="0" y="0" width="225" height="520" fill="rgba(34, 197, 94, 0.08)"/>
-            <rect x="225" y="0" width="215" height="520" fill="rgba(56, 189, 248, 0.08)"/>
-            <rect x="440" y="0" width="210" height="520" fill="rgba(16, 185, 129, 0.08)"/>
-            <rect x="650" y="0" width="185" height="520" fill="rgba(244, 63, 94, 0.08)"/>
-            <rect x="835" y="0" width="165" height="520" fill="rgba(251, 191, 36, 0.09)"/>
+            <!-- Zonos foninės sritys (dinamiškai atnaujinamos pagal 1–4 / 5–8 skirtuką) -->
+            <g id="campaign-zone-rects">
+              <rect x="0" y="0" width="250" height="520" fill="rgba(34, 197, 94, 0.08)"/>
+              <rect x="250" y="0" width="250" height="520" fill="rgba(56, 189, 248, 0.08)"/>
+              <rect x="500" y="0" width="250" height="520" fill="rgba(16, 185, 129, 0.08)"/>
+              <rect x="750" y="0" width="250" height="520" fill="rgba(244, 63, 94, 0.08)"/>
+            </g>
             <path id="campaign-road-shadow" fill="none" stroke="rgba(2, 6, 23, 0.65)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
             <path id="campaign-road-line" fill="none" stroke="url(#campRoadGrad)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="14 10"/>
           </svg>
@@ -371,7 +392,7 @@
         </div>
         <div class="ency-tabs">
           <button id="btn-ency-tab-towers" class="ency-tab-btn active" type="button">🏰 Bokšteliai (6)</button>
-          <button id="btn-ency-tab-enemies" class="ency-tab-btn" type="button">👾 Priešai ir Bosai (17)</button>
+          <button id="btn-ency-tab-enemies" class="ency-tab-btn" type="button">👾 Priešai ir Bosai (21)</button>
           <button id="btn-ency-tab-world" class="ency-tab-btn" type="button">🗺️ Žemėlapis ir bonusai</button>
         </div>
       </div>
@@ -405,6 +426,6 @@
     </div>
   </div>
 
-  <script type="module" src="./js/main.js?v=20261121q"></script>
+  <script type="module" src="./js/main.js?v=20261121r"></script>
 </body>
 </html>

@@ -5,14 +5,14 @@
 import {
   getTowerStats,
   getTargetingPriorityMeta
-} from './balance.js?v=20261121q';
+} from './balance.js?v=20261121r';
 import {
   drawEnemySprite,
   drawTowerBaseSprite,
   drawTowerTurretSprite,
   drawDroneUnitSprite,
   drawMowerUnitSprite
-} from './sprites.js?v=20261121q';
+} from './sprites.js?v=20261121r';
 
 const backdropCache = new Map();
 
@@ -146,6 +146,24 @@ const BONUS_ZONE_COPY = {
     goldDesc: 'Energijos perteklius! Pastatyk bokštelį šalia ir iškart gauk +18 🪙!',
     powerTitle: '⚡ Plazminis stiprintuvas',
     powerDesc: 'Aukšta įtampa! Šalia esantys bokšteliai šaudo +15% greičiau!'
+  },
+  6: {
+    goldTitle: '🫐 Spanguolyno lobio kupstas',
+    goldDesc: 'Mūšos tyrelio dovana! Pastatyk bokštelį šalia ir iškart gauk +18 🪙!',
+    powerTitle: '⚡ Pelkių žaltvykslės galia',
+    powerDesc: 'Samanų energija! Šalia esantys bokšteliai šaudo +15% greičiau!'
+  },
+  7: {
+    goldTitle: '💎 Klinčių kristalų gysla',
+    goldDesc: 'Karpėnų lobis! Pastatyk bokštelį šalia ir iškart gauk +18 🪙 premiją!',
+    powerTitle: '⚡ Kanjono rezonanso uola',
+    powerDesc: 'Aukštos terasos jėga! Šalia esantys bokšteliai šaudo +15% greičiau!'
+  },
+  8: {
+    goldTitle: '☀️ Kosminis kondensatorius',
+    goldDesc: 'Orbitinis energijos perteklius! Pastatyk bokštelį šalia ir gauk +18 🪙!',
+    powerTitle: '⚡ Plazminio tilto srovė',
+    powerDesc: 'Tiesioginė Saulės jėgainės galia! Šalia esantys bokšteliai šaudo +15% greičiau!'
   }
 };
 
@@ -901,6 +919,191 @@ function drawZone5FutureBase(ctx, map, pathSplines, w, h) {
   }
 }
 
+function drawZone6MusaSwamp(ctx, map, pathSplines, w, h) {
+  // 6 zona: Mūšos tyrelio pelkynas (samanos, tamsūs ežerėliai, spanguolių kupstai, pelkės pušys)
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#4d7c58');
+  grad.addColorStop(0.55, '#3b6447');
+  grad.addColorStop(1, '#2b4d38');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Samanų dėmės
+  for (let i = 0; i < 16; i += 1) {
+    const mx = ((i * 173 + 50) % (w - 80)) + 40;
+    const my = ((i * 109 + 40) % (h - 80)) + 40;
+    ctx.fillStyle = i % 2 === 0 ? 'rgba(134, 239, 172, 0.11)' : 'rgba(20, 83, 45, 0.22)';
+    ctx.beginPath();
+    ctx.ellipse(mx, my, 52 + (i % 3) * 14, 28 + (i % 2) * 12, i * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Tamsūs pelkės ežerėliai saugiose vietose
+  const lakes = [
+    { x: 165, y: 80, rx: 46, ry: 26 },
+    { x: 725, y: 78, rx: 48, ry: 26 },
+    { x: 455, y: 440, rx: 56, ry: 26 },
+    { x: 165, y: 425, rx: 44, ry: 24 }
+  ];
+  for (const lk of lakes) {
+    if (!isSpotClear(lk.x, lk.y, map, pathSplines, 44, 40, 48)) continue;
+    ctx.fillStyle = '#115e59';
+    ctx.strokeStyle = '#2dd4bf';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(lk.x, lk.y, lk.rx, lk.ry, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#0f3f3c';
+    ctx.beginPath();
+    ctx.ellipse(lk.x, lk.y + 2, lk.rx * 0.72, lk.ry * 0.65, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Spanguolių kupstai su raudonomis uogomis
+  for (let i = 0; i < 20; i += 1) {
+    const kx = ((i * 199 + 70) % (w - 110)) + 55;
+    const ky = ((i * 131 + 45) % (h - 90)) + 45;
+    if (!isSpotClear(kx, ky, map, pathSplines, 34, 30, 38)) continue;
+    drawGroundShadow(ctx, kx + 2, ky + 4, 15, 7, 0.22);
+    ctx.fillStyle = '#15803d';
+    ctx.beginPath();
+    ctx.ellipse(kx, ky, 15, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#4ade80';
+    ctx.beginPath();
+    ctx.ellipse(kx - 2, ky - 2, 10, 5.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(kx - 5, ky - 1, 2.3, 0, Math.PI * 2);
+    ctx.arc(kx + 3, ky - 3, 2.4, 0, Math.PI * 2);
+    ctx.arc(kx + 6, ky + 2, 2.1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawZone7KarpenaiQuarry(ctx, map, pathSplines, w, h) {
+  // 7 zona: Karpėnų klinčių karjeras (šviesios uolų terasos + ryškiai žydras karjero vanduo)
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#e2dcc8');
+  grad.addColorStop(0.55, '#d5ccb2');
+  grad.addColorStop(1, '#c2b596');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Klinčių uolų terasų pakopos fone
+  ctx.strokeStyle = 'rgba(120, 113, 108, 0.35)';
+  ctx.lineWidth = 3;
+  for (let ty = 34; ty < h - 20; ty += 108) {
+    ctx.fillStyle = 'rgba(248, 250, 252, 0.22)';
+    ctx.beginPath();
+    ctx.roundRect(18, ty, w - 36, 36, 12);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Ryškiai žydros karjero lagūnos saugiose vietose
+  const lagoons = [
+    { x: 455, y: 45, rx: 78, ry: 24 },
+    { x: 455, y: 455, rx: 78, ry: 24 },
+    { x: 145, y: 45, rx: 52, ry: 22 },
+    { x: 750, y: 455, rx: 56, ry: 22 }
+  ];
+  for (const lg of lagoons) {
+    if (!isSpotClear(lg.x, lg.y, map, pathSplines, 44, 38, 46)) continue;
+    ctx.fillStyle = '#06b6d4';
+    ctx.strokeStyle = '#bae6fd';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.ellipse(lg.x, lg.y, lg.rx, lg.ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#22d3ee';
+    ctx.beginPath();
+    ctx.ellipse(lg.x - 10, lg.y - 2, lg.rx * 0.62, lg.ry * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Balti klinčių akmenys
+  for (let i = 0; i < 16; i += 1) {
+    const sx = ((i * 191 + 48) % (w - 110)) + 55;
+    const sy = ((i * 117 + 42) % (h - 90)) + 45;
+    if (!isSpotClear(sx, sy, map, pathSplines, 34, 30, 38)) continue;
+    drawGroundShadow(ctx, sx + 2, sy + 5, 13, 6, 0.22);
+    ctx.fillStyle = '#f1f5f9';
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, 12, 8, i * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+}
+
+function drawZone8CosmicSolar(ctx, map, pathSplines, w, h) {
+  // 8 zona: Kosminė Saulės Jėgainė (gili kosminė platforma, milžiniškos baterijų eilės, energijos tiltai)
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, '#1e1b4b');
+  grad.addColorStop(0.55, '#0f1035');
+  grad.addColorStop(1, '#07061d');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Kosminės žvaigždutės tarp platformų
+  for (let i = 0; i < 36; i += 1) {
+    const sx = ((i * 197 + 25) % (w - 20)) + 10;
+    const sy = ((i * 113 + 17) % (h - 20)) + 10;
+    ctx.fillStyle = i % 3 === 0 ? 'rgba(250, 204, 21, 0.5)' : 'rgba(196, 181, 253, 0.45)';
+    ctx.beginPath();
+    ctx.arc(sx, sy, (i % 2) + 1.1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Orbitinės platformos tinklelis
+  for (let gx = 28; gx < w - 24; gx += 140) {
+    for (let gy = 22; gy < h - 22; gy += 114) {
+      ctx.fillStyle = 'rgba(30, 27, 75, 0.48)';
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.22)';
+      ctx.lineWidth = 1.4;
+      drawRoundedRectPath(ctx, gx, gy, 126, 98, 10);
+      ctx.fill();
+      ctx.stroke();
+    }
+  }
+
+  // Milžiniškos saulės baterijų eilės saugiose vietose
+  const arraySpots = [
+    { x: 145, y: 36 },
+    { x: 455, y: 36 },
+    { x: 755, y: 36 },
+    { x: 145, y: 464 },
+    { x: 455, y: 464 },
+    { x: 755, y: 464 }
+  ];
+  for (const s of arraySpots) {
+    if (!isSpotClear(s.x, s.y, map, pathSplines, 36, 32, 42)) continue;
+    ctx.fillStyle = '#1d4ed8';
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 1.8;
+    drawRoundedRectPath(ctx, s.x - 42, s.y - 12, 84, 24, 5);
+    ctx.fill();
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(147, 197, 253, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let ox = -22; ox <= 22; ox += 22) {
+      ctx.moveTo(s.x + ox, s.y - 11);
+      ctx.lineTo(s.x + ox, s.y + 11);
+    }
+    ctx.moveTo(s.x - 41, s.y);
+    ctx.lineTo(s.x + 41, s.y);
+    ctx.stroke();
+  }
+}
+
 function drawStaticRoads(ctx, engine) {
   const { map, pathSplines } = engine;
   const theme = map.theme || 'courtyard_greenhouse';
@@ -910,7 +1113,10 @@ function drawStaticRoads(ctx, engine) {
     mound_pond: { shadow: 'rgba(15, 23, 42, 0.24)', border: '#876037', fill: '#dfc08b', sheen: '#ead2a7' },
     kurtuvenai_forest: { shadow: 'rgba(2, 6, 23, 0.34)', border: '#543c24', fill: '#9f7c55', sheen: '#b39068' },
     dagilelis_music: { shadow: 'rgba(30, 41, 59, 0.22)', border: '#475569', fill: '#cbd5e1', sheen: '#e2e8f0' },
-    solar_future_base: { shadow: 'rgba(2, 6, 23, 0.52)', border: '#0f172a', fill: '#334155', sheen: '#475569' }
+    solar_future_base: { shadow: 'rgba(2, 6, 23, 0.52)', border: '#0f172a', fill: '#334155', sheen: '#475569' },
+    musa_swamp: { shadow: 'rgba(2, 6, 23, 0.42)', border: '#3f2412', fill: '#8a5a36', sheen: '#a16c43' },
+    karpenai_quarry: { shadow: 'rgba(15, 23, 42, 0.28)', border: '#64748b', fill: '#f1f5f9', sheen: '#ffffff' },
+    cosmic_solar_plant: { shadow: 'rgba(2, 6, 23, 0.62)', border: '#4c1d95', fill: '#312e81', sheen: '#4338ca' }
   };
   const pal = palettes[theme] || palettes.courtyard_greenhouse;
 
@@ -1015,6 +1221,39 @@ function drawStaticRoads(ctx, engine) {
         ctx.strokeRect(-4, -14, 8, 28);
         ctx.restore();
       }
+    } else if (theme === 'musa_swamp') {
+      // Mūšos tyrelio medinių lentų pažintinis takas su kuolais
+      for (let d = 16; d < spline.totalLength - 16; d += 11) {
+        const pt = sampleSplinePoint(spline, d);
+        ctx.save();
+        ctx.translate(pt.x, pt.y);
+        ctx.rotate(pt.angle);
+        if (Math.round(d) % 33 < 11) {
+          ctx.fillStyle = '#452712';
+          ctx.beginPath();
+          ctx.arc(0, -19, 3.3, 0, Math.PI * 2);
+          ctx.arc(0, 19, 3.3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = Math.round(d) % 22 === 0 ? '#9c683f' : '#855530';
+        ctx.strokeStyle = '#3b210d';
+        ctx.lineWidth = 1.1;
+        ctx.fillRect(-4, -16, 8, 32);
+        ctx.strokeRect(-4, -16, 8, 32);
+        ctx.restore();
+      }
+    } else if (theme === 'karpenai_quarry') {
+      // Klinčių skalda kelio pakraščiuose
+      for (let d = 18; d < spline.totalLength - 18; d += 24) {
+        const pt = sampleSplinePoint(spline, d);
+        const side = ((Math.round(d) % 2) === 0 ? 1 : -1) * 11;
+        const px = pt.x + Math.cos(pt.angle + Math.PI / 2) * side;
+        const py = pt.y + Math.sin(pt.angle + Math.PI / 2) * side;
+        ctx.fillStyle = 'rgba(100, 116, 139, 0.42)';
+        ctx.beginPath();
+        ctx.ellipse(px, py, 3.5, 2.2, pt.angle, 0, Math.PI * 2);
+        ctx.fill();
+      }
     } else if (theme === 'dagilelis_music') {
       // Subtilūs pianino klavišai kelio pakraščiuose ir penklinė viduryje
       for (let d = 16; d < spline.totalLength - 16; d += 14) {
@@ -1034,12 +1273,12 @@ function drawStaticRoads(ctx, engine) {
       tracePath();
       ctx.stroke();
       ctx.restore();
-    } else if (theme === 'solar_future_base') {
+    } else if (theme === 'solar_future_base' || theme === 'cosmic_solar_plant') {
       ctx.save();
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 10;
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.65)';
-      ctx.lineWidth = 2.6;
+      ctx.shadowColor = theme === 'cosmic_solar_plant' ? '#c084fc' : '#38bdf8';
+      ctx.shadowBlur = 11;
+      ctx.strokeStyle = theme === 'cosmic_solar_plant' ? 'rgba(192, 132, 252, 0.72)' : 'rgba(56, 189, 248, 0.65)';
+      ctx.lineWidth = 2.8;
       tracePath();
       ctx.stroke();
       ctx.restore();
@@ -1059,6 +1298,12 @@ function renderStaticBackdrop(ctx, engine, w, h) {
     drawZone3Forest(ctx, map, pathSplines, w, h);
   } else if (theme === 'dagilelis_music') {
     drawZone4MusicPlaza(ctx, map, pathSplines, w, h);
+  } else if (theme === 'musa_swamp') {
+    drawZone6MusaSwamp(ctx, map, pathSplines, w, h);
+  } else if (theme === 'karpenai_quarry') {
+    drawZone7KarpenaiQuarry(ctx, map, pathSplines, w, h);
+  } else if (theme === 'cosmic_solar_plant') {
+    drawZone8CosmicSolar(ctx, map, pathSplines, w, h);
   } else {
     drawZone5FutureBase(ctx, map, pathSplines, w, h);
   }
@@ -1093,8 +1338,8 @@ function renderLiveAmbientLayer(ctx, engine, w, h, animClock) {
   const theme = engine.map.theme || 'courtyard_greenhouse';
   ctx.save();
 
-  // Lengvai plaukiantys debesėlių šešėliai (1–4 dienos zonose)
-  if (theme !== 'solar_future_base') {
+  // Lengvai plaukiantys debesėlių šešėliai (dienos zonose)
+  if (theme !== 'solar_future_base' && theme !== 'cosmic_solar_plant') {
     for (let c = 0; c < 2; c += 1) {
       const cx = ((animClock * 16 + c * 460) % (w + 260)) - 130;
       const cy = 135 + c * 210;
@@ -1152,6 +1397,34 @@ function renderLiveAmbientLayer(ctx, engine, w, h, animClock) {
       ctx.fill();
       ctx.restore();
     }
+  } else if (theme === 'musa_swamp') {
+    // Kylantis pelkės rūkas ir švytinčios žaltvykslės
+    for (let m = 0; m < 4; m += 1) {
+      const mx = ((animClock * 14 + m * 240) % (w + 220)) - 110;
+      const my = 90 + m * 95 + Math.sin(animClock * 0.7 + m) * 14;
+      ctx.fillStyle = 'rgba(204, 251, 241, 0.12)';
+      ctx.beginPath();
+      ctx.ellipse(mx, my, 110, 32, 0.08, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    for (let f = 0; f < 9; f += 1) {
+      const fx = ((f * 107 + Math.sin(animClock + f) * 32) % (w - 30)) + 15;
+      const fy = ((f * 61 + animClock * 10) % (h - 30)) + 15;
+      ctx.fillStyle = `rgba(94, 234, 212, ${0.35 + 0.3 * Math.sin(animClock * 3 + f)})`;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (theme === 'karpenai_quarry') {
+    // Saulės atspindžiai karjere
+    for (let i = 0; i < 8; i += 1) {
+      const qx = ((i * 119 + animClock * 16) % (w - 30)) + 15;
+      const qy = ((i * 67 + Math.sin(animClock * 1.2 + i) * 14) % (h - 30)) + 15;
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.25 + 0.2 * Math.sin(animClock * 2.8 + i)})`;
+      ctx.beginPath();
+      ctx.arc(qx, qy, 2.1, 0, Math.PI * 2);
+      ctx.fill();
+    }
   } else if (theme === 'dagilelis_music') {
     // Plaukiančios muzikinės natos virš aikštės
     const noteChars = ['♪', '♫', '♬'];
@@ -1163,10 +1436,10 @@ function renderLiveAmbientLayer(ctx, engine, w, h, animClock) {
       ctx.textAlign = 'center';
       ctx.fillText(noteChars[n % noteChars.length], nx, ny);
     }
-  } else if (theme === 'solar_future_base') {
+  } else if (theme === 'solar_future_base' || theme === 'cosmic_solar_plant') {
     // Tekančios energijos linijos ant neoninių kelių
     ctx.save();
-    ctx.strokeStyle = 'rgba(251, 191, 36, 0.78)';
+    ctx.strokeStyle = theme === 'cosmic_solar_plant' ? 'rgba(250, 204, 21, 0.85)' : 'rgba(251, 191, 36, 0.78)';
     ctx.lineWidth = 2.2;
     ctx.setLineDash([18, 28]);
     ctx.lineDashOffset = -animClock * 52;
@@ -1187,7 +1460,7 @@ function renderLiveAmbientLayer(ctx, engine, w, h, animClock) {
 
 function renderEntranceGates25D(ctx, engine, animClock) {
   const theme = engine.map.theme || 'courtyard_greenhouse';
-  const isSciFi = theme === 'solar_future_base';
+  const isSciFi = theme === 'solar_future_base' || theme === 'cosmic_solar_plant';
 
   for (const spline of engine.pathSplines) {
     const entry = spline.points?.[0];
@@ -1269,10 +1542,10 @@ function renderFortress25D(ctx, engine, animClock) {
       ctx.stroke();
     }
 
-    if (theme === 'solar_future_base') {
-      // 5 zonos futuristinis Saulės Bokšto komandos centras
+    if (theme === 'solar_future_base' || theme === 'cosmic_solar_plant') {
+      // 5 ir 8 zonos futuristinis Saulės Bokšto komandos centras
       ctx.fillStyle = '#1e293b';
-      ctx.strokeStyle = '#38bdf8';
+      ctx.strokeStyle = theme === 'cosmic_solar_plant' ? '#c084fc' : '#38bdf8';
       ctx.lineWidth = 2.6;
       drawRoundedRectPath(ctx, -24, -22, 48, 44, 12);
       ctx.fill();
@@ -1364,7 +1637,7 @@ function renderFortress25D(ctx, engine, animClock) {
 
 function renderBuildPads25D(ctx, engine, animClock) {
   const theme = engine.map.theme || 'courtyard_greenhouse';
-  const isSciFi = theme === 'solar_future_base';
+  const isSciFi = theme === 'solar_future_base' || theme === 'cosmic_solar_plant';
 
   engine.map.pads.forEach((pad, idx) => {
     if (engine.getTowerAtPad(idx)) return;

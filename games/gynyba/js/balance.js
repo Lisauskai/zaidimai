@@ -8,18 +8,19 @@ export {
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121q';
+} from './towers.js?v=20261121r';
 
 export {
   ENEMY_ARCHETYPES,
   ENEMY_LIST,
   ZONE_BOSSES,
+  ZONE_CO_BOSSES,
   BOSS_LIST,
   getZoneBoss,
   createEnemyInstanceData,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './enemies.js?v=20261121q';
+} from './enemies.js?v=20261121r';
 
 export {
   CAMPAIGN_ZONES,
@@ -27,7 +28,7 @@ export {
   MAP_DEFINITIONS,
   getLevelById,
   renderMapThemeDecorations
-} from './maps.js?v=20261121q';
+} from './maps.js?v=20261121r';
 
 export {
   buildTaskReviewSummary,
@@ -35,9 +36,11 @@ export {
   EduTaskGenerator,
   eduTaskGenerator,
   renderTaskVisual
-} from './edu_tasks.js?v=20261121q';
+} from './edu_tasks.js?v=20261121r';
 
 export const STARTING_HEARTS = 20;
+export const VETERAN_HEARTS = 10;
+export const VETERAN_ENEMY_HP_MULTIPLIER = 1.35;
 export const SELL_REFUND_RATE = 0.75; // 75% investuotų monetų grąžinimas
 export const INTER_WAVE_COOLDOWN_SECONDS = 14;
 export const MAX_WAVES_PER_MAP = 10;
@@ -48,46 +51,64 @@ export const STAR_TECH_CATALOG = [
     id: 'solar_efficiency',
     name: 'Saulės efektyvumas',
     icon: '☀️',
-    maxRank: 2,
-    costs: [2, 3],
-    desc: '+10% / +20% pradinio aukso kiekvieno lygio pradžioje',
-    rankLabels: ['+10% pradinio aukso', '+20% pradinio aukso']
+    maxRank: 3,
+    costs: [2, 3, 5],
+    desc: '+10% / +20% / +30% pradinio aukso kiekvieno lygio pradžioje',
+    rankLabels: ['+10% pradinio aukso', '+20% pradinio aukso', '+30% pradinio aukso']
   },
   {
     id: 'sturdy_barracks',
     name: 'Tvirtesni barakai',
     icon: '🤖',
-    maxRank: 1,
-    costs: [2],
-    desc: '+25% robotų-vejapjovių gyvybių (HP)',
-    rankLabels: ['+25% robotų gyvybių']
+    maxRank: 3,
+    costs: [2, 4, 6],
+    desc: '+25% / +45% / +65% robotų-vejapjovių gyvybių (HP)',
+    rankLabels: ['+25% robotų gyvybių', '+45% robotų gyvybių', '+65% robotų gyvybių']
   },
   {
     id: 'better_acoustics',
     name: 'Geresnė akustika',
     icon: '🎵',
-    maxRank: 1,
-    costs: [2],
-    desc: '+15% „Dagilėlio“ garso bokšto nuotolio',
-    rankLabels: ['+15% „Dagilėlio“ nuotolio']
+    maxRank: 3,
+    costs: [2, 4, 6],
+    desc: '+15% / +25% / +35% „Dagilėlio“ garso bokšto nuotolio',
+    rankLabels: ['+15% „Dagilėlio“ nuotolio', '+25% „Dagilėlio“ nuotolio', '+35% „Dagilėlio“ nuotolio']
   },
   {
     id: 'drone_turbine',
     name: 'Dronų turbina',
     icon: '🚁',
-    maxRank: 1,
-    costs: [2],
-    desc: '+20% dronų skridimo ir šaudymo greičio',
-    rankLabels: ['+20% dronų greičio']
+    maxRank: 3,
+    costs: [2, 4, 6],
+    desc: '+20% / +35% / +50% dronų skridimo ir šaudymo greičio',
+    rankLabels: ['+20% dronų greičio', '+35% dronų greičio', '+50% dronų greičio']
   },
   {
     id: 'emergency_battery',
     name: 'Avarinė baterija',
     icon: '❤️',
-    maxRank: 1,
-    costs: [3],
-    desc: '+5 papildomos širdelės kiekviename lygyje (iš viso 25 ❤️)',
-    rankLabels: ['+5 širdelės pradžioje']
+    maxRank: 2,
+    costs: [3, 6],
+    desc: '+5 / +10 papildomų širdelių įprastu režimu (iki 30 ❤️)',
+    rankLabels: ['+5 širdelės pradžioje', '+10 širdelių pradžioje']
+  },
+  {
+    id: 'laser_overclock',
+    name: 'Lazerio lęšiai',
+    icon: '🔆',
+    maxRank: 3,
+    costs: [4, 6, 8],
+    desc: '+10% / +20% / +30% Saulės Lazerio daromos žalos prieš šarvus ir bosus',
+    rankLabels: ['+10% Lazerio žalos', '+20% Lazerio žalos', '+30% Lazerio žalos']
+  },
+  {
+    id: 'catapult_payload',
+    name: 'Sunkios šilauogės',
+    icon: '🫐',
+    maxRank: 3,
+    costs: [4, 6, 8],
+    desc: '+10% / +20% / +30% Šilauogių Katapultos sprogimo žalos',
+    rankLabels: ['+10% Katapultos žalos', '+20% Katapultos žalos', '+30% Katapultos žalos']
   }
 ];
 
@@ -128,12 +149,17 @@ export function computeAvailableTechStars(totalStars, techTree) {
 
 export function getTechModifiers(techTree) {
   const norm = normalizeTechTree(techTree);
+  const mowerBonuses = [0, 0.25, 0.45, 0.65];
+  const acousticBonuses = [0, 0.15, 0.25, 0.35];
+  const droneBonuses = [0, 0.20, 0.35, 0.50];
   return {
     startingCoinsBonusPct: norm.solar_efficiency * 0.1,
-    mowerHpMultiplier: 1 + (norm.sturdy_barracks > 0 ? 0.25 : 0),
-    dagilelisRangeMultiplier: 1 + (norm.better_acoustics > 0 ? 0.15 : 0),
-    droneSpeedMultiplier: 1 + (norm.drone_turbine > 0 ? 0.2 : 0),
-    bonusHearts: norm.emergency_battery > 0 ? 5 : 0
+    mowerHpMultiplier: 1 + (mowerBonuses[norm.sturdy_barracks] || 0),
+    dagilelisRangeMultiplier: 1 + (acousticBonuses[norm.better_acoustics] || 0),
+    droneSpeedMultiplier: 1 + (droneBonuses[norm.drone_turbine] || 0),
+    bonusHearts: norm.emergency_battery * 5,
+    laserDamageMultiplier: 1 + norm.laser_overclock * 0.1,
+    catapultDamageMultiplier: 1 + norm.catapult_payload * 0.1
   };
 }
 
@@ -164,7 +190,8 @@ export function getStartingCoins(baseCoins, profileId, techTree = null) {
   return Math.round((Number(baseCoins) || 200) * mod.startingCoinsMultiplier * (1 + tech.startingCoinsBonusPct));
 }
 
-export function getStartingHearts(techTree = null) {
+export function getStartingHearts(techTree = null, veteranMode = false) {
+  if (veteranMode) return VETERAN_HEARTS;
   const tech = getTechModifiers(techTree);
   return STARTING_HEARTS + tech.bonusHearts;
 }
@@ -173,7 +200,7 @@ export function getScaledEnemyHp(baseHp, waveNumber, profileId) {
   const mod = getProfileModifier(profileId);
   const w = Math.max(1, Number(waveNumber) || 1);
   // Progresyvi Kingdom Rush / BTD6 HP kreivė pagal bangos numerį
-  const waveScale = 1 + (w - 1) * 0.32 + Math.pow(Math.max(0, w - 3), 1.42) * 0.095;
+  const waveScale = 1 + (w - 1) * 0.24 + Math.pow(Math.max(0, w - 3), 1.22) * 0.055;
   return Math.max(10, Math.round(baseHp * waveScale * mod.enemyHpMultiplier));
 }
 
