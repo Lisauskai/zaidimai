@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261121e" />
+  <link rel="stylesheet" href="./style.css?v=20261121f" />
 </head>
 <body>
   <div class="td-bg-glow" aria-hidden="true"></div>
@@ -251,6 +251,9 @@
               <button id="btn-upgrade-tower" class="insp-btn insp-upgrade" type="button">
                 ⬆️ Tobulinti (65 🪙)
               </button>
+              <button id="btn-smart-upgrade" class="insp-btn insp-smart hidden" type="button">
+                🧠 Nemokamas patobulinimas (1 uždavinys)
+              </button>
               <button id="btn-sell-tower" class="insp-btn insp-sell" type="button">
                 💰 Parduoti (+53 🪙)
               </button>
@@ -291,21 +294,31 @@
     </section>
   </main>
 
-  <!-- ==================== ŽINIŲ VARTŲ MODALAS (ATRAKINTI KITAM LYGIUI) ==================== -->
+  <!-- ==================== ŽINIŲ VARTŲ / PROTINGO PATOBULINIMO MODALAS ==================== -->
   <div id="knowledge-gate-modal" class="knowledge-gate-modal hidden" role="dialog" aria-modal="true" aria-labelledby="kg-title">
     <div class="knowledge-gate-card glass-panel">
       <div class="floating-menu-head">
         <span id="kg-badge" class="kg-badge">🔐 ŽINIŲ VARTAI</span>
         <button id="btn-close-kg" class="menu-close-x" type="button" aria-label="Uždaryti">✕</button>
       </div>
+      <div class="kg-status-row">
+        <span id="kg-category-badge" class="kg-pill kg-cat-pill">🕒 Laikrodis</span>
+        <span id="kg-remaining-pill" class="kg-pill kg-rem-pill">Liko: 3 užd.</span>
+        <span id="kg-mistakes-pill" class="kg-pill kg-err-pill hidden">Klaidos: 0</span>
+      </div>
       <h3 id="kg-title">Atrakink naują lygį!</h3>
       <p id="kg-subtitle" class="kg-subtitle">Išspręsk užduotį, kad atvertum kelią į priekį:</p>
+      <div class="kg-visual-wrap">
+        <canvas id="kg-visual-canvas" width="320" height="148" aria-label="Užduoties iliustracija"></canvas>
+      </div>
       <div id="kg-question" class="kg-question">8 + 7 = ?</div>
+      <div id="kg-penalty-banner" class="kg-penalty-banner hidden"></div>
       <div id="kg-options" class="kg-options"></div>
+      <div id="kg-explanation-box" class="kg-explanation-box hidden"></div>
       <div id="kg-feedback" class="kg-feedback hidden"></div>
     </div>
   </div>
 
-  <script type="module" src="./js/main.js?v=20261121e"></script>
+  <script type="module" src="./js/main.js?v=20261121f"></script>
 </body>
 </html>

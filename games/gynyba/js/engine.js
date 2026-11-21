@@ -17,14 +17,14 @@ import {
   generateWaveSpawns,
   getWavePreviewInfo,
   renderMapThemeDecorations
-} from './balance.js?v=20261121e';
+} from './balance.js?v=20261121f';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121e';
+} from './towers.js?v=20261121f';
 
 let nextEnemyUid = 1;
 
@@ -168,6 +168,7 @@ export class TDEngine {
     this.placingRallyPadIndex = null;
     this.nextWavePreview = null;
     this.pinnedWavePreview = false;
+    this.smartUpgradeUsedInWave = false;
     this.gameResult = null;
     this.animClock = 0;
     this.lastUiSyncTime = 0;
@@ -214,6 +215,7 @@ export class TDEngine {
     this.previewTowerType = 'solar_laser';
     this.placingRallyPadIndex = null;
     this.pinnedWavePreview = false;
+    this.smartUpgradeUsedInWave = false;
     this.manualPaused = false;
     this.gameResult = null;
 
@@ -517,6 +519,33 @@ export class TDEngine {
     return true;
   }
 
+  canUseSmartUpgrade(padIndex) {
+    if (this.gameResult || this.externalLocked || this.smartUpgradeUsedInWave) return false;
+    const tower = this.getTowerAtPad(padIndex);
+    return Boolean(tower && tower.level < 3);
+  }
+
+  consumeSmartUpgradeAttempt() {
+    this.smartUpgradeUsedInWave = true;
+    this.notifySelectionChange();
+    this.notifyStateChange();
+  }
+
+  applyFreeSmartUpgrade(padIndex) {
+    if (this.gameResult || this.externalLocked) return false;
+    const tower = this.getTowerAtPad(padIndex);
+    if (!tower || tower.level >= 3) return false;
+
+    tower.level += 1;
+    // Nemokamas patobulinimas nepadidina totalInvested, kad pardavimas (75%) nebūtų išnaudojamas
+    this.initTowerSubEntities(tower);
+    this.recomputeTowerAuras();
+    this.addFloatingText(tower.x, tower.y - 30, `🧠 Nemokamas Lygis ${tower.level}!`, '#38bdf8');
+    this.notifySelectionChange();
+    this.notifyStateChange();
+    return true;
+  }
+
   evolveTower(padIndex, evolutionId) {
     if (this.gameResult || this.externalLocked) return false;
     const tower = this.getTowerAtPad(padIndex);
@@ -603,6 +632,7 @@ export class TDEngine {
     this.waveActive = true;
     this.interWaveTimer = 0;
     this.pinnedWavePreview = false;
+    this.smartUpgradeUsedInWave = false;
     if (typeof this.callbacks.onWavePreviewChange === 'function') {
       this.callbacks.onWavePreviewChange(null, null, false);
     }

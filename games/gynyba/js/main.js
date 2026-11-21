@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121e';
+} from '../../../shared/playtime-timer.js?v=20261121f';
 import {
   TOWER_LIST,
   TARGETING_PRIORITIES,
@@ -15,9 +15,12 @@ import {
   getTowerEvolutions,
   computeSellRefund,
   calculateStarsForHearts,
-  getProfileModifier
-} from './balance.js?v=20261121e';
-import { TDEngine } from './engine.js?v=20261121e';
+  getProfileModifier,
+  createKnowledgeGateSession,
+  eduTaskGenerator,
+  renderTaskVisual
+} from './balance.js?v=20261121f';
+import { TDEngine } from './engine.js?v=20261121f';
 
 const SAVE_KEY = 'gynyba_save_v1';
 
@@ -105,10 +108,18 @@ const campaignTotalStars = document.getElementById('campaign-total-stars');
 const campaignUnlockedCount = document.getElementById('campaign-unlocked-count');
 
 const knowledgeGateModal = document.getElementById('knowledge-gate-modal');
+const kgBadgeEl = document.getElementById('kg-badge');
+const kgCategoryBadgeEl = document.getElementById('kg-category-badge');
+const kgRemainingPillEl = document.getElementById('kg-remaining-pill');
+const kgMistakesPillEl = document.getElementById('kg-mistakes-pill');
+const kgVisualCanvas = document.getElementById('kg-visual-canvas');
 const kgQuestionEl = document.getElementById('kg-question');
+const kgPenaltyBannerEl = document.getElementById('kg-penalty-banner');
 const kgOptionsEl = document.getElementById('kg-options');
+const kgExplanationBoxEl = document.getElementById('kg-explanation-box');
 const kgFeedbackEl = document.getElementById('kg-feedback');
 const kgTitleEl = document.getElementById('kg-title');
+const kgSubtitleEl = document.getElementById('kg-subtitle');
 const btnResultNextLevel = document.getElementById('btn-result-next-level');
 
 const canvasFrame = document.getElementById('canvas-frame');
@@ -131,12 +142,16 @@ const btnCallWave = document.getElementById('btn-call-wave');
 const uiCallWaveLabel = document.getElementById('ui-call-wave-label');
 const uiEarlyWaveBonus = document.getElementById('ui-early-wave-bonus');
 const btnUpgradeTower = document.getElementById('btn-upgrade-tower');
+const btnSmartUpgrade = document.getElementById('btn-smart-upgrade');
 const btnSellTower = document.getElementById('btn-sell-tower');
 
 let saveData = loadSaveData();
 let activeProfile = null;
 let lastFrameTimestamp = 0;
 let pendingGateLevelId = null;
+let gateStepTimeoutId = null;
+let victoryGateTimeoutId = null;
+let smartUpgradeRestorePause = null;
 
 const engine = new TDEngine(canvas, {
   onStateChange: () => syncBattleUI(),
@@ -330,6 +345,22 @@ function formatTowerStatsLine(tower, stats) {
   return parts.join(' • ');
 }
 
+function syncSmartUpgradeButton(tower) {
+  if (!btnSmartUpgrade) return;
+  if (!tower || tower.level >= 3) {
+    btnSmartUpgrade.classList.add('hidden');
+    return;
+  }
+  btnSmartUpgrade.classList.remove('hidden');
+  if (!engine.smartUpgradeUsedInWave) {
+    btnSmartUpgrade.disabled = false;
+    btnSmartUpgrade.textContent = '🧠 Nemokamas patobulinimas (1 užd.)';
+  } else {
+    btnSmartUpgrade.disabled = true;
+    btnSmartUpgrade.textContent = '🧠 Išnaudota šią bangą';
+  }
+}
+
 function renderTowerInspectorMenu(pad, tower) {
   if (!towerInspectorMenu || !inspectorPriorityGrid) return;
   const stats = getTowerStats(tower.type, tower.level, tower.evolutionId);
@@ -405,6 +436,8 @@ function renderTowerInspectorMenu(pad, tower) {
       btnUpgradeTower.disabled = engine.coins < upgradeCost;
     }
   }
+
+  syncSmartUpgradeButton(tower);
 
   if (btnSellTower) {
     const refund = computeSellRefund(tower.totalInvested);
@@ -497,6 +530,7 @@ function syncBattleUI() {
       const upCost = getUpgradeCost(t.type, t.level);
       btnUpgradeTower.disabled = t.level >= 3 || upCost === null || engine.coins < upCost;
     }
+    syncSmartUpgradeButton(t);
     if (inspectorEvolutionsGrid && !inspectorEvolutionsBox?.classList.contains('hidden')) {
       inspectorEvolutionsGrid.querySelectorAll('.evo-btn').forEach((evoBtn) => {
         const c = Number(evoBtn.dataset.cost) || 0;
@@ -513,8 +547,25 @@ function syncBattleUI() {
   }
 }
 
+function clearEduModalTimers(restorePause = true) {
+  if (gateStepTimeoutId) {
+    clearTimeout(gateStepTimeoutId);
+    gateStepTimeoutId = null;
+  }
+  if (victoryGateTimeoutId) {
+    clearTimeout(victoryGateTimeoutId);
+    victoryGateTimeoutId = null;
+  }
+  if (restorePause && smartUpgradeRestorePause !== null) {
+    engine.setPaused(smartUpgradeRestorePause);
+    smartUpgradeRestorePause = null;
+  }
+}
+
 function handleGameResult(result) {
   if (!result || !resultOverlay) return;
+  clearEduModalTimers(true);
+  knowledgeGateModal?.classList.add('hidden');
   closePadMenus();
 
   const iconEl = document.getElementById('result-icon');
@@ -550,6 +601,14 @@ function handleGameResult(result) {
         : `🔐 Žinių Vartai: Lygis ${nextLvl.levelNumber} →`;
       btnResultNextLevel.dataset.nextLevelId = nextLvl.id;
       btnResultNextLevel.classList.remove('hidden');
+
+      if (!nextUnlocked) {
+        victoryGateTimeoutId = setTimeout(() => {
+          victoryGateTimeoutId = null;
+          if (!activeProfile || !isInBattleView() || resultOverlay?.classList.contains('hidden')) return;
+          openKnowledgeGateModal(nextLvl.id, { autoEnter: false });
+        }, 2000);
+      }
     } else {
       btnResultNextLevel?.classList.add('hidden');
     }
@@ -566,106 +625,202 @@ function handleGameResult(result) {
   resultOverlay.classList.remove('hidden');
 }
 
-function generateKnowledgeQuestion(profileId) {
-  let a;
-  let b;
-  let answer;
-  let promptText;
+function renderTaskPromptAndOptions(task, onPick) {
+  if (kgCategoryBadgeEl) kgCategoryBadgeEl.textContent = task.categoryLabel || '🧠 Užduotis';
+  if (kgQuestionEl) kgQuestionEl.textContent = task.prompt;
+  if (kgVisualCanvas) renderTaskVisual(kgVisualCanvas, task);
 
-  if (profileId === 'linas') {
-    // 1 klasė: sudėtis ir atimtis iki 20
-    const isAdd = Math.random() < 0.6;
-    if (isAdd) {
-      a = 3 + Math.floor(Math.random() * 10);
-      b = 2 + Math.floor(Math.random() * (20 - a));
-      answer = a + b;
-      promptText = `${a} + ${b} = ?`;
-    } else {
-      a = 8 + Math.floor(Math.random() * 12);
-      b = 2 + Math.floor(Math.random() * (a - 2));
-      answer = a - b;
-      promptText = `${a} - ${b} = ?`;
-    }
-  } else {
-    // 3 klasė: daugyba, dalyba arba dviaukštė sudėtis
-    const mode = Math.floor(Math.random() * 3);
-    if (mode === 0) {
-      a = 3 + Math.floor(Math.random() * 7);
-      b = 3 + Math.floor(Math.random() * 7);
-      answer = a * b;
-      promptText = `${a} × ${b} = ?`;
-    } else if (mode === 1) {
-      b = 3 + Math.floor(Math.random() * 7);
-      answer = 3 + Math.floor(Math.random() * 8);
-      a = b * answer;
-      promptText = `${a} ÷ ${b} = ?`;
-    } else {
-      a = 24 + Math.floor(Math.random() * 45);
-      b = 12 + Math.floor(Math.random() * 29);
-      answer = a + b;
-      promptText = `${a} + ${b} = ?`;
-    }
-  }
+  kgPenaltyBannerEl?.classList.add('hidden');
+  kgExplanationBoxEl?.classList.add('hidden');
+  kgFeedbackEl?.classList.add('hidden');
 
-  const optionsSet = new Set([answer]);
-  while (optionsSet.size < 4) {
-    const delta = (Math.floor(Math.random() * 7) - 3) || 4;
-    const candidate = Math.max(1, answer + delta);
-    optionsSet.add(candidate);
-  }
-  const options = Array.from(optionsSet).sort(() => Math.random() - 0.5);
-  return { promptText, answer, options };
+  if (!kgOptionsEl) return;
+  kgOptionsEl.innerHTML = '';
+  kgOptionsEl.classList.toggle('kg-options-three', task.options.length === 3);
+
+  let answered = false;
+  task.options.forEach((opt) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'kg-opt-btn';
+    btn.textContent = String(opt);
+    btn.addEventListener('click', () => {
+      if (answered) return;
+      answered = true;
+      const isCorrect = opt === task.correctAnswer;
+      kgOptionsEl.querySelectorAll('.kg-opt-btn').forEach((b) => {
+        b.disabled = true;
+        if (b.textContent === String(task.correctAnswer)) {
+          b.classList.add('kg-opt-correct');
+        }
+      });
+      if (!isCorrect) {
+        btn.classList.add('kg-opt-wrong');
+      }
+      onPick(isCorrect);
+    });
+    kgOptionsEl.appendChild(btn);
+  });
 }
 
-function openKnowledgeGateModal(targetLevelId) {
+function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
   if (!knowledgeGateModal || !activeProfile) return;
+  clearEduModalTimers(true);
   const targetLvl = getLevelById(targetLevelId);
   pendingGateLevelId = targetLvl.id;
+  const session = createKnowledgeGateSession(3);
 
+  if (kgBadgeEl) kgBadgeEl.textContent = '🔐 ŽINIŲ VARTAI';
   if (kgTitleEl) {
     kgTitleEl.textContent = `Atrakink ${targetLvl.levelNumber} lygį: ${targetLvl.title.replace(/^\d+\.\s*/, '')}`;
   }
-  if (kgFeedbackEl) {
-    kgFeedbackEl.classList.add('hidden');
-    kgFeedbackEl.textContent = '';
+  if (kgSubtitleEl) {
+    kgSubtitleEl.textContent = 'Išspręsk 3 užduotis! Kiekviena klaida prideda vis daugiau papildomų uždavinių.';
   }
 
-  const renderRound = () => {
-    const q = generateKnowledgeQuestion(activeProfile);
-    if (kgQuestionEl) kgQuestionEl.textContent = q.promptText;
-    if (!kgOptionsEl) return;
-    kgOptionsEl.innerHTML = '';
+  const syncGateCounters = () => {
+    if (kgRemainingPillEl) {
+      kgRemainingPillEl.textContent = `Liko: ${session.remaining} užd.`;
+    }
+    if (kgMistakesPillEl) {
+      if (session.mistakes > 0) {
+        kgMistakesPillEl.textContent = `Klaidos: ${session.mistakes}`;
+        kgMistakesPillEl.classList.remove('hidden');
+      } else {
+        kgMistakesPillEl.classList.add('hidden');
+      }
+    }
+  };
 
-    q.options.forEach((opt) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'kg-opt-btn';
-      btn.textContent = String(opt);
-      btn.addEventListener('click', () => {
-        if (opt === q.answer) {
+  const renderRound = () => {
+    syncGateCounters();
+    const task = eduTaskGenerator.generateTask(activeProfile);
+    renderTaskPromptAndOptions(task, (isCorrect) => {
+      const outcome = session.submitAnswer(isCorrect);
+      syncGateCounters();
+
+      if (outcome.isCorrect) {
+        if (outcome.complete) {
           const bucket = saveData[activeProfile];
           if (!bucket.unlockedLevels.includes(pendingGateLevelId)) {
             bucket.unlockedLevels.push(pendingGateLevelId);
             persistSaveData(saveData);
           }
-          knowledgeGateModal.classList.add('hidden');
-          const lvlToStart = pendingGateLevelId;
-          pendingGateLevelId = null;
-          renderCampaignMap();
-          enterBattleLevel(lvlToStart);
-        } else {
+          if (btnResultNextLevel && btnResultNextLevel.dataset.nextLevelId === pendingGateLevelId) {
+            btnResultNextLevel.textContent = `▶️ Kitas lygis (${targetLvl.levelNumber}) →`;
+          }
           if (kgFeedbackEl) {
-            kgFeedbackEl.textContent = '❌ Beveik! Pamėgink kitą užduotį ramiai suskaičiavęs.';
+            kgFeedbackEl.style.color = '#86efac';
+            kgFeedbackEl.textContent = `🎉 Šaunuolis! Žinių vartai įveikti — ${targetLvl.levelNumber} lygis atrakintas!`;
             kgFeedbackEl.classList.remove('hidden');
           }
-          renderRound();
+          renderCampaignMap();
+          const unlockedId = pendingGateLevelId;
+          gateStepTimeoutId = setTimeout(() => {
+            gateStepTimeoutId = null;
+            knowledgeGateModal.classList.add('hidden');
+            pendingGateLevelId = null;
+            if (autoEnter) enterBattleLevel(unlockedId);
+          }, 1150);
+          return;
         }
-      });
-      kgOptionsEl.appendChild(btn);
+
+        if (kgFeedbackEl) {
+          kgFeedbackEl.style.color = '#86efac';
+          kgFeedbackEl.textContent = `✅ Teisingai! Liko dar ${outcome.remaining} užd.`;
+          kgFeedbackEl.classList.remove('hidden');
+        }
+        if (kgExplanationBoxEl) {
+          kgExplanationBoxEl.textContent = `💡 ${task.explanation}`;
+          kgExplanationBoxEl.classList.remove('hidden');
+        }
+        gateStepTimeoutId = setTimeout(() => {
+          gateStepTimeoutId = null;
+          renderRound();
+        }, 1100);
+        return;
+      }
+
+      // Klaidos bausmė + 2 sek. paaiškinimas
+      if (kgPenaltyBannerEl) {
+        kgPenaltyBannerEl.textContent = outcome.warning;
+        kgPenaltyBannerEl.classList.remove('hidden');
+      }
+      if (kgExplanationBoxEl) {
+        kgExplanationBoxEl.textContent = `📖 Teisingas atsakymas: ${task.correctAnswer}. ${task.explanation}`;
+        kgExplanationBoxEl.classList.remove('hidden');
+      }
+      gateStepTimeoutId = setTimeout(() => {
+        gateStepTimeoutId = null;
+        renderRound();
+      }, 2000);
     });
   };
 
   renderRound();
+  knowledgeGateModal.classList.remove('hidden');
+}
+
+function openSmartUpgradeModal(padIndex) {
+  if (!knowledgeGateModal || !activeProfile || !engine.canUseSmartUpgrade(padIndex)) return;
+  clearEduModalTimers(false);
+  pendingGateLevelId = null;
+
+  smartUpgradeRestorePause = engine.manualPaused;
+  engine.setPaused(true);
+  engine.consumeSmartUpgradeAttempt();
+  closePadMenus();
+
+  const tower = engine.getTowerAtPad(padIndex);
+  if (!tower) {
+    clearEduModalTimers(true);
+    return;
+  }
+
+  if (kgBadgeEl) kgBadgeEl.textContent = '🧠 PROTINGAS PATOBULINIMAS';
+  if (kgTitleEl) kgTitleEl.textContent = 'Nemokamas bokštelio patobulinimas!';
+  if (kgSubtitleEl) {
+    kgSubtitleEl.textContent = 'Išspręsk iš 1-o karto teisingai ir pakelk bokštelio lygį už 0 🪙!';
+  }
+  if (kgRemainingPillEl) kgRemainingPillEl.textContent = '1 užduotis (1 bandymas)';
+  kgMistakesPillEl?.classList.add('hidden');
+
+  const task = eduTaskGenerator.generateTask(activeProfile);
+  renderTaskPromptAndOptions(task, (isCorrect) => {
+    if (isCorrect) {
+      engine.applyFreeSmartUpgrade(padIndex);
+      if (kgFeedbackEl) {
+        kgFeedbackEl.style.color = '#86efac';
+        kgFeedbackEl.textContent = '✅ Teisingai! Bokštelis nemokamai patobulintas!';
+        kgFeedbackEl.classList.remove('hidden');
+      }
+      if (kgExplanationBoxEl) {
+        kgExplanationBoxEl.textContent = `💡 ${task.explanation}`;
+        kgExplanationBoxEl.classList.remove('hidden');
+      }
+      gateStepTimeoutId = setTimeout(() => {
+        gateStepTimeoutId = null;
+        knowledgeGateModal.classList.add('hidden');
+        clearEduModalTimers(true);
+      }, 1100);
+      return;
+    }
+
+    if (kgPenaltyBannerEl) {
+      kgPenaltyBannerEl.textContent = '❌ Suklydai! Šios bangos nemokamas patobulinimas sudegė.';
+      kgPenaltyBannerEl.classList.remove('hidden');
+    }
+    if (kgExplanationBoxEl) {
+      kgExplanationBoxEl.textContent = `📖 Teisingas atsakymas: ${task.correctAnswer}. ${task.explanation}`;
+      kgExplanationBoxEl.classList.remove('hidden');
+    }
+    gateStepTimeoutId = setTimeout(() => {
+      gateStepTimeoutId = null;
+      knowledgeGateModal.classList.add('hidden');
+      clearEduModalTimers(true);
+    }, 2000);
+  });
+
   knowledgeGateModal.classList.remove('hidden');
 }
 
@@ -779,6 +934,7 @@ function renderCampaignMap() {
 
 function showCampaignMapView() {
   if (!activeProfile) return;
+  clearEduModalTimers(false);
   closePadMenus();
   resultOverlay?.classList.add('hidden');
   knowledgeGateModal?.classList.add('hidden');
@@ -822,6 +978,7 @@ function selectProfile(profileId) {
 
 function showProfileScreen() {
   activeProfile = null;
+  clearEduModalTimers(false);
   closePadMenus();
   resultOverlay?.classList.add('hidden');
   knowledgeGateModal?.classList.add('hidden');
@@ -835,6 +992,8 @@ function showProfileScreen() {
 }
 
 function selectMap(mapId) {
+  clearEduModalTimers(false);
+  knowledgeGateModal?.classList.add('hidden');
   closePadMenus();
   resultOverlay?.classList.add('hidden');
   engine.loadMap(mapId, activeProfile || 'lukas');
@@ -870,6 +1029,7 @@ btnSwitchProfile?.addEventListener('click', showProfileScreen);
 document.getElementById('btn-back-campaign')?.addEventListener('click', showCampaignMapView);
 document.getElementById('btn-result-campaign')?.addEventListener('click', showCampaignMapView);
 document.getElementById('btn-close-kg')?.addEventListener('click', () => {
+  clearEduModalTimers(true);
   knowledgeGateModal?.classList.add('hidden');
 });
 
@@ -880,7 +1040,7 @@ btnResultNextLevel?.addEventListener('click', () => {
   if (bucket.unlockedLevels.includes(nextId)) {
     enterBattleLevel(nextId);
   } else {
-    openKnowledgeGateModal(nextId);
+    openKnowledgeGateModal(nextId, { autoEnter: true });
   }
 });
 
@@ -920,6 +1080,12 @@ document.getElementById('btn-close-wave-preview')?.addEventListener('click', () 
 btnUpgradeTower?.addEventListener('click', () => {
   if (engine.selectedPadIndex !== null) {
     engine.upgradeTower(engine.selectedPadIndex);
+  }
+});
+
+btnSmartUpgrade?.addEventListener('click', () => {
+  if (engine.selectedPadIndex !== null) {
+    openSmartUpgradeModal(engine.selectedPadIndex);
   }
 });
 
