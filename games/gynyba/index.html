@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#070d20" />
+  <title>Bubių Tvirtovė – Bokštelių Gynyba</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css?v=20261121a" />
+</head>
+<body>
+  <div class="td-bg-glow" aria-hidden="true"></div>
+
+  <!-- ==================== VIRŠUTINĖ NAVIGACIJOS JUOSTA ==================== -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <a href="../../index.html" class="back-portal-btn">← Į portalą</a>
+      <div class="game-brand">
+        <span class="brand-icon" aria-hidden="true">🏰⚡</span>
+        <div>
+          <h1>BUBIŲ TVIRTOVĖ</h1>
+          <span class="brand-sub">Strateginė bokštelių gynyba: Bubių kiemas, Kurtuvėnai ir Dagilėlio aikštė!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="top-bar-right">
+      <div id="top-playtime-slot" class="top-playtime-slot"></div>
+      <div id="top-profile-pill" class="hud-pill hud-profile hidden">
+        <span id="ui-active-profile">👤 Linas (1 klasė)</span>
+      </div>
+      <button id="btn-switch-profile" class="switch-profile-btn hidden" type="button">
+        Keisti žaidėją
+      </button>
+    </div>
+  </header>
+
+  <main class="td-container">
+    <!-- ==================== 1. PROFILIO PASIRINKIMO EKRANAS ==================== -->
+    <section id="screen-profiles" class="profiles-screen">
+      <div class="hero-card glass-panel">
+        <span class="hero-kicker">🛡️ BOKŠTELIŲ GYNYBOS KARKASAS</span>
+        <h2>PASIRINK TVIRTOVĖS VADĄ!</h2>
+        <p class="hero-desc">
+          Gink tris mūsų krašto tvirtoves nuo įsibrovėlių bangų. Pasirink savo vardą ir klasę –
+          tavo dienos 20 minučių žaidimo laikas ir rezultatai skaičiuojami automatiškai!
+        </p>
+      </div>
+
+      <div class="profiles-grid">
+        <!-- LINAS (1 KLASĖ) -->
+        <article class="profile-card card-linas glass-panel">
+          <div class="profile-card-head">
+            <span class="profile-chip chip-linas">1 KLASĖ</span>
+            <span class="profile-avatar" aria-hidden="true">🛡️</span>
+          </div>
+          <h3>Linas (1 klasė)</h3>
+          <p class="profile-desc">
+            Lengvesnės priešų bangos, daugiau startinės energijos bokšteliams ir greitesni patobulinimai!
+          </p>
+          <div class="profile-stats">
+            <div class="stat-row">
+              <span>⏳ Liko šiandien:</span>
+              <strong id="linas-time-left">20:00</strong>
+            </div>
+            <div class="stat-row">
+              <span>⭐ Žvaigždutės / Banga:</span>
+              <strong id="linas-save-stats">⭐ 0 • Banga 0</strong>
+            </div>
+          </div>
+          <button id="btn-select-linas" class="select-profile-btn btn-linas" type="button">
+            🛡️ ŽAISTI: LINAS (1 KLASĖ)
+          </button>
+        </article>
+
+        <!-- LUKAS (3 KLASĖ) -->
+        <article class="profile-card card-lukas glass-panel">
+          <div class="profile-card-head">
+            <span class="profile-chip chip-lukas">3 KLASĖ</span>
+            <span class="profile-avatar" aria-hidden="true">⚡</span>
+          </div>
+          <h3>Lukas (3 klasė)</h3>
+          <p class="profile-desc">
+            Taktiškesni priešų maršrutai, didesni bokštų deriniai ir papildomos bangos tvirtovės meistrams!
+          </p>
+          <div class="profile-stats">
+            <div class="stat-row">
+              <span>⏳ Liko šiandien:</span>
+              <strong id="lukas-time-left">20:00</strong>
+            </div>
+            <div class="stat-row">
+              <span>⭐ Žvaigždutės / Banga:</span>
+              <strong id="lukas-save-stats">⭐ 0 • Banga 0</strong>
+            </div>
+          </div>
+          <button id="btn-select-lukas" class="select-profile-btn btn-lukas" type="button">
+            ⚡ ŽAISTI: LUKAS (3 KLASĖ)
+          </button>
+        </article>
+      </div>
+    </section>
+
+    <!-- ==================== 2. TAKTINIS ŽAIDIMO IR ŽEMĖLAPIŲ EKRANAS ==================== -->
+    <section id="screen-game" class="game-screen hidden">
+      <!-- Žemėlapių pasirinkimo juosta -->
+      <div class="map-selector-bar glass-panel">
+        <div class="map-tabs" role="tablist" aria-label="Žemėlapiai">
+          <button class="map-tab-btn active" data-map-id="bubiai" type="button">
+            🏡 Bubių kiemas
+          </button>
+          <button class="map-tab-btn" data-map-id="kurtuvenai" type="button">
+            🌲 Kurtuvėnai
+          </button>
+          <button class="map-tab-btn" data-map-id="dagilelis" type="button">
+            🏛️ Dagilėlio aikštė
+          </button>
+        </div>
+
+        <div class="battle-hud">
+          <span class="battle-stat">❤️ Tvirtovė: <strong id="hud-hp">20</strong></span>
+          <span class="battle-stat">⚡ Energija: <strong id="hud-energy">150</strong></span>
+          <span class="battle-stat">🌊 Banga: <strong id="hud-wave">0</strong></span>
+        </div>
+      </div>
+
+      <!-- Taktinė lenta ir bokštų skydelis -->
+      <div class="tactical-workspace glass-panel">
+        <div class="workspace-header">
+          <div>
+            <h2 id="map-title">🏡 Bubių kiemas</h2>
+            <p id="map-subtitle" class="map-subtitle">
+              Paspausk ant švytinčio statybos taško žemėlapyje, kad pastatytum bokštelį!
+            </p>
+          </div>
+          <div class="wave-actions">
+            <button id="btn-clear-towers" class="secondary-action-btn" type="button">
+              🔄 Išvalyti lentą
+            </button>
+            <button id="btn-start-wave" class="primary-wave-btn" type="button">
+              🌊 Paleisti bandomąją bangą
+            </button>
+          </div>
+        </div>
+
+        <div class="canvas-frame">
+          <canvas id="gynyba-canvas" width="900" height="480" aria-label="Bubių Tvirtovės taktinis žemėlapis"></canvas>
+        </div>
+
+        <!-- Bokštų pasirinkimo įrankinė -->
+        <div class="tower-toolbar" aria-label="Bokštelių pasirinkimas">
+          <button class="tower-btn active" data-tower="laser" type="button">
+            <span class="tower-emoji">🔦</span>
+            <span>
+              <strong>Lazerio bokštas</strong>
+              <small>50 ⚡ • Greitas šviesos spindulys</small>
+            </span>
+          </button>
+          <button class="tower-btn" data-tower="acorn" type="button">
+            <span class="tower-emoji">🌰</span>
+            <span>
+              <strong>Kurtuvėnų svaidyklė</strong>
+              <small>65 ⚡ • Toli šaudo galingais riešutais</small>
+            </span>
+          </button>
+          <button class="tower-btn" data-tower="sonic" type="button">
+            <span class="tower-emoji">🔔</span>
+            <span>
+              <strong>Dagilėlio rezonatorius</strong>
+              <small>80 ⚡ • Sulėtina priešus garso banga</small>
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./js/main.js?v=20261121a"></script>
+</body>
+</html>

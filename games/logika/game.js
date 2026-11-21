@@ -71,6 +71,11 @@ import {
   renderRobotWorkshopSvg
 } from './robot.js?v=20261113n';
 import { computeInventionsState } from './inventions.js?v=20261113n';
+import {
+  initPlaytimeTimer,
+  getRemainingPlaytimeSeconds,
+  formatMMSS
+} from '../../shared/playtime-timer.js?v=20261121a';
 
 export const STORAGE_KEY = 'proto_lab_progress';
 
@@ -209,10 +214,38 @@ const bridgesCanvas = document.getElementById('bridges-canvas');
 const bridgesStage = document.getElementById('bridges-stage');
 const miniStage = document.getElementById('puzzle-stage');
 
+const playtimeTimer = initPlaytimeTimer({
+  containerSelector: '#top-playtime-slot',
+  portalUrl: '../../index.html',
+  shouldCount: () => Boolean(currentDifficulty),
+  onSwitchProfile: () => showDifficultyScreen(),
+  onLock: () => {
+    stopLevelTimer();
+  },
+  onTick: () => {
+    updatePlaytimePreviewTexts();
+  }
+});
+
+function updatePlaytimePreviewTexts() {
+  const g1TimeEl = document.getElementById('g1-time-text');
+  const g3TimeEl = document.getElementById('g3-time-text');
+  if (g1TimeEl) {
+    const rem1 = getRemainingPlaytimeSeconds('linas');
+    g1TimeEl.textContent = formatMMSS(rem1);
+    g1TimeEl.style.color = rem1 > 0 ? '#67e8f9' : '#f87171';
+  }
+  if (g3TimeEl) {
+    const rem3 = getRemainingPlaytimeSeconds('lukas');
+    g3TimeEl.textContent = formatMMSS(rem3);
+    g3TimeEl.style.color = rem3 > 0 ? '#67e8f9' : '#f87171';
+  }
+}
+
 function getDifficultyLabel(diff) {
   return diff === 'grade1'
-    ? '1 klasė (Jaunasis išradėjas)'
-    : '3 klasė (Vyriausiasis inžinierius)';
+    ? 'Linas – 1 klasė (Jaunasis išradėjas)'
+    : 'Lukas – 3 klasė (Vyriausiasis inžinierius)';
 }
 
 function getAllLevelsForDiff(diff) {
@@ -368,7 +401,7 @@ function updateSummaryUI() {
     const activeData = progress[currentDifficulty];
     const totalLevels = getAllLevelsForDiff(currentDifficulty).length;
     uiTotalCrystals.textContent = String(g1Crystals + g3Crystals);
-    uiActiveRank.textContent = currentDifficulty === 'grade1' ? '🔬 1 klasė' : '⚡ 3 klasė';
+    uiActiveRank.textContent = currentDifficulty === 'grade1' ? '🔬 Linas (1 kl.)' : '⚡ Lukas (3 kl.)';
     document.getElementById('lab-mode-title').textContent = getDifficultyLabel(currentDifficulty);
     document.getElementById('lab-mode-stats').textContent =
       `Išspręsta: ${activeData.solvedLevels.length} / ${totalLevels} • 💎 ${activeData.crystals}`;
@@ -376,6 +409,7 @@ function updateSummaryUI() {
     uiTotalCrystals.textContent = String(g1Crystals + g3Crystals);
   }
 
+  updatePlaytimePreviewTexts();
   renderRobotWorkshop(g1Crystals + g3Crystals);
   renderInventionsBadge();
 }
@@ -589,6 +623,7 @@ export function selectDifficulty(difficulty) {
   syncModeTabsUI();
   updateSummaryUI();
   showWorldMapView();
+  playtimeTimer.setActiveChild(difficulty === 'grade1' ? 'linas' : 'lukas');
 }
 
 function showDifficultyScreen() {
@@ -608,6 +643,7 @@ function showDifficultyScreen() {
   destroyMiniFlaskEngine();
   destroySokobanState();
   currentDifficulty = null;
+  playtimeTimer.clearActiveChild();
   labScreen.classList.add('hidden');
   startScreen.classList.remove('hidden');
   topDiffPill.classList.add('hidden');
@@ -2954,7 +2990,7 @@ window.addEventListener(
 });
 
 window.addEventListener('keydown', (e) => {
-  if (!currentDifficulty) return;
+  if (!currentDifficulty || playtimeTimer.isLocked()) return;
   const k = e.key.toLowerCase();
   const keyMap = {
     arrowup: ['U', -1, 0],

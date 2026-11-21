@@ -351,14 +351,24 @@ body {
 /* ==================== 3D GLASSMORPHISM ŽAIDIMŲ KORTELĖS ==================== */
 .games-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 26px;
   perspective: 1300px;
 }
 
-@media (max-width: 1060px) {
+@media (min-width: 1520px) {
+  .portal-wrapper {
+    max-width: 1460px;
+  }
+
   .games-grid {
-    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 780px) {
+  .games-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -468,6 +478,22 @@ body {
     inset 0 1px 0 rgba(221, 214, 254, 0.36);
 }
 
+.card-defense {
+  border-color: rgba(251, 113, 133, 0.42);
+  box-shadow:
+    0 22px 44px rgba(2, 6, 23, 0.56),
+    0 0 28px rgba(244, 63, 94, 0.16),
+    inset 0 1px 0 rgba(254, 205, 211, 0.2);
+}
+
+.card-defense:hover {
+  border-color: rgba(56, 189, 248, 0.9);
+  box-shadow:
+    0 28px 54px rgba(2, 6, 23, 0.68),
+    0 0 38px rgba(244, 63, 94, 0.36),
+    inset 0 1px 0 rgba(186, 230, 253, 0.36);
+}
+
 /* ==================== KORTELIŲ SCENOS IR SVG ILIUSTRACIJOS ==================== */
 .tile-art {
   position: relative;
@@ -500,6 +526,13 @@ body {
     radial-gradient(circle at 50% 42%, rgba(139, 92, 246, 0.32), transparent 58%),
     radial-gradient(circle at 22% 25%, rgba(34, 211, 238, 0.2), transparent 50%),
     linear-gradient(180deg, rgba(26, 20, 62, 0.76) 0%, rgba(10, 14, 34, 0.85) 100%);
+}
+
+.art-defense {
+  background:
+    radial-gradient(circle at 42% 45%, rgba(56, 189, 248, 0.28), transparent 56%),
+    radial-gradient(circle at 80% 28%, rgba(244, 63, 94, 0.28), transparent 52%),
+    linear-gradient(180deg, rgba(36, 16, 40, 0.76) 0%, rgba(9, 14, 32, 0.86) 100%);
 }
 
 .tile-top-row {
@@ -537,6 +570,12 @@ body {
   color: #ddd6fe;
   background: rgba(139, 92, 246, 0.25);
   border: 1px solid rgba(167, 139, 250, 0.5);
+}
+
+.badge-defense {
+  color: #fecdd3;
+  background: rgba(244, 63, 94, 0.24);
+  border: 1px solid rgba(251, 113, 133, 0.52);
 }
 
 /* Kampe rodomas pasiekimų ženkliukas iš localStorage */
@@ -693,6 +732,20 @@ body {
   filter: brightness(1.08);
   box-shadow:
     0 12px 28px rgba(139, 92, 246, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.btn-defense {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 52%, #be123c 100%);
+  box-shadow:
+    0 10px 24px rgba(225, 29, 72, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.btn-defense:hover {
+  filter: brightness(1.08);
+  box-shadow:
+    0 12px 28px rgba(244, 63, 94, 0.52),
     inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 

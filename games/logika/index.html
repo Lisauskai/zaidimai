@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261113n" />
+  <link rel="stylesheet" href="./style.css?v=20261121a" />
 </head>
 <body>
   <div class="lab-bg-grid" aria-hidden="true"></div>
@@ -34,6 +34,7 @@
       <button id="btn-lab-hint" class="hint-lamp-btn hidden" type="button" title="Parodyti pirmojo žingsnio užuominą">
         💡 Užuomina
       </button>
+      <div id="top-playtime-slot" class="top-playtime-slot"></div>
       <div id="top-difficulty-pill" class="hud-pill hud-rank hidden">
         <span id="ui-active-rank">🔬 1 klasė</span>
       </div>
@@ -64,10 +65,10 @@
           <!-- 1 KLASĖ -->
           <article class="diff-card diff-grade1" data-difficulty="grade1">
             <div class="diff-card-header">
-              <span class="diff-level-chip">GRADE 1</span>
+              <span class="diff-level-chip">LINAS • 1 KLASĖ</span>
               <span class="diff-icon" aria-hidden="true">🔭</span>
             </div>
-            <h3>1 klasė (Jaunasis išradėjas)</h3>
+            <h3>Linas – 1 klasė (Jaunasis išradėjas)</h3>
             <p class="diff-desc">
               12 laboratorijos zonų po 10 nuoseklių lygių (120 galvosūkių): kaiščiai, stumdukas, lazeriai, grandinės, svarstyklės, šifrai, algoritmai, krumpliaračiai, gravitacija, skaičių kryžiažodžiai, tiltai ir kolbos.
             </p>
@@ -81,20 +82,24 @@
                 <span>💎 Proto kristalai:</span>
                 <strong id="g1-crystals-text">0</strong>
               </div>
+              <div class="progress-stat">
+                <span>⏳ Šiandien liko laiko:</span>
+                <strong id="g1-time-text">20:00</strong>
+              </div>
             </div>
 
             <button id="btn-select-grade1" class="diff-start-btn btn-cyan" type="button">
-              🔬 ŽAISTI: 1 KLASĖ
+              🔬 ŽAISTI: LINAS (1 KLASĖ)
             </button>
           </article>
 
           <!-- 3 KLASĖ -->
           <article class="diff-card diff-grade3" data-difficulty="grade3">
             <div class="diff-card-header">
-              <span class="diff-level-chip">GRADE 3</span>
+              <span class="diff-level-chip">LUKAS • 3 KLASĖ</span>
               <span class="diff-icon" aria-hidden="true">🧪</span>
             </div>
-            <h3>3 klasė (Vyriausiasis inžinierius)</h3>
+            <h3>Lukas – 3 klasė (Vyriausiasis inžinierius)</h3>
             <p class="diff-desc">
               12 laboratorijos zonų po 10 gilesnių lygių (120 galvosūkių) su ėjimų limitais, dalikliais, tiltais, krypties krumpliaračiais ir daugiažingsniais šifrais.
             </p>
@@ -108,10 +113,14 @@
                 <span>💎 Proto kristalai:</span>
                 <strong id="g3-crystals-text">0</strong>
               </div>
+              <div class="progress-stat">
+                <span>⏳ Šiandien liko laiko:</span>
+                <strong id="g3-time-text">20:00</strong>
+              </div>
             </div>
 
             <button id="btn-select-grade3" class="diff-start-btn btn-purple" type="button">
-              ⚡ ŽAISTI: 3 KLASĖ
+              ⚡ ŽAISTI: LUKAS (3 KLASĖ)
             </button>
           </article>
         </div>
@@ -661,6 +670,6 @@
     </div>
   </div>
 
-  <script type="module" src="./game.js?v=20261113n"></script>
+  <script type="module" src="./game.js?v=20261121a"></script>
 </body>
 </html>

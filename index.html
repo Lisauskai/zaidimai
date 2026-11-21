@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css?v=20261113n" />
+  <link rel="stylesheet" href="./style.css?v=20261121a" />
 </head>
 <body>
   <!-- Gyvas kosminis dalelių tinklo fonas -->
@@ -69,14 +69,14 @@
       </div>
     </header>
 
-    <!-- ==================== 3 ŽAIDIMŲ GLASSMORPHISM KORTELĖS ==================== -->
+    <!-- ==================== 4 ŽAIDIMŲ GLASSMORPHISM KORTELĖS ==================== -->
     <main class="games-grid-section">
       <div class="section-heading">
         <div class="section-title-wrap">
           <span class="section-kicker">ŽAIDIMŲ KATALOGAS</span>
           <h2>Pasirink pasaulį</h2>
         </div>
-        <span class="games-count-badge">3 AKTYVŪS ŽAIDIMAI</span>
+        <span class="games-count-badge">4 AKTYVŪS ŽAIDIMAI</span>
       </div>
 
       <div class="games-grid">
@@ -363,6 +363,111 @@
             </div>
           </div>
         </article>
+
+        <!-- 4 KORTELĖ: BUBIŲ TVIRTOVĖ -->
+        <article class="game-tile card-defense" data-tilt onclick="window.location.href='/games/gynyba/'">
+          <div class="card-glare" aria-hidden="true"></div>
+          <div class="tile-art art-defense">
+            <div class="tile-top-row">
+              <span class="tile-status-badge badge-defense">BOKŠTELIŲ GYNYBA • 3 ŽEMĖLAPIAI</span>
+              <span id="badge-progress-defense" class="corner-progress-badge" hidden></span>
+            </div>
+
+            <!-- Unikali detali SVG iliustracija: Bubių Tvirtovės lazerinis gynybos bokštas su energijos skydu -->
+            <div class="svg-stage" aria-hidden="true">
+              <svg class="card-svg" viewBox="0 0 320 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="towerWall" x1="120" y1="48" x2="120" y2="132" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#94a3b8"/>
+                    <stop offset="50%" stop-color="#334155"/>
+                    <stop offset="100%" stop-color="#0f172a"/>
+                  </linearGradient>
+                  <linearGradient id="towerShield" x1="120" y1="16" x2="120" y2="134" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.34"/>
+                    <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.06"/>
+                  </linearGradient>
+                  <linearGradient id="laserBeam" x1="158" y1="54" x2="294" y2="34" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#ffffff"/>
+                    <stop offset="35%" stop-color="#38bdf8"/>
+                    <stop offset="100%" stop-color="#fb7185"/>
+                  </linearGradient>
+                  <linearGradient id="fortressHill" x1="160" y1="112" x2="160" y2="146" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#1e293b"/>
+                    <stop offset="100%" stop-color="#090d1f"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Radaro žiedai ir taikinio tinklelis -->
+                <circle cx="256" cy="40" r="24" stroke="#fb7185" stroke-opacity="0.32" stroke-width="1.5" stroke-dasharray="5 4"/>
+                <circle cx="256" cy="40" r="14" stroke="#fda4af" stroke-opacity="0.55" stroke-width="1.5"/>
+                <line x1="232" y1="40" x2="280" y2="40" stroke="#fb7185" stroke-opacity="0.4" stroke-width="1.2"/>
+                <line x1="256" y1="16" x2="256" y2="64" stroke="#fb7185" stroke-opacity="0.4" stroke-width="1.2"/>
+
+                <!-- Švytintis energijos skydo kupolas -->
+                <path d="M52 130 A68 68 0 0 1 188 130 Z" fill="url(#towerShield)" stroke="#38bdf8" stroke-opacity="0.45" stroke-width="1.6" stroke-dasharray="6 4"/>
+
+                <!-- Tvirtovės kalva ir pamatas -->
+                <path d="M22 134 Q120 110 218 126 L298 136 L22 136 Z" fill="url(#fortressHill)"/>
+                <ellipse cx="120" cy="133" rx="84" ry="9" fill="#f43f5e" fill-opacity="0.22"/>
+
+                <!-- Šoniniai bastionai -->
+                <rect x="68" y="92" width="26" height="38" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="1.6"/>
+                <rect x="65" y="86" width="32" height="8" rx="2" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+                <rect x="146" y="92" width="26" height="38" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="1.6"/>
+                <rect x="143" y="86" width="32" height="8" rx="2" fill="#334155" stroke="#94a3b8" stroke-width="1.4"/>
+
+                <!-- Pagrindinis Tvirtovės bokštas -->
+                <path d="M92 130 L98 58 L142 58 L148 130 Z" fill="url(#towerWall)" stroke="#cbd5e1" stroke-width="2"/>
+                <!-- Bokšto mūro detalės ir energijos šerdis -->
+                <rect x="112" y="76" width="16" height="34" rx="8" fill="#090d1f" stroke="#38bdf8" stroke-width="1.6"/>
+                <polygon points="120,82 126,93 120,104 114,93" fill="#38bdf8"/>
+                <circle cx="120" cy="93" r="3" fill="#ffffff"/>
+
+                <!-- Bokšto viršutinė platforma ir lazerinė patranka -->
+                <rect x="88" y="50" width="64" height="11" rx="4" fill="#1e293b" stroke="#fbbf24" stroke-width="1.8"/>
+                <circle cx="120" cy="44" r="16" fill="#0f172a" stroke="#38bdf8" stroke-width="2.2"/>
+                <!-- Lazerio vamzdis -->
+                <g transform="rotate(-10 120 44)">
+                  <rect x="118" y="37" width="44" height="12" rx="5" fill="#1e293b" stroke="#7dd3fc" stroke-width="2"/>
+                  <rect x="152" y="39" width="12" height="8" rx="3" fill="#38bdf8"/>
+                </g>
+
+                <!-- Lazerio spindulys ir smūgio sprogimas -->
+                <line x1="162" y1="36" x2="256" y2="40" stroke="#38bdf8" stroke-opacity="0.45" stroke-width="9" stroke-linecap="round"/>
+                <line x1="162" y1="36" x2="256" y2="40" stroke="url(#laserBeam)" stroke-width="3.6" stroke-linecap="round"/>
+                <circle cx="163" cy="36" r="6" fill="#ffffff"/>
+
+                <!-- Priešo dronas taikiklyje -->
+                <polygon points="256,28 269,40 256,52 243,40" fill="#be123c" stroke="#fda4af" stroke-width="2"/>
+                <circle cx="256" cy="40" r="6" fill="#fde047"/>
+                <circle cx="240" cy="26" r="2.2" fill="#fde047"/>
+                <circle cx="272" cy="54" r="2.4" fill="#38bdf8"/>
+                <circle cx="234" cy="52" r="1.8" fill="#fb7185"/>
+              </svg>
+            </div>
+
+            <div class="art-tags">
+              <span>Bubių kiemas</span>
+              <span>Kurtuvėnai</span>
+              <span>Dagilėlio aikštė</span>
+            </div>
+          </div>
+
+          <div class="tile-body">
+            <div>
+              <h3>Bubių Tvirtovė</h3>
+              <p class="tile-desc">
+                Strateginė bokštelių gynyba: Bubių kiemas, Kurtuvėnai ir Dagilėlio aikštė!
+              </p>
+            </div>
+            <div class="tile-footer">
+              <a href="/games/gynyba/" class="play-btn btn-defense">
+                <span>Žaisti dabar</span>
+                <span class="btn-arrow" aria-hidden="true">→</span>
+              </a>
+            </div>
+          </div>
+        </article>
       </div>
     </main>
 
@@ -479,6 +584,17 @@
           if (totalCrystals > 0 || totalSolved > 0) {
             labBadge.textContent = `💎 ${totalCrystals} • 🧩 ${totalSolved}/240`;
             labBadge.hidden = false;
+          }
+        }
+
+        const defenseData = readJson('gynyba_save_v1');
+        const defenseBadge = document.getElementById('badge-progress-defense');
+        if (defenseBadge && defenseData) {
+          const totalStars = (Number(defenseData?.linas?.stars) || 0) + (Number(defenseData?.lukas?.stars) || 0);
+          const totalWaves = (Number(defenseData?.linas?.bestWave) || 0) + (Number(defenseData?.lukas?.bestWave) || 0);
+          if (totalStars > 0 || totalWaves > 0) {
+            defenseBadge.textContent = `⭐ ${totalStars} • 🛡️ Banga ${Math.max(Number(defenseData?.linas?.bestWave) || 0, Number(defenseData?.lukas?.bestWave) || 0)}`;
+            defenseBadge.hidden = false;
           }
         }
       } catch (e) {}
