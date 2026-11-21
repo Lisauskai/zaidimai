@@ -934,6 +934,114 @@ body.in-battle-mode .td-container {
   color: #e2e8f0;
 }
 
+.boss-hp-bar {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 22;
+  pointer-events: none;
+  width: min(460px, calc(100% - 28px));
+  padding: 8px 14px 10px;
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(69, 10, 10, 0.94), rgba(15, 23, 42, 0.96));
+  border: 2px solid rgba(250, 204, 21, 0.72);
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.65), 0 0 18px rgba(239, 68, 68, 0.25);
+  color: #fef2f2;
+}
+
+.boss-hp-bar.is-phase-2 {
+  border-color: #fde047;
+  background: linear-gradient(160deg, rgba(124, 45, 18, 0.96), rgba(69, 10, 10, 0.97));
+  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.45), 0 0 22px rgba(250, 204, 21, 0.35);
+}
+
+.boss-hp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.boss-hp-name {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+  color: #fde047;
+  font-size: 0.94rem;
+}
+
+.boss-hp-phase {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(250, 204, 21, 0.18);
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  color: #fef08a;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.boss-hp-bar.is-phase-2 .boss-hp-phase {
+  background: rgba(239, 68, 68, 0.38);
+  border-color: #fde047;
+  color: #ffffff;
+}
+
+.boss-hp-numbers {
+  font-weight: 700;
+  color: #fecaca;
+  font-size: 0.8rem;
+}
+
+.boss-hp-track {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(2, 6, 23, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+
+.boss-hp-fill {
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ef4444, #f97316, #facc15);
+  transition: width 0.12s linear;
+}
+
+.boss-hp-bar.is-phase-2 .boss-hp-fill {
+  background: linear-gradient(90deg, #f97316, #facc15, #fef08a);
+}
+
+.boss-hp-mid-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.wave-preview-warnings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 9px;
+}
+
+.wave-warn-pill {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.18);
+  border: 1px solid rgba(251, 191, 36, 0.6);
+  color: #fef08a;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
 .wave-preview-list {
   display: flex;
   flex-direction: column;

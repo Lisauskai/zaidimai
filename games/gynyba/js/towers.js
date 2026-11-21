@@ -10,9 +10,10 @@ export const TOWER_CATALOG = {
     accentColor: '#fde047',
     cost: 75,
     attackMode: 'continuous_beam',
+    damageType: 'energy',
     canHitFlying: true,
     detectsCamo: false,
-    desc: 'Ištisinis spindulys: kuo ilgiau degina taikinį, tuo didesnė žala (iki 2.5x). Kerta šarvus!',
+    desc: 'Energijos spindulys (iki 2.5x žalos): ignoruoja fizinius šarvus ir muša skraidančius, bet silpnas prieš Veidrodinį Kristalą!',
     levels: [
       {
         level: 1,
@@ -21,27 +22,27 @@ export const TOWER_CATALOG = {
         dps: 34,
         maxRamp: 2.5,
         rampRatePerSec: 0.65,
-        armorPierce: 0.55,
+        armorPierce: 1.0,
         maxTargets: 1
       },
       {
         level: 2,
-        upgradeCost: 65,
+        upgradeCost: 70,
         range: 172,
         dps: 50,
         maxRamp: 2.5,
         rampRatePerSec: 0.72,
-        armorPierce: 0.65,
+        armorPierce: 1.0,
         maxTargets: 1
       },
       {
         level: 3,
-        upgradeCost: 110,
+        upgradeCost: 140,
         range: 190,
         dps: 72,
         maxRamp: 2.5,
         rampRatePerSec: 0.80,
-        armorPierce: 0.75,
+        armorPierce: 1.0,
         maxTargets: 1
       }
     ],
@@ -50,14 +51,14 @@ export const TOWER_CATALOG = {
         id: 'plasma_burner',
         name: 'Plazmos Degiklis',
         icon: '🔥',
-        cost: 165,
+        cost: 205,
         color: '#f97316',
         desc: 'Sunaikintas priešas sprogsta plazmos banga, pažeisdamas aplinkinius!',
         range: 205,
         dps: 96,
         maxRamp: 2.5,
         rampRatePerSec: 0.90,
-        armorPierce: 0.85,
+        armorPierce: 1.0,
         maxTargets: 1,
         explodeOnKillRadius: 68,
         explodeOnKillDamage: 90
@@ -66,14 +67,14 @@ export const TOWER_CATALOG = {
         id: 'prism_beacon',
         name: 'Prizmės Švyturys',
         icon: '🌈',
-        cost: 170,
+        cost: 215,
         color: '#22d3ee',
         desc: 'Skaido spindulį ir vienu metu degina iki 3 priešų!',
         range: 210,
         dps: 76,
         maxRamp: 2.5,
         rampRatePerSec: 0.85,
-        armorPierce: 0.75,
+        armorPierce: 1.0,
         maxTargets: 3
       }
     }
@@ -88,9 +89,10 @@ export const TOWER_CATALOG = {
     accentColor: '#fecdd3',
     cost: 90,
     attackMode: 'sound_wave',
+    damageType: 'sound',
     canHitFlying: true,
     detectsCamo: false,
-    desc: 'Skleidžia natų bangas (AoE žala) ir suteikia +15% šaudymo greičio aurą šalia esantiems bokštams!',
+    desc: 'Garso žala ignoruoja fizinius ir veidrodinius šarvus (muša ir skraidančius), o šalia suteikia +15% greičio aurą!',
     levels: [
       {
         level: 1,
@@ -112,7 +114,7 @@ export const TOWER_CATALOG = {
       },
       {
         level: 3,
-        upgradeCost: 120,
+        upgradeCost: 150,
         range: 168,
         damage: 50,
         cooldown: 0.88,
@@ -125,7 +127,7 @@ export const TOWER_CATALOG = {
         id: 'choir_harmony',
         name: 'Choro Harmonija',
         icon: '🎶',
-        cost: 165,
+        cost: 205,
         color: '#f472b6',
         desc: '+30% šaudymo greičio aura gretimiems bokštams ir didelis bangų nuotolis!',
         range: 200,
@@ -138,7 +140,7 @@ export const TOWER_CATALOG = {
         id: 'bass_drop',
         name: 'Boso Smūgis',
         icon: '🔊',
-        cost: 175,
+        cost: 220,
         color: '#e11d48',
         desc: 'Galinga žemų dažnių banga trumpam apsvaigina (0.65s) ir atstumia priešus atgal!',
         range: 180,
@@ -161,9 +163,10 @@ export const TOWER_CATALOG = {
     accentColor: '#a7f3d0',
     cost: 95,
     attackMode: 'drones',
+    damageType: 'physical',
     canHitFlying: true,
     detectsCamo: true,
-    desc: 'Paleidžia 1–2 dronus: šaudo skraidančius priešus ir radaru atidengia nematomus (Camo)!',
+    desc: 'Fizinė ugnis iš oro: muša skraidančius, kerta Veidrodinį Kristalą ir radaru atidengia nematomus (Camo)!',
     levels: [
       {
         level: 1,
@@ -189,7 +192,7 @@ export const TOWER_CATALOG = {
       },
       {
         level: 3,
-        upgradeCost: 130,
+        upgradeCost: 165,
         range: 225,
         droneCount: 2,
         damage: 42,
@@ -204,7 +207,7 @@ export const TOWER_CATALOG = {
         id: 'scout_scanner',
         name: 'Žvalgas-Skeneris',
         icon: '📡',
-        cost: 160,
+        cost: 200,
         color: '#34d399',
         desc: 'Milžiniškas radaras visiškai nuima nematomumą dideliame plote +20% žalos pažeistiems!',
         range: 255,
@@ -221,9 +224,9 @@ export const TOWER_CATALOG = {
         id: 'missile_drone',
         name: 'Raketinis Dronas',
         icon: '🚀',
-        cost: 180,
+        cost: 225,
         color: '#0ea5e9',
-        desc: 'Dronai šaudo galingas sekimo raketas su sprogimo banga!',
+        desc: 'Dronai šaudo galingas fizines sekimo raketas su sprogimo banga (niokoja Veidrodinį Kristalą)!',
         range: 240,
         droneCount: 2,
         damage: 90,
@@ -246,9 +249,10 @@ export const TOWER_CATALOG = {
     accentColor: '#bbf7d0',
     cost: 100,
     attackMode: 'barracks',
+    damageType: 'physical',
     canHitFlying: false,
     detectsCamo: false,
-    desc: 'Išleidžia 2–3 robotus ant kelio (su Rally Point): jie sustabdo žemės priešus ir kovoja!',
+    desc: 'Fizinė kova tik ant žemės (nemato skraidančių): sulaiko priešus, puikiai kerta Veidrodinį Kristalą!',
     levels: [
       {
         level: 1,
@@ -272,7 +276,7 @@ export const TOWER_CATALOG = {
       },
       {
         level: 3,
-        upgradeCost: 135,
+        upgradeCost: 170,
         range: 195,
         unitCount: 3,
         unitMaxHp: 255,
@@ -286,7 +290,7 @@ export const TOWER_CATALOG = {
         id: 'armored_guards',
         name: 'Šarvuoti Sargai',
         icon: '🛡️',
-        cost: 175,
+        cost: 220,
         color: '#22c55e',
         desc: '3 labai tvirti šarvuoti robotai (480 HP, 35% šarvai), ilgai laikantys net bosus!',
         range: 210,
@@ -300,9 +304,9 @@ export const TOWER_CATALOG = {
         id: 'electro_mowers',
         name: 'Elektros Pjovėjai',
         icon: '⚡',
-        cost: 180,
+        cost: 225,
         color: '#eab308',
-        desc: 'Robotai skleidžia aukštos įtampos lauką, degindami aplinkinius priešus!',
+        desc: 'Robotai skleidžia aukštos įtampos lauką, degindami aplinkinius žemės priešus!',
         range: 210,
         unitCount: 3,
         unitMaxHp: 310,
@@ -324,9 +328,10 @@ export const TOWER_CATALOG = {
     accentColor: '#c7d2fe',
     cost: 105,
     attackMode: 'catapult',
+    damageType: 'physical',
     canHitFlying: false,
     detectsCamo: false,
-    desc: 'Paraboliniai šilauogių šūviai daro ploto žalą (Splash) ir sulėtina 35–50% 2.5s!',
+    desc: 'Fiziniai žemės sviediniai (nemato skraidančių): traiško Veidrodinį Kristalą, sulėtina ir daro ploto žalą!',
     levels: [
       {
         level: 1,
@@ -354,7 +359,7 @@ export const TOWER_CATALOG = {
       },
       {
         level: 3,
-        upgradeCost: 140,
+        upgradeCost: 175,
         range: 248,
         damage: 96,
         cooldown: 1.15,
@@ -370,9 +375,9 @@ export const TOWER_CATALOG = {
         id: 'arctic_cannon',
         name: 'Arktinė Patranka',
         icon: '❄️',
-        cost: 180,
+        cost: 225,
         color: '#60a5fa',
-        desc: 'Kas 3-ias šūvis visiškai sustingdo visus priešus sprogimo zonoje (1.7s)!',
+        desc: 'Kas 3-ias šūvis sustingdo įprastus priešus sprogimo zonoje (1.7s)!',
         range: 265,
         damage: 138,
         cooldown: 1.08,
@@ -388,9 +393,9 @@ export const TOWER_CATALOG = {
         id: 'double_catapult',
         name: 'Dviguba Svaidyklė',
         icon: '🫐',
-        cost: 185,
+        cost: 230,
         color: '#a855f7',
-        desc: 'Iššauna 3 parabolinės trajektorijos šilauogių bombas vienu metu!',
+        desc: 'Iššauna 3 parabolines šilauogių bombas vienu metu!',
         range: 255,
         damage: 86,
         cooldown: 1.12,
@@ -412,6 +417,7 @@ export const TOWER_CATALOG = {
     accentColor: '#fef08a',
     cost: 85,
     attackMode: 'station',
+    damageType: 'energy',
     canHitFlying: true,
     detectsCamo: false,
     desc: 'Kas 6s bangos metu gamina monetas ir padidina gretimų bokštų nuotolį +12%!',
@@ -423,7 +429,7 @@ export const TOWER_CATALOG = {
         auraRadius: 155,
         auraRangeBonus: 0.12,
         incomeInterval: 6.0,
-        incomeAmount: 15
+        incomeAmount: 14
       },
       {
         level: 2,
@@ -432,16 +438,16 @@ export const TOWER_CATALOG = {
         auraRadius: 165,
         auraRangeBonus: 0.12,
         incomeInterval: 6.0,
-        incomeAmount: 24
+        incomeAmount: 22
       },
       {
         level: 3,
-        upgradeCost: 120,
+        upgradeCost: 150,
         range: 175,
         auraRadius: 175,
         auraRangeBonus: 0.12,
         incomeInterval: 6.0,
-        incomeAmount: 35
+        incomeAmount: 32
       }
     ],
     evolutions: {
@@ -449,27 +455,27 @@ export const TOWER_CATALOG = {
         id: 'power_plant_10kw',
         name: '10 kW Elektrinė',
         icon: '🏭',
-        cost: 165,
+        cost: 205,
         color: '#f59e0b',
-        desc: 'Dviguba monetų gamyba (+70 🪙 kas 6s) ir +15% nuotolio aura kaimynams!',
+        desc: 'Galinga monetų gamyba (+60 🪙 kas 6s) ir +15% nuotolio aura kaimynams!',
         range: 195,
         auraRadius: 195,
         auraRangeBonus: 0.15,
         incomeInterval: 6.0,
-        incomeAmount: 70
+        incomeAmount: 60
       },
       super_capacitor: {
         id: 'super_capacitor',
         name: 'Super-Akumuliatorius',
         icon: '🌩️',
-        cost: 175,
+        cost: 220,
         color: '#fde047',
-        desc: 'Kas 12s trenkia galingu 420 žalos žaibu į stipriausią priešą visame žemėlapyje!',
+        desc: 'Kas 12s trenkia galingu 420 energijos žaibu į stipriausią priešą!',
         range: 185,
         auraRadius: 185,
         auraRangeBonus: 0.12,
         incomeInterval: 6.0,
-        incomeAmount: 35,
+        incomeAmount: 32,
         lightningInterval: 12.0,
         lightningDamage: 420
       }

@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121p';
+} from '../../../shared/playtime-timer.js?v=20261121q';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -27,9 +27,9 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121p';
-import { TDEngine } from './engine.js?v=20261121p';
-import { audioManager } from './audio.js?v=20261121p';
+} from './balance.js?v=20261121q';
+import { TDEngine } from './engine.js?v=20261121q';
+import { audioManager } from './audio.js?v=20261121q';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];
@@ -174,6 +174,12 @@ const btnRallyPoint = document.getElementById('btn-rally-point');
 const wavePreviewCard = document.getElementById('wave-preview-card');
 const wavePreviewHeadline = document.getElementById('wave-preview-headline');
 const wavePreviewList = document.getElementById('wave-preview-list');
+const wavePreviewWarnings = document.getElementById('wave-preview-warnings');
+const bossHpBar = document.getElementById('boss-hp-bar');
+const bossHpName = document.getElementById('boss-hp-name');
+const bossHpPhase = document.getElementById('boss-hp-phase');
+const bossHpNumbers = document.getElementById('boss-hp-numbers');
+const bossHpFill = document.getElementById('boss-hp-fill');
 const bonusZoneTooltip = document.getElementById('bonus-zone-tooltip');
 const resultOverlay = document.getElementById('battle-result-overlay');
 
@@ -362,6 +368,21 @@ function renderWavePreviewCard(preview) {
   }
 
   wavePreviewHeadline.textContent = preview.headline;
+  if (wavePreviewWarnings) {
+    const warnings = Array.isArray(preview.warnings) ? preview.warnings : [];
+    wavePreviewWarnings.innerHTML = '';
+    if (warnings.length > 0) {
+      warnings.forEach((warnText) => {
+        const pill = document.createElement('span');
+        pill.className = 'wave-warn-pill';
+        pill.textContent = warnText;
+        wavePreviewWarnings.appendChild(pill);
+      });
+      wavePreviewWarnings.classList.remove('hidden');
+    } else {
+      wavePreviewWarnings.classList.add('hidden');
+    }
+  }
   wavePreviewList.innerHTML = '';
 
   preview.groups.forEach((g) => {
@@ -592,8 +613,44 @@ function syncSelectionUI() {
   }
 }
 
+function syncBossHpBarUI() {
+  if (!bossHpBar) return;
+  const boss = activeProfile && isInBattleView() ? engine?.getActiveBoss() : null;
+  if (!boss) {
+    bossHpBar.classList.add('hidden');
+    bossHpBar.classList.remove('is-phase-2');
+    return;
+  }
+
+  bossHpBar.classList.remove('hidden');
+  const isPhase2 = boss.phase === 2 || Boolean(boss.phase2Triggered);
+  bossHpBar.classList.toggle('is-phase-2', isPhase2);
+
+  if (bossHpName) {
+    bossHpName.textContent = `${boss.icon || '👑'} ${boss.name}`;
+  }
+  if (bossHpPhase) {
+    const hasShield = (boss.phase2ShieldTimer || 0) > 0;
+    bossHpPhase.textContent = isPhase2
+      ? (hasShield ? '⚡ 2 FAZĖ • 🛡️ SKYDAS' : '⚡ 2 FAZĖ')
+      : '1 FAZĖ';
+  }
+  const hp = Math.max(0, Math.ceil(boss.hp));
+  const maxHp = Math.max(1, Math.ceil(boss.maxHp));
+  if (bossHpNumbers) {
+    bossHpNumbers.textContent = (boss.shield || 0) > 0
+      ? `${hp} + 🛡️${Math.ceil(boss.shield)} / ${maxHp}`
+      : `${hp} / ${maxHp}`;
+  }
+  if (bossHpFill) {
+    const pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+    bossHpFill.style.width = `${pct.toFixed(1)}%`;
+  }
+}
+
 function syncBattleUI() {
   if (!engine) return;
+  syncBossHpBarUI();
   const heartsEl = document.getElementById('hud-hearts');
   const maxHeartsEl = document.getElementById('hud-max-hearts');
   const starsPreviewEl = document.getElementById('hud-stars-preview');
@@ -1226,14 +1283,14 @@ function renderEncyclopediaTab(tab = 'towers') {
         icon: '🪙',
         title: 'Derlinga / Lobio zona (+🪙)',
         meta: 'Auksinis žiedas su kibirkštėlėmis ant žemės',
-        desc: 'Pastatyk bent vieną bokštelį švytinčiame zonos spindulyje ir iškart gauk +15 🪙 papildomų monetų kovos pradžiai!',
+        desc: 'Pastatyk bent vieną bokštelį švytinčiame zonos spindulyje ir iškart gauk +18 🪙 papildomų monetų kovos pradžiai!',
         tip: '💡 Vieną kartą per lygį – idealu brangesniam startiniam bokšteliui!'
       },
       {
         icon: '⚡',
         title: 'Galios / Akustikos zona (+⚡)',
         meta: 'Žydras energijos kristalas ant žemės',
-        desc: 'Visi bokšteliai, pastatyti netoli šios zonos, gauna nuolatinį +8% šaudymo greičio pagreitinimą visos kovos metu.',
+        desc: 'Visi bokšteliai, pastatyti netoli šios zonos, gauna nuolatinį +15% šaudymo greičio pagreitinimą visos kovos metu.',
         tip: '💡 Derink su „Dagilėlio“ bokšteliu – greičio bonusai sumuojasi!'
       },
       {
@@ -1323,8 +1380,11 @@ function renderEncyclopediaTab(tab = 'towers') {
     } else {
       const attrs = [];
       if (enemy.armor > 0) attrs.push(`🛡️ ${Math.round(enemy.armor * 100)}% šarvų`);
+      if ((enemy.energyResist || 0) > 0) attrs.push(`🪞 ${Math.round(enemy.energyResist * 100)}% prieš energiją`);
+      if ((enemy.healInterval || 0) > 0) attrs.push(`💚 Gydo (+${Math.round((enemy.healPctNormal || 0.12) * 100)}%)`);
       if (enemy.isFlying) attrs.push('🪽 Skraidantis');
       if (enemy.isCamo) attrs.push('👁️ Nematomas');
+      if (enemy.isBoss) attrs.push('👑 2 fazių bosas');
       const attrLine = attrs.length > 0 ? ` • ${attrs.join(' • ')}` : '';
       card.innerHTML = `
         <div class="ency-card-head">
@@ -1363,6 +1423,7 @@ function showCampaignMapView() {
   document.body.classList.remove('in-battle-mode');
   screenGame?.classList.add('hidden');
   screenCampaign?.classList.remove('hidden');
+  syncBossHpBarUI();
   playtimeTimer.setActiveGameplay(false);
   syncTechStarsUI();
   renderCampaignMap();
@@ -1419,6 +1480,7 @@ function showProfileScreen() {
   screenGame?.classList.add('hidden');
   screenCampaign?.classList.add('hidden');
   screenProfiles?.classList.remove('hidden');
+  syncBossHpBarUI();
   topProfilePill?.classList.add('hidden');
   btnSwitchProfile?.classList.add('hidden');
   syncTechStarsUI();
@@ -1450,6 +1512,7 @@ function animationLoop(timestamp) {
 
   if (activeProfile && isInBattleView()) {
     engine.update(rawDt);
+    syncBossHpBarUI();
     engine.render();
   }
 

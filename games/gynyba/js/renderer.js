@@ -5,14 +5,14 @@
 import {
   getTowerStats,
   getTargetingPriorityMeta
-} from './balance.js?v=20261121p';
+} from './balance.js?v=20261121q';
 import {
   drawEnemySprite,
   drawTowerBaseSprite,
   drawTowerTurretSprite,
   drawDroneUnitSprite,
   drawMowerUnitSprite
-} from './sprites.js?v=20261121p';
+} from './sprites.js?v=20261121q';
 
 const backdropCache = new Map();
 
@@ -119,33 +119,33 @@ function isSpotClear(x, y, map, pathSplines, minPadDist = 46, minPathDist = 40, 
 const BONUS_ZONE_COPY = {
   1: {
     goldTitle: '☀️ Derlinga saulėta vieta',
-    goldDesc: 'Derlinga vieta! Pastatyk bokštelį šalia ir iškart gauk +15 🪙 premiją!',
+    goldDesc: 'Derlinga vieta! Pastatyk bokštelį šalia ir iškart gauk +18 🪙 premiją!',
     powerTitle: '⚡ Saulės energijos taškas',
-    powerDesc: 'Energijos vieta! Šalia pastatyti bokšteliai šaudo +8% greičiau!'
+    powerDesc: 'Energijos vieta! Šalia pastatyti bokšteliai šaudo +15% greičiau!'
   },
   2: {
     goldTitle: '🪙 Pakrantės lobio taškas',
-    goldDesc: 'Sėkmės vieta prie tvenkinio! Pastatęs bokštelį šalia iškart gausi +15 🪙!',
+    goldDesc: 'Sėkmės vieta prie tvenkinio! Pastatęs bokštelį šalia iškart gausi +18 🪙!',
     powerTitle: '⚡ Piliakalnio vėjo gūsis',
-    powerDesc: 'Stiprybės vieta! Aplinkiniai bokšteliai šaudo +8% greičiau!'
+    powerDesc: 'Stiprybės vieta! Aplinkiniai bokšteliai šaudo +15% greičiau!'
   },
   3: {
     goldTitle: '🪙 Gintarinė girios aikštelė',
-    goldDesc: 'Kuršių lobis! Pastatyk bokštelį netoliese ir gauk +15 🪙 premiją!',
+    goldDesc: 'Kuršių lobis! Pastatyk bokštelį netoliese ir gauk +18 🪙 premiją!',
     powerTitle: '⚡ Senųjų pušų galia',
-    powerDesc: 'Miško jėga! Šalia pastatyti bokšteliai įgauna +8% šaudymo greičio!'
+    powerDesc: 'Miško jėga! Šalia pastatyti bokšteliai įgauna +15% šaudymo greičio!'
   },
   4: {
     goldTitle: '🪙 Koncertų rėmėjų vieta',
-    goldDesc: 'Scenos premija! Pastatęs bokštelį šalia iškart gausi +15 🪙!',
+    goldDesc: 'Scenos premija! Pastatęs bokštelį šalia iškart gausi +18 🪙!',
     powerTitle: '⚡ Akustinio rezonanso taškas',
-    powerDesc: 'Puiki akustika! Šalia esantys bokšteliai šaudo +8% greičiau!'
+    powerDesc: 'Puiki akustika! Šalia esantys bokšteliai šaudo +15% greičiau!'
   },
   5: {
     goldTitle: '🪙 Saulės kolektoriaus mazgas',
-    goldDesc: 'Energijos perteklius! Pastatyk bokštelį šalia ir iškart gauk +15 🪙!',
+    goldDesc: 'Energijos perteklius! Pastatyk bokštelį šalia ir iškart gauk +18 🪙!',
     powerTitle: '⚡ Plazminis stiprintuvas',
-    powerDesc: 'Aukšta įtampa! Šalia esantys bokšteliai šaudo +8% greičiau!'
+    powerDesc: 'Aukšta įtampa! Šalia esantys bokšteliai šaudo +15% greičiau!'
   }
 };
 
@@ -212,7 +212,7 @@ export function getMapBonusZones(map, pathSplines) {
       x: goldPos.x,
       y: goldPos.y,
       effectRadius: 86,
-      rewardCoins: 15
+      rewardCoins: 18
     });
   }
 
@@ -228,7 +228,7 @@ export function getMapBonusZones(map, pathSplines) {
       x: powerPos.x,
       y: powerPos.y,
       effectRadius: 86,
-      speedBonus: 0.08
+      speedBonus: 0.15
     });
   }
 
@@ -1637,11 +1637,13 @@ function renderEnemy25D(ctx, enemy, animClock) {
     }
   }
 
-  // Būsenos ir savybių piktogramos (šarvai, ledas, apsvaiginimas, bosas, camo)
+  // Būsenos ir savybių piktogramos (šarvai, veidrodis, gydytojas, ledas, apsvaiginimas, bosas, camo)
   const badges = [];
   if (enemy.isBoss) badges.push('👑');
   if (enemy.isCamo) badges.push('👁️');
   if ((enemy.armor || 0) >= 0.25) badges.push('🛡️');
+  if ((enemy.energyResist || 0) >= 0.5) badges.push('🪞');
+  if ((enemy.healInterval || 0) > 0) badges.push('💚');
   if (enemy.slowTimer > 0) badges.push('❄️');
   if (enemy.stunTimer > 0) badges.push('💫');
 
@@ -1755,6 +1757,40 @@ export function renderBattleScene(engine) {
         const lift = p * 16;
         const note = n % 3 === 0 ? '♪' : n % 3 === 1 ? '♫' : '♬';
         ctx.fillText(note, pulse.x + Math.cos(ang) * r, pulse.y + Math.sin(ang) * r - lift);
+      }
+    } else if (pulse.isHealWave) {
+      ctx.globalAlpha = Math.max(0, (1 - p) * 0.35);
+      ctx.fillStyle = '#4ade80';
+      ctx.beginPath();
+      ctx.arc(pulse.x, pulse.y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.globalAlpha = Math.max(0, 1 - p * 0.8);
+      ctx.fillStyle = '#bbf7d0';
+      ctx.font = 'bold 14px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let n = 0; n < 6; n += 1) {
+        const ang = (n * Math.PI) / 3 + p * 1.1;
+        const lift = p * 14;
+        const glyph = n % 2 === 0 ? '+' : '💚';
+        ctx.fillText(glyph, pulse.x + Math.cos(ang) * (r * 0.72), pulse.y + Math.sin(ang) * (r * 0.72) - lift);
+      }
+    } else if (pulse.isBossPhase) {
+      ctx.globalAlpha = Math.max(0, (1 - p) * 0.9);
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = Math.max(2, (1 - p) * 6);
+      ctx.beginPath();
+      ctx.arc(pulse.x, pulse.y, r * 0.75, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#fde047';
+      ctx.font = 'bold 16px Outfit, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      for (let n = 0; n < 8; n += 1) {
+        const ang = (n * Math.PI) / 4 + p * 2.2;
+        ctx.fillText('✦', pulse.x + Math.cos(ang) * r, pulse.y + Math.sin(ang) * r);
       }
     }
     ctx.restore();

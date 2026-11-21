@@ -20,16 +20,16 @@ import {
   selectTargetByPriority,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './balance.js?v=20261121p';
+} from './balance.js?v=20261121q';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121p';
-import { renderBattleScene, getMapBonusZones } from './renderer.js?v=20261121p';
-import { audioManager } from './audio.js?v=20261121p';
+} from './towers.js?v=20261121q';
+import { renderBattleScene, getMapBonusZones } from './renderer.js?v=20261121q';
+import { audioManager } from './audio.js?v=20261121q';
 
 let nextEnemyUid = 1;
 
@@ -933,6 +933,11 @@ export class TDEngine {
       periodicCamoTimer: 0,
       periodicCamoActiveTimer: 0,
       silenceTowerTimer: 0,
+      healTimer: 0,
+      phase: 1,
+      phase2Triggered: false,
+      phase2ShieldTimer: 0,
+      phase2HasteTimer: 0,
       isBlocked: false,
       hitFlash: 0
     };
@@ -946,10 +951,82 @@ export class TDEngine {
     return enemyObj;
   }
 
+  getActiveBoss() {
+    return this.enemies.find((e) => e.isBoss && e.hp > 0) || null;
+  }
+
+  triggerBossPhase2(boss) {
+    if (!boss || boss.phase2Triggered) return;
+    boss.phase = 2;
+    boss.phase2Triggered = true;
+    boss.phase2ShieldTimer = 3.0;
+    boss.phase2HasteTimer = 4.0;
+
+    audioManager.playBossHorn();
+    this.triggerScreenShake(7, 0.38);
+    this.spawnParticles(boss.x, boss.y, { count: 26, color: '#fde047', speedMax: 145, sizeMax: 6, life: 0.7 });
+    this.pulses.push({
+      x: boss.x,
+      y: boss.y,
+      maxRadius: 120,
+      color: '#facc15',
+      life: 0.55,
+      maxLife: 0.55,
+      isBossPhase: true
+    });
+    this.addFloatingText(boss.x, boss.y - 34, '⚡ 2-OJI FAZĖ! SKYDAS + GREITIS!', '#fde047', {
+      vy: -36,
+      life: 1.5,
+      font: 'bold 15px Fredoka, Outfit, sans-serif'
+    });
+
+    // Iškviečia 4–5 teminius palydovus
+    const escorts = Array.isArray(boss.phase2Escorts) && boss.phase2Escorts.length > 0
+      ? boss.phase2Escorts
+      : ['garden_slug', 'rushing_hedgehog', 'armored_beetle', 'garden_slug'];
+    for (let i = 0; i < escorts.length; i++) {
+      const arch = ENEMY_ARCHETYPES[escorts[i]] || ENEMY_ARCHETYPES.garden_slug;
+      const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, boss.pathIndex, 0, 0.62);
+      const offsetDist = Math.max(0, boss.distance - (i + 1) * 14);
+      this.spawnEnemyRuntime(minion, offsetDist);
+    }
+
+    // Teminiai 2-osios fazės efektai pagal bosą
+    if (boss.type === 'boss_slug_king') {
+      for (let k = -1; k <= 1; k++) {
+        this.slimePuddles.push({ x: boss.x + k * 20, y: boss.y + (k % 2) * 8, life: 5.0, maxLife: 5.0 });
+      }
+    } else if (boss.type === 'boss_iron_mole') {
+      boss.burrowTimer = 2.5;
+      boss.burrowSpeedMult = 1.45;
+      boss.isBlocked = false;
+      this.addFloatingText(boss.x, boss.y - 20, '⛏️ Greitas tunelis!', '#fde68a');
+    } else if (boss.type === 'boss_shadow_lord') {
+      boss.isCamo = true;
+      boss.periodicCamoActiveTimer = 3.5;
+    } else if (boss.type === 'boss_wrong_notes') {
+      const nearestTwo = [...this.towers]
+        .map((t) => ({ tower: t, d: Math.hypot(t.x - boss.x, t.y - boss.y) }))
+        .sort((a, b) => a.d - b.d)
+        .slice(0, 2);
+      for (const item of nearestTwo) {
+        item.tower.silencedTimer = Math.max(item.tower.silencedTimer || 0, 4.0);
+        this.addFloatingText(item.tower.x, item.tower.y - 28, '🔇 Užtildytas 4s!', '#fda4af');
+      }
+    } else if (boss.type === 'boss_cyber_mega' && boss.maxShield > 0) {
+      boss.shield = boss.maxShield;
+    }
+
+    this.notifyStateChange();
+  }
+
   applySlowToEnemy(enemy, rawSlowPct, duration) {
     if (!enemy || enemy.burrowTimer > 0) return;
     const resist = enemy.slowResistance || 0;
-    const effectiveSlowPct = rawSlowPct * (1 - resist);
+    let effectiveSlowPct = rawSlowPct * (1 - resist);
+    if (enemy.isBoss || (enemy.maxSlowPct !== undefined && enemy.maxSlowPct < 1)) {
+      effectiveSlowPct = Math.min(enemy.maxSlowPct || 0.20, effectiveSlowPct);
+    }
     if (effectiveSlowPct <= 0.02) return;
     const factor = 1 - effectiveSlowPct;
     enemy.slowFactor = Math.min(enemy.slowFactor, factor);
@@ -1022,6 +1099,12 @@ export class TDEngine {
       }
       if (enemy.hitFlash > 0) {
         enemy.hitFlash = Math.max(0, enemy.hitFlash - dt);
+      }
+      if (enemy.phase2ShieldTimer > 0) {
+        enemy.phase2ShieldTimer = Math.max(0, enemy.phase2ShieldTimer - dt);
+      }
+      if (enemy.phase2HasteTimer > 0) {
+        enemy.phase2HasteTimer = Math.max(0, enemy.phase2HasteTimer - dt);
       }
 
       // Kurmis-Tunelininkas (50% HP) ir Geležinis Kurmis (periodinis panėrimas)
@@ -1115,12 +1198,49 @@ export class TDEngine {
         }
       }
 
+      // Gamtos Gydytojas (forest_healer): kas 3.5s žalia gydymo banga (+12% HP, bosams +3%)
+      if (enemy.healInterval > 0 && enemy.burrowTimer <= 0 && enemy.stunTimer <= 0) {
+        enemy.healTimer = (enemy.healTimer || 0) + dt;
+        if (enemy.healTimer >= enemy.healInterval) {
+          enemy.healTimer = 0;
+          const radius = enemy.healRadius || 125;
+          this.pulses.push({
+            x: enemy.x,
+            y: enemy.y,
+            maxRadius: radius,
+            color: '#4ade80',
+            life: 0.52,
+            maxLife: 0.52,
+            isHealWave: true
+          });
+          let healedAny = false;
+          for (const ally of this.enemies) {
+            if (ally.hp <= 0 || ally.burrowTimer > 0) continue;
+            if (Math.hypot(ally.x - enemy.x, ally.y - enemy.y) <= radius) {
+              const pct = ally.isBoss ? (enemy.healPctBoss || 0.03) : (enemy.healPctNormal || 0.12);
+              const gain = Math.max(1, Math.round(ally.maxHp * pct));
+              if (ally.hp < ally.maxHp) {
+                ally.hp = Math.min(ally.maxHp, ally.hp + gain);
+                healedAny = true;
+              }
+            }
+          }
+          if (healedAny) {
+            this.addFloatingText(enemy.x, enemy.y - 22, '💚 +Gydymas!', '#86efac', {
+              vy: -30,
+              font: 'bold 12px Fredoka, Outfit, sans-serif'
+            });
+          }
+        }
+      }
+
       const canMove = enemy.stunTimer <= 0 && !enemy.isBlocked;
       const spline = this.pathSplines[enemy.pathIndex];
 
       if (canMove) {
         const burrowMult = enemy.burrowTimer > 0 ? enemy.burrowSpeedMult || 1.3 : 1;
-        const currentSpeed = enemy.speed * burrowMult * (enemy.slowTimer > 0 ? enemy.slowFactor : 1);
+        const hasteMult = (enemy.phase2HasteTimer || 0) > 0 ? 1.25 : 1;
+        const currentSpeed = enemy.speed * burrowMult * hasteMult * (enemy.slowTimer > 0 ? enemy.slowFactor : 1);
         enemy.distance += currentSpeed * dt;
       }
 
@@ -1128,7 +1248,7 @@ export class TDEngine {
         this.enemies.splice(i, 1);
         this.hearts = Math.max(0, this.hearts - (enemy.heartCost || 1));
         this.fortressHitTimer = 0.45;
-        this.triggerShake(4, 0.22);
+        this.triggerScreenShake(4, 0.22);
         this.addFloatingText(
           this.map.fortress.x - 10,
           this.map.fortress.y - 24,
@@ -1274,7 +1394,7 @@ export class TDEngine {
     // 8. Bangos ir žemėlapio pergalės tikrinimas
     if (this.waveActive && this.spawnQueue.length === 0 && this.enemies.length === 0) {
       this.waveActive = false;
-      const clearBonus = 25 + this.wave * 5;
+      const clearBonus = 18 + this.wave * 3;
       this.coins += clearBonus;
       this.addFloatingText(
         this.map.fortress.x - 40,
@@ -1357,7 +1477,8 @@ export class TDEngine {
       });
 
       const killed = this.damageEnemy(target, dmg, {
-        armorPierce: stats.armorPierce || 0,
+        damageType: 'energy',
+        armorPierce: stats.armorPierce ?? 1.0,
         silentText: true
       });
 
@@ -1374,7 +1495,10 @@ export class TDEngine {
         this.triggerScreenShake(3.2, 0.16);
         for (const other of [...this.enemies]) {
           if (Math.hypot(other.x - target.x, other.y - target.y) <= stats.explodeOnKillRadius) {
-            this.damageEnemy(other, stats.explodeOnKillDamage || 90, { armorPierce: 0.4 });
+            this.damageEnemy(other, stats.explodeOnKillDamage || 90, {
+              damageType: 'energy',
+              armorPierce: 1.0
+            });
           }
         }
       }
@@ -1412,13 +1536,13 @@ export class TDEngine {
     });
 
     for (const enemy of [...targets]) {
-      if (stats.stunDuration) {
-        enemy.stunTimer = Math.max(enemy.stunTimer, enemy.isBoss ? stats.stunDuration * 0.4 : stats.stunDuration);
+      if (stats.stunDuration && !enemy.isBoss && !enemy.stunImmune) {
+        enemy.stunTimer = Math.max(enemy.stunTimer, stats.stunDuration);
       }
       if (stats.knockbackDist && !enemy.isBoss) {
         enemy.distance = Math.max(0, enemy.distance - stats.knockbackDist);
       }
-      this.damageEnemy(enemy, stats.damage);
+      this.damageEnemy(enemy, stats.damage, { damageType: 'sound' });
     }
   }
 
@@ -1492,6 +1616,7 @@ export class TDEngine {
               target,
               speed: 340,
               damage: stats.damage,
+              damageType: 'physical',
               splashRadius: stats.splashRadius || 56,
               color: stats.color,
               radius: 5,
@@ -1507,7 +1632,7 @@ export class TDEngine {
               life: 0.11,
               maxLife: 0.11
             });
-            this.damageEnemy(target, stats.damage);
+            this.damageEnemy(target, stats.damage, { damageType: 'physical' });
           }
         }
       } else {
@@ -1598,7 +1723,7 @@ export class TDEngine {
       if (enemy && Math.hypot(enemy.x - unit.x, enemy.y - unit.y) <= 28) {
         enemy.isBlocked = true;
         audioManager.playMowerClash();
-        this.damageEnemy(enemy, stats.unitDps * dt, { silentText: true });
+        this.damageEnemy(enemy, stats.unitDps * dt, { damageType: 'physical', silentText: true });
 
         // Priešo kontrataka į robotą
         const enemyDps = enemy.isBoss ? 52 : 16 + (enemy.heartCost || 1) * 4;
@@ -1619,7 +1744,7 @@ export class TDEngine {
         unit.zapTimer = (unit.zapTimer || 0) - dt;
         for (const near of [...this.enemies]) {
           if (!near.isFlying && Math.hypot(near.x - unit.x, near.y - unit.y) <= (stats.electroAuraRadius || 60)) {
-            this.damageEnemy(near, stats.electroAuraDps * dt, { silentText: true });
+            this.damageEnemy(near, stats.electroAuraDps * dt, { damageType: 'energy', silentText: true });
           }
         }
       }
@@ -1704,14 +1829,11 @@ export class TDEngine {
       const dist = Math.hypot(enemy.x - shot.targetX, enemy.y - shot.targetY);
       if (dist <= shot.splashRadius) {
         this.applySlowToEnemy(enemy, shot.slowPercentage || 0.35, shot.slowDuration);
-        if (shot.freezeDuration > 0) {
-          enemy.stunTimer = Math.max(
-            enemy.stunTimer,
-            enemy.isBoss ? shot.freezeDuration * 0.45 : shot.freezeDuration
-          );
+        if (shot.freezeDuration > 0 && !enemy.isBoss && !enemy.stunImmune) {
+          enemy.stunTimer = Math.max(enemy.stunTimer, shot.freezeDuration);
         }
         const falloff = dist < shot.splashRadius * 0.5 ? 1 : 0.75;
-        this.damageEnemy(enemy, Math.round(shot.damage * falloff));
+        this.damageEnemy(enemy, Math.round(shot.damage * falloff), { damageType: 'physical' });
       }
     }
   }
@@ -1760,7 +1882,7 @@ export class TDEngine {
           });
           this.spawnParticles(strongest.x, strongest.y, { count: 16, color: '#fde047', speedMax: 130 });
           this.triggerScreenShake(4.2, 0.2);
-          this.damageEnemy(strongest, stats.lightningDamage || 420, { armorPierce: 0.5 });
+          this.damageEnemy(strongest, stats.lightningDamage || 420, { damageType: 'energy', armorPierce: 1.0 });
         }
       }
     }
@@ -1783,21 +1905,35 @@ export class TDEngine {
         const dist = Math.hypot(enemy.x - proj.tx, enemy.y - proj.ty);
         if (dist <= proj.splashRadius) {
           const falloff = dist < proj.splashRadius * 0.45 ? 1 : 0.72;
-          this.damageEnemy(enemy, Math.round(proj.damage * falloff));
+          this.damageEnemy(enemy, Math.round(proj.damage * falloff), {
+            damageType: proj.damageType || 'physical'
+          });
         }
       }
     } else if (proj.target && proj.target.hp > 0) {
       this.spawnParticles(proj.tx, proj.ty, { count: 5, color: proj.color, speedMax: 60, life: 0.28 });
-      this.damageEnemy(proj.target, proj.damage);
+      this.damageEnemy(proj.target, proj.damage, {
+        damageType: proj.damageType || 'physical'
+      });
     }
   }
 
   damageEnemy(enemy, rawAmount, options = {}) {
     if (!enemy || enemy.hp <= 0 || enemy.burrowTimer > 0) return false;
-    const armorPierce = options.armorPierce || 0;
-    const effectiveArmor = Math.max(0, (enemy.armor || 0) * (1 - armorPierce));
+    const damageType = options.damageType || 'physical';
+    let effectiveResist = 0;
+    if (damageType === 'energy') {
+      effectiveResist = Math.max(0, Math.min(0.95, enemy.energyResist || 0));
+    } else if (damageType === 'sound') {
+      effectiveResist = Math.max(0, Math.min(0.95, enemy.soundResist || 0));
+    } else {
+      const armorPierce = options.armorPierce || 0;
+      effectiveResist = Math.max(0, Math.min(0.95, (enemy.armor || 0) * (1 - armorPierce)));
+    }
+
     const vulnMult = enemy.scannerVulnerable ? 1.2 : 1.0;
-    const totalInflicted = rawAmount * (1 - effectiveArmor) * vulnMult;
+    const phaseShieldMult = (enemy.phase2ShieldTimer || 0) > 0 ? 0.5 : 1.0;
+    const totalInflicted = rawAmount * (1 - effectiveResist) * vulnMult * phaseShieldMult;
     let finalDamage = totalInflicted;
 
     enemy.timeSinceLastHit = 0;
@@ -1813,6 +1949,11 @@ export class TDEngine {
       enemy.hp -= finalDamage;
     }
     enemy.hitFlash = 0.08;
+
+    // Dvifazio boso 2-oji fazė ties 50% HP
+    if (enemy.hp > 0 && enemy.isBoss && !enemy.phase2Triggered && enemy.hp <= enemy.maxHp * 0.5) {
+      this.triggerBossPhase2(enemy);
+    }
 
     // Kylantys žalos skaičiukai
     if (!options.silentText) {

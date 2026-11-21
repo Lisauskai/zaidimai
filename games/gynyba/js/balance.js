@@ -8,7 +8,7 @@ export {
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121p';
+} from './towers.js?v=20261121q';
 
 export {
   ENEMY_ARCHETYPES,
@@ -19,7 +19,7 @@ export {
   createEnemyInstanceData,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './enemies.js?v=20261121p';
+} from './enemies.js?v=20261121q';
 
 export {
   CAMPAIGN_ZONES,
@@ -27,7 +27,7 @@ export {
   MAP_DEFINITIONS,
   getLevelById,
   renderMapThemeDecorations
-} from './maps.js?v=20261121p';
+} from './maps.js?v=20261121q';
 
 export {
   buildTaskReviewSummary,
@@ -35,7 +35,7 @@ export {
   EduTaskGenerator,
   eduTaskGenerator,
   renderTaskVisual
-} from './edu_tasks.js?v=20261121p';
+} from './edu_tasks.js?v=20261121q';
 
 export const STARTING_HEARTS = 20;
 export const SELL_REFUND_RATE = 0.75; // 75% investuotų monetų grąžinimas
@@ -141,16 +141,16 @@ export const PROFILE_MODIFIERS = {
   linas: {
     id: 'linas',
     label: 'Linas (1 klasė)',
-    startingCoinsMultiplier: 1.2, // +20% pradinių monetų
-    enemyHpMultiplier: 0.8, // -20% priešų HP
-    badgeText: '1 kl. balansas: +20% pradinių monetų • -20% priešų HP'
+    startingCoinsMultiplier: 1.15, // +15% daugiau pradinių monetų nei 3 kl.
+    enemyHpMultiplier: 1.0125, // ~25% mažiau HP nei 3 kl. (1.0125 / 1.35 = 0.75)
+    badgeText: '1 kl. balansas: +15% pradinių monetų • -25% priešų HP'
   },
   lukas: {
     id: 'lukas',
     label: 'Lukas (3 klasė)',
     startingCoinsMultiplier: 1.0,
-    enemyHpMultiplier: 1.0,
-    badgeText: '3 kl. balansas: standartinis stratego režimas (100%)'
+    enemyHpMultiplier: 1.35,
+    badgeText: '3 kl. balansas: stratego iššūkis (+35% priešų HP)'
   }
 };
 
@@ -173,7 +173,7 @@ export function getScaledEnemyHp(baseHp, waveNumber, profileId) {
   const mod = getProfileModifier(profileId);
   const w = Math.max(1, Number(waveNumber) || 1);
   // Progresyvi Kingdom Rush / BTD6 HP kreivė pagal bangos numerį
-  const waveScale = 1 + (w - 1) * 0.28 + Math.pow(Math.max(0, w - 3), 1.35) * 0.08;
+  const waveScale = 1 + (w - 1) * 0.32 + Math.pow(Math.max(0, w - 3), 1.42) * 0.095;
   return Math.max(10, Math.round(baseHp * waveScale * mod.enemyHpMultiplier));
 }
 
@@ -185,7 +185,7 @@ export function computeEarlyWaveBonus(remainingCooldownSeconds, nextWaveNumber) 
   const rem = Math.max(0, Number(remainingCooldownSeconds) || 0);
   if (rem <= 0.25) return 0;
   const w = Math.max(1, Number(nextWaveNumber) || 1);
-  return Math.max(0, Math.round(rem * (2.5 + w * 0.5)));
+  return Math.max(0, Math.round(rem * (1.8 + w * 0.35)));
 }
 
 export function calculateStarsForHearts(remainingHearts) {

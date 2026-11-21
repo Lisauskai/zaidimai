@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261121p" />
+  <link rel="stylesheet" href="./style.css?v=20261121q" />
 </head>
 <body>
   <div class="td-bg-glow" aria-hidden="true"></div>
@@ -233,11 +233,25 @@
               <span id="wave-preview-headline">⚠️ Ateina skraidančios širšės!</span>
               <button id="btn-close-wave-preview" class="menu-close-x" type="button" aria-label="Uždaryti">✕</button>
             </div>
+            <div id="wave-preview-warnings" class="wave-preview-warnings hidden"></div>
             <div id="wave-preview-list" class="wave-preview-list"></div>
           </div>
 
           <!-- Bonusinės zonos paaiškinimas užvedus pelę arba bakstelėjus -->
           <div id="bonus-zone-tooltip" class="bonus-zone-tooltip hidden" role="status"></div>
+
+          <!-- Dvifazio Zonos Boso viršutinė HP juosta -->
+          <div id="boss-hp-bar" class="boss-hp-bar hidden" role="status">
+            <div class="boss-hp-head">
+              <span id="boss-hp-name" class="boss-hp-name">👑 Zonos Bosas</span>
+              <span id="boss-hp-phase" class="boss-hp-phase">1 FAZĖ</span>
+              <span id="boss-hp-numbers" class="boss-hp-numbers">2450 / 2450</span>
+            </div>
+            <div class="boss-hp-track">
+              <div id="boss-hp-fill" class="boss-hp-fill"></div>
+              <div class="boss-hp-mid-marker" title="50% – 2-oji fazė"></div>
+            </div>
+          </div>
 
           <!-- Kompaktiškas radialinis statybos meniu ant tuščios aikštelės -->
           <div id="pad-build-menu" class="floating-pad-menu hidden" role="dialog" aria-label="Bokštelio statyba">
@@ -357,7 +371,7 @@
         </div>
         <div class="ency-tabs">
           <button id="btn-ency-tab-towers" class="ency-tab-btn active" type="button">🏰 Bokšteliai (6)</button>
-          <button id="btn-ency-tab-enemies" class="ency-tab-btn" type="button">👾 Priešai ir Bosai (15)</button>
+          <button id="btn-ency-tab-enemies" class="ency-tab-btn" type="button">👾 Priešai ir Bosai (17)</button>
           <button id="btn-ency-tab-world" class="ency-tab-btn" type="button">🗺️ Žemėlapis ir bonusai</button>
         </div>
       </div>
@@ -391,6 +405,6 @@
     </div>
   </div>
 
-  <script type="module" src="./js/main.js?v=20261121p"></script>
+  <script type="module" src="./js/main.js?v=20261121q"></script>
 </body>
 </html>

@@ -6,6 +6,8 @@ export const ENEMY_SPRITE_IDS = [
   'garden_slug',
   'rushing_hedgehog',
   'armored_beetle',
+  'mirror_beetle',
+  'forest_healer',
   'forest_shadow',
   'hornet_swarm',
   'tunnel_mole',
@@ -336,6 +338,53 @@ const ENEMY_SVG_BUILDERS = {
     <circle cx="71" cy="42.5" r="2.3" fill="#ef4444"/>
     `,
     `<linearGradient id="cyberBird" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0f172a"/></linearGradient>`
+  ),
+
+  mirror_beetle: () => wrapSvg(
+    `
+    <!-- Blizgūs šviesos atspindžiai aplink Veidrodinį Kristalą -->
+    <circle cx="48" cy="48" r="36" fill="#bae6fd" fill-opacity="0.16"/>
+    <!-- 6 kristalinės kojos -->
+    <path d="M31 30 L22 18 L15 20 M48 25 L47 13 L40 15 M64 31 L71 19 L79 22" fill="none" stroke="#1e293b" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M31 66 L22 78 L15 76 M48 71 L47 83 L40 81 M64 65 L71 77 L79 74" fill="none" stroke="#1e293b" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Prizminis ragas priekyje -->
+    <polygon points="73,42 90,34 80,50" fill="#7dd3fc" stroke="#0f172a" stroke-width="2.6" stroke-linejoin="round"/>
+    <!-- Veidrodinio kristalo briaunotas korpusas -->
+    <polygon points="15,48 29,24 58,24 76,40 76,56 58,72 29,72" fill="url(#mirrorGrad)" stroke="#0f172a" stroke-width="3.4" stroke-linejoin="round"/>
+    <!-- Veidrodžio briaunos (fasetės) ir spindintys blyksniai -->
+    <polygon points="29,24 46,48 29,72 15,48" fill="#e0f2fe" opacity="0.65" stroke="#0284c7" stroke-width="1.6"/>
+    <polygon points="29,24 58,24 46,48" fill="#ffffff" opacity="0.72" stroke="#38bdf8" stroke-width="1.6"/>
+    <polygon points="58,24 76,40 62,48 46,48" fill="#38bdf8" opacity="0.55" stroke="#0284c7" stroke-width="1.6"/>
+    <polygon points="46,48 62,48 58,72 29,72" fill="#7dd3fc" opacity="0.48"/>
+    <line x1="25" y1="32" x2="54" y2="62" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" opacity="0.88"/>
+    <!-- Akys priekyje -->
+    <circle cx="71" cy="42" r="3.4" fill="#fde047" stroke="#0f172a" stroke-width="1.8"/>
+    <circle cx="71" cy="54" r="3.4" fill="#fde047" stroke="#0f172a" stroke-width="1.8"/>
+    `,
+    `<linearGradient id="mirrorGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="48%" stop-color="#bae6fd"/><stop offset="100%" stop-color="#0284c7"/></linearGradient>`
+  ),
+
+  forest_healer: () => wrapSvg(
+    `
+    <!-- Švelni žalio gydymo aura -->
+    <circle cx="48" cy="48" r="36" fill="#4ade80" fill-opacity="0.18"/>
+    <!-- Gamtos gydytojo žalia mantija -->
+    <path d="M24 78 L27 42 C29 24, 61 24, 63 42 L66 78 Z" fill="url(#healerCloak)" stroke="#0f172a" stroke-width="3.2" stroke-linejoin="round"/>
+    <!-- Lapų vainikas ant gaubto -->
+    <path d="M31 28 C27 16, 41 13, 45 25 C49 13, 62 16, 59 28 Z" fill="#86efac" stroke="#0f172a" stroke-width="2.4" stroke-linejoin="round"/>
+    <!-- Veido anga ir geros švytinčios akys -->
+    <ellipse cx="46" cy="41" rx="12" ry="11" fill="#064e3b" stroke="#4ade80" stroke-width="2"/>
+    <circle cx="42" cy="40" r="3" fill="#fef08a"/>
+    <circle cx="52" cy="40" r="3" fill="#fef08a"/>
+    <!-- Gydantis simbolis ant krūtinės -->
+    <rect x="42" y="55" width="7" height="15" rx="2" fill="#ffffff"/>
+    <rect x="38" y="59" width="15" height="7" rx="2" fill="#ffffff"/>
+    <!-- Gamtos lazda dešinėje su švytinčiu kristalu -->
+    <line x1="73" y1="26" x2="73" y2="80" stroke="#78350f" stroke-width="4.8" stroke-linecap="round"/>
+    <circle cx="73" cy="24" r="9.5" fill="#4ade80" stroke="#0f172a" stroke-width="2.6"/>
+    <circle cx="73" cy="24" r="4.5" fill="#ecfccb"/>
+    `,
+    `<linearGradient id="healerCloak" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#34d399"/><stop offset="100%" stop-color="#065f46"/></linearGradient>`
   ),
 
   // ==================== 5 ZONŲ BOSAI (SU KARŪNOMIS IR UNIKALIAIS ŠARVAIS) ====================
@@ -1028,6 +1077,26 @@ export function drawEnemySprite(ctx, enemy, animClock = 0) {
     ctx.lineWidth = 2.5;
     ctx.beginPath();
     ctx.arc(0, 0, drawSize * 0.47, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Dvifazio boso 2-osios fazės įniršio žiedas ir 3s energijos skydas (-50% žalos)
+  if (enemy.isBoss && enemy.phase === 2) {
+    const ragePulse = 0.48 + 0.28 * Math.sin(animClock * 9);
+    ctx.strokeStyle = `rgba(250, 204, 21, ${ragePulse.toFixed(2)})`;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath();
+    ctx.arc(0, 0, drawSize * 0.44, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  if ((enemy.phase2ShieldTimer || 0) > 0) {
+    const shieldPulse = 0.55 + 0.3 * Math.sin(animClock * 12);
+    ctx.strokeStyle = `rgba(251, 146, 60, ${shieldPulse.toFixed(2)})`;
+    ctx.fillStyle = 'rgba(253, 224, 71, 0.16)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, drawSize * 0.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }
