@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121f';
+} from '../../../shared/playtime-timer.js?v=20261121g';
 import {
   TOWER_LIST,
   TARGETING_PRIORITIES,
@@ -19,8 +19,8 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121f';
-import { TDEngine } from './engine.js?v=20261121f';
+} from './balance.js?v=20261121g';
+import { TDEngine } from './engine.js?v=20261121g';
 
 const SAVE_KEY = 'gynyba_save_v1';
 
@@ -939,6 +939,7 @@ function showCampaignMapView() {
   resultOverlay?.classList.add('hidden');
   knowledgeGateModal?.classList.add('hidden');
   engine.setPaused(false);
+  document.body.classList.remove('in-battle-mode');
   screenGame?.classList.add('hidden');
   screenCampaign?.classList.remove('hidden');
   renderCampaignMap();
@@ -946,6 +947,7 @@ function showCampaignMapView() {
 
 function enterBattleLevel(mapId) {
   if (!activeProfile) return;
+  document.body.classList.add('in-battle-mode');
   screenCampaign?.classList.add('hidden');
   screenGame?.classList.remove('hidden');
   selectMap(mapId);
@@ -983,6 +985,7 @@ function showProfileScreen() {
   resultOverlay?.classList.add('hidden');
   knowledgeGateModal?.classList.add('hidden');
   playtimeTimer.clearActiveChild();
+  document.body.classList.remove('in-battle-mode');
   screenGame?.classList.add('hidden');
   screenCampaign?.classList.add('hidden');
   screenProfiles?.classList.remove('hidden');

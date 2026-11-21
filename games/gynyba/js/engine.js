@@ -15,16 +15,16 @@ import {
   getTargetingPriorityMeta,
   selectTargetByPriority,
   generateWaveSpawns,
-  getWavePreviewInfo,
-  renderMapThemeDecorations
-} from './balance.js?v=20261121f';
+  getWavePreviewInfo
+} from './balance.js?v=20261121g';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121f';
+} from './towers.js?v=20261121g';
+import { renderBattleScene } from './renderer.js?v=20261121g';
 
 let nextEnemyUid = 1;
 
@@ -160,8 +160,14 @@ export class TDEngine {
     this.lightningBolts = [];
     this.pulses = [];
     this.explosions = [];
+    this.particles = [];
     this.slimePuddles = [];
     this.floatingTexts = [];
+    this.shakeTimer = 0;
+    this.shakeMaxTimer = 0.01;
+    this.shakeIntensity = 0;
+    this.shakeOffsetX = 0;
+    this.shakeOffsetY = 0;
 
     this.selectedPadIndex = null;
     this.previewTowerType = 'solar_laser';
@@ -208,8 +214,14 @@ export class TDEngine {
     this.lightningBolts = [];
     this.pulses = [];
     this.explosions = [];
+    this.particles = [];
     this.slimePuddles = [];
     this.floatingTexts = [];
+    this.shakeTimer = 0;
+    this.shakeMaxTimer = 0.01;
+    this.shakeIntensity = 0;
+    this.shakeOffsetX = 0;
+    this.shakeOffsetY = 0;
 
     this.selectedPadIndex = null;
     this.previewTowerType = 'solar_laser';
@@ -413,7 +425,8 @@ export class TDEngine {
           y: tower.y + Math.sin(a) * 32,
           orbitAngle: a,
           angle: a,
-          cooldownLeft: idx * 0.2
+          cooldownLeft: idx * 0.2,
+          recoilOffset: 0
         });
       }
     } else if (tower.type === 'mower_barracks') {
@@ -476,6 +489,7 @@ export class TDEngine {
       effectiveRange: stats.range,
       effectiveFireRateMult: 1,
       radarAngle: 0,
+      recoilOffset: 0,
       silencedTimer: 0,
       isJammed: false
     };
@@ -483,6 +497,7 @@ export class TDEngine {
     this.initTowerSubEntities(tower);
     this.towers.push(tower);
     this.recomputeTowerAuras();
+    this.spawnParticles(pad.x, pad.y, { count: 12, color: stats.color, speedMax: 75 });
     this.addFloatingText(pad.x, pad.y - 26, `-${stats.cost} 🪙`, '#fde047');
     this.notifySelectionChange();
     this.notifyStateChange();
@@ -647,15 +662,56 @@ export class TDEngine {
     this.refreshNextWavePreview();
   }
 
-  addFloatingText(x, y, text, color = '#ffffff') {
+  addFloatingText(x, y, text, color = '#ffffff', options = {}) {
+    if (this.floatingTexts.length > 65) {
+      this.floatingTexts.shift();
+    }
+    const life = options.life || 1.05;
     this.floatingTexts.push({
       x,
       y,
       text,
       color,
-      life: 1.05,
-      maxLife: 1.05
+      vx: options.vx || 0,
+      vy: options.vy !== undefined ? options.vy : -30,
+      font: options.font || null,
+      life,
+      maxLife: life
     });
+  }
+
+  triggerScreenShake(intensity = 4, duration = 0.2) {
+    this.shakeIntensity = Math.max(this.shakeIntensity || 0, intensity);
+    this.shakeTimer = Math.max(this.shakeTimer || 0, duration);
+    this.shakeMaxTimer = Math.max(this.shakeMaxTimer || 0.01, duration);
+  }
+
+  spawnParticles(x, y, options = {}) {
+    const count = options.count || 10;
+    const color = options.color || '#fde047';
+    const speedMin = options.speedMin || 25;
+    const speedMax = options.speedMax || 95;
+    const sizeMin = options.sizeMin || 2.2;
+    const sizeMax = options.sizeMax || 5.2;
+    const life = options.life || 0.45;
+
+    for (let i = 0; i < count; i++) {
+      if (this.particles.length >= 260) {
+        this.particles.shift();
+      }
+      const ang = Math.random() * Math.PI * 2;
+      const spd = speedMin + Math.random() * (speedMax - speedMin);
+      this.particles.push({
+        x,
+        y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd,
+        size: sizeMin + Math.random() * (sizeMax - sizeMin),
+        color,
+        life: life * (0.7 + Math.random() * 0.5),
+        maxLife: life
+      });
+    }
   }
 
   /**
@@ -761,6 +817,18 @@ export class TDEngine {
 
   update(rawDt) {
     this.animClock += rawDt;
+
+    if (this.shakeTimer > 0) {
+      this.shakeTimer = Math.max(0, this.shakeTimer - rawDt);
+      const mag = this.shakeIntensity * (this.shakeTimer / Math.max(0.01, this.shakeMaxTimer));
+      this.shakeOffsetX = (Math.random() * 2 - 1) * mag;
+      this.shakeOffsetY = (Math.random() * 2 - 1) * mag;
+      if (this.shakeTimer <= 0) {
+        this.shakeIntensity = 0;
+        this.shakeOffsetX = 0;
+        this.shakeOffsetY = 0;
+      }
+    }
 
     if (this.isPaused()) {
       return;
@@ -946,6 +1014,14 @@ export class TDEngine {
 
     // 4. Visų 6 bokštelių mechanikų atnaujinimas (atsižvelgiant į užtildymą 🔇)
     for (const tower of this.towers) {
+      if (tower.recoilOffset > 0) {
+        tower.recoilOffset = Math.max(0, tower.recoilOffset - dt * 24);
+      }
+      if (Array.isArray(tower.drones)) {
+        for (const d of tower.drones) {
+          if (d.recoilOffset > 0) d.recoilOffset = Math.max(0, d.recoilOffset - dt * 20);
+        }
+      }
       if (tower.silencedTimer > 0) {
         tower.silencedTimer = Math.max(0, tower.silencedTimer - dt);
         tower.activeBeams = [];
@@ -1027,13 +1103,23 @@ export class TDEngine {
       this.explosions[i].life -= dt;
       if (this.explosions[i].life <= 0) this.explosions.splice(i, 1);
     }
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const pt = this.particles[i];
+      pt.x += pt.vx * dt;
+      pt.y += pt.vy * dt;
+      pt.vx *= 0.94;
+      pt.vy *= 0.94;
+      pt.life -= dt;
+      if (pt.life <= 0) this.particles.splice(i, 1);
+    }
     for (let i = this.slimePuddles.length - 1; i >= 0; i--) {
       this.slimePuddles[i].life -= dt;
       if (this.slimePuddles[i].life <= 0) this.slimePuddles.splice(i, 1);
     }
     for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
       const ft = this.floatingTexts[i];
-      ft.y -= 28 * dt;
+      ft.x += (ft.vx || 0) * dt;
+      ft.y += (ft.vy !== undefined ? ft.vy : -28) * dt;
       ft.life -= dt;
       if (ft.life <= 0) this.floatingTexts.splice(i, 1);
     }
@@ -1100,6 +1186,7 @@ export class TDEngine {
 
     if (selected[0]) {
       tower.angle = Math.atan2(selected[0].y - tower.y, selected[0].x - tower.x);
+      tower.recoilOffset = Math.max(tower.recoilOffset || 0, 2.2);
     }
 
     for (const target of selected) {
@@ -1133,6 +1220,8 @@ export class TDEngine {
           life: 0.28,
           maxLife: 0.28
         });
+        this.spawnParticles(target.x, target.y, { count: 16, color: '#fb923c', speedMax: 120 });
+        this.triggerScreenShake(3.2, 0.16);
         for (const other of [...this.enemies]) {
           if (Math.hypot(other.x - target.x, other.y - target.y) <= stats.explodeOnKillRadius) {
             this.damageEnemy(other, stats.explodeOnKillDamage || 90, { armorPierce: 0.4 });
@@ -1158,6 +1247,9 @@ export class TDEngine {
     if (targets.length === 0) return;
 
     tower.cooldownLeft = stats.cooldown;
+    tower.recoilOffset = 4.6;
+    tower.angle = Math.atan2(targets[0].y - tower.y, targets[0].x - tower.x);
+    this.spawnParticles(tower.x, tower.y, { count: 7, color: stats.color, speedMax: 70 });
     this.pulses.push({
       x: tower.x,
       y: tower.y,
@@ -1233,6 +1325,8 @@ export class TDEngine {
 
         if (drone.cooldownLeft <= 0) {
           drone.cooldownLeft = stats.cooldown;
+          drone.recoilOffset = 3.5;
+          tower.recoilOffset = 2.5;
           if (stats.homingMissiles) {
             this.projectiles.push({
               x: drone.x,
@@ -1395,6 +1489,7 @@ export class TDEngine {
     tower.cooldownLeft = stats.cooldown;
     tower.shotCounter = (tower.shotCounter || 0) + 1;
     tower.angle = Math.atan2(target.y - tower.y, target.x - tower.x);
+    tower.recoilOffset = 6.0;
 
     const freezeShot =
       Boolean(stats.freezeEveryNShots) && tower.shotCounter % stats.freezeEveryNShots === 0;
@@ -1428,14 +1523,21 @@ export class TDEngine {
   }
 
   impactParabolicShot(shot) {
+    const expColor = shot.freezeDuration > 0 ? '#93c5fd' : shot.color;
     this.explosions.push({
       x: shot.targetX,
       y: shot.targetY,
       radius: shot.splashRadius,
-      color: shot.freezeDuration > 0 ? '#93c5fd' : shot.color,
+      color: expColor,
       life: 0.28,
       maxLife: 0.28
     });
+    this.spawnParticles(shot.targetX, shot.targetY, {
+      count: 14,
+      color: expColor,
+      speedMax: 105
+    });
+    this.triggerScreenShake(2.6, 0.14);
 
     for (const enemy of [...this.enemies]) {
       if (enemy.isFlying || enemy.burrowTimer > 0) continue;
@@ -1465,7 +1567,11 @@ export class TDEngine {
       tower.incomeTimer -= interval;
       const gain = stats.incomeAmount || 15;
       this.coins += gain;
-      this.addFloatingText(tower.x, tower.y - 26, `+${gain} 🪙 ☀️`, '#fde047');
+      this.spawnParticles(tower.x, tower.y, { count: 7, color: '#fde047', speedMax: 55 });
+      this.addFloatingText(tower.x, tower.y - 26, `+${gain}🪙`, '#fde047', {
+        vy: -36,
+        font: 'bold 15px Fredoka, Outfit, sans-serif'
+      });
       this.notifyStateChange();
     }
 
@@ -1491,6 +1597,8 @@ export class TDEngine {
             life: 0.26,
             maxLife: 0.26
           });
+          this.spawnParticles(strongest.x, strongest.y, { count: 16, color: '#fde047', speedMax: 130 });
+          this.triggerScreenShake(4.2, 0.2);
           this.damageEnemy(strongest, stats.lightningDamage || 420, { armorPierce: 0.5 });
         }
       }
@@ -1507,6 +1615,8 @@ export class TDEngine {
         life: 0.24,
         maxLife: 0.24
       });
+      this.spawnParticles(proj.tx, proj.ty, { count: 12, color: proj.color, speedMax: 110 });
+      this.triggerScreenShake(2.8, 0.14);
       for (const enemy of [...this.enemies]) {
         if (enemy.burrowTimer > 0) continue;
         const dist = Math.hypot(enemy.x - proj.tx, enemy.y - proj.ty);
@@ -1516,6 +1626,7 @@ export class TDEngine {
         }
       }
     } else if (proj.target && proj.target.hp > 0) {
+      this.spawnParticles(proj.tx, proj.ty, { count: 5, color: proj.color, speedMax: 60, life: 0.28 });
       this.damageEnemy(proj.target, proj.damage);
     }
   }
@@ -1525,7 +1636,8 @@ export class TDEngine {
     const armorPierce = options.armorPierce || 0;
     const effectiveArmor = Math.max(0, (enemy.armor || 0) * (1 - armorPierce));
     const vulnMult = enemy.scannerVulnerable ? 1.2 : 1.0;
-    let finalDamage = rawAmount * (1 - effectiveArmor) * vulnMult;
+    const totalInflicted = rawAmount * (1 - effectiveArmor) * vulnMult;
+    let finalDamage = totalInflicted;
 
     enemy.timeSinceLastHit = 0;
 
@@ -1541,6 +1653,31 @@ export class TDEngine {
     }
     enemy.hitFlash = 0.08;
 
+    // Kylantys žalos skaičiukai
+    if (!options.silentText) {
+      const shown = Math.max(1, Math.round(totalInflicted));
+      this.addFloatingText(
+        enemy.x + (Math.random() * 12 - 6),
+        enemy.y - enemy.radius - 6,
+        `-${shown}`,
+        '#fda4af',
+        { life: 0.72, vy: -34, font: 'bold 12px Fredoka, Outfit, sans-serif' }
+      );
+    } else {
+      enemy.damageTextAccum = (enemy.damageTextAccum || 0) + totalInflicted;
+      if (enemy.damageTextAccum >= 12 || enemy.hp <= 0) {
+        const shown = Math.max(1, Math.round(enemy.damageTextAccum));
+        enemy.damageTextAccum = 0;
+        this.addFloatingText(
+          enemy.x + (Math.random() * 12 - 6),
+          enemy.y - enemy.radius - 6,
+          `-${shown}`,
+          '#fca5a5',
+          { life: 0.65, vy: -32, font: 'bold 12px Fredoka, Outfit, sans-serif' }
+        );
+      }
+    }
+
     if (enemy.hp <= 0) {
       const idx = this.enemies.indexOf(enemy);
       if (idx !== -1) {
@@ -1548,7 +1685,20 @@ export class TDEngine {
       }
       const reward = enemy.reward || 10;
       this.coins += reward;
-      this.addFloatingText(enemy.x, enemy.y - 14, `+${reward} 🪙`, '#fde047');
+      this.addFloatingText(enemy.x, enemy.y - 14, `+${reward}🪙`, '#fde047', {
+        vy: -38,
+        font: 'bold 14px Fredoka, Outfit, sans-serif'
+      });
+      this.spawnParticles(enemy.x, enemy.y, {
+        count: enemy.isBoss ? 28 : 11,
+        color: enemy.color,
+        speedMax: enemy.isBoss ? 150 : 88,
+        sizeMax: enemy.isBoss ? 6.5 : 4.6,
+        life: enemy.isBoss ? 0.75 : 0.45
+      });
+      if (enemy.isBoss) {
+        this.triggerScreenShake(8, 0.42);
+      }
 
       // Piktžolių Golemas sunaikintas suskyla į 2 mažus šliužus
       if (enemy.splitOnDeath) {
@@ -1571,6 +1721,8 @@ export class TDEngine {
           life: 0.3,
           maxLife: 0.3
         });
+        this.spawnParticles(enemy.x, enemy.y, { count: 16, color: '#ef4444', speedMax: 120 });
+        this.triggerScreenShake(3.8, 0.2);
         for (const t of this.towers) {
           if (t.type !== 'mower_barracks') continue;
           for (const u of t.units) {
@@ -1589,617 +1741,7 @@ export class TDEngine {
 
   // ==================== ATVAIZDAVIMAS ANT DROBĖS ====================
   render() {
-    const ctx = this.ctx;
-    const canvas = this.canvas;
-    if (!ctx || !canvas) return;
-
-    const w = canvas.width;
-    const h = canvas.height;
-
-    // 1. Fonas ir taktinis tinklelis
-    const grad = ctx.createLinearGradient(0, 0, 0, h);
-    grad.addColorStop(0, this.map.bgTop);
-    grad.addColorStop(1, this.map.bgBottom);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-
-    ctx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
-    ctx.lineWidth = 1;
-    for (let gx = 0; gx < w; gx += 45) {
-      ctx.beginPath();
-      ctx.moveTo(gx, 0);
-      ctx.lineTo(gx, h);
-      ctx.stroke();
-    }
-    for (let gy = 0; gy < h; gy += 45) {
-      ctx.beginPath();
-      ctx.moveTo(0, gy);
-      ctx.lineTo(w, gy);
-      ctx.stroke();
-    }
-
-    // 1b. Teminės zonos dekoracijos (šiltnamis, tvenkinys, pušynas, klavišai, ateities bazė)
-    renderMapThemeDecorations(ctx, this.map, this.animClock);
-
-    // 2. Glotnūs keliai (1 arba 2 išsišakojantys / atskiri keliai)
-    for (const spline of this.pathSplines) {
-      if (spline.points.length < 2) continue;
-
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      ctx.strokeStyle = this.map.pathBorder;
-      ctx.lineWidth = 46;
-      ctx.beginPath();
-      spline.points.forEach((pt, idx) => {
-        if (idx === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-      });
-      ctx.stroke();
-
-      ctx.strokeStyle = this.map.pathColor;
-      ctx.lineWidth = 34;
-      ctx.stroke();
-
-      // Dagilėlio muzikos aikštėje – juodai balti klavišų takeliai
-      if (this.map.theme === 'dagilelis_music') {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(248, 250, 252, 0.72)';
-        ctx.lineWidth = 22;
-        ctx.setLineDash([12, 12]);
-        ctx.stroke();
-        ctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
-        ctx.lineDashOffset = 12;
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
-      ctx.lineWidth = 2;
-      for (let d = 55; d < spline.totalLength - 45; d += 95) {
-        const pt = samplePathAtDistance(spline, d);
-        ctx.save();
-        ctx.translate(pt.x, pt.y);
-        ctx.rotate(pt.angle);
-        ctx.beginPath();
-        ctx.moveTo(-5, -5);
-        ctx.lineTo(4, 0);
-        ctx.lineTo(-5, 5);
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      const entry = spline.points[0];
-      ctx.fillStyle = '#4c0519';
-      ctx.strokeStyle = '#fb7185';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(entry.x, entry.y, 17, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#fecdd3';
-      ctx.font = 'bold 14px Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⚔️', entry.x, entry.y + 1);
-
-      // Pulsuojanti būsimos bangos peržiūros ikona kelio pradžioje
-      if (this.nextWavePreview && this.canCallWaveEarly()) {
-        const pulseScale = 1 + Math.sin(this.animClock * 5) * 0.1;
-        const bx = entry.x + 18;
-        const by = entry.y;
-        ctx.save();
-        ctx.translate(bx, by);
-        ctx.scale(pulseScale, pulseScale);
-        ctx.fillStyle = this.nextWavePreview.hasBoss ? 'rgba(190, 18, 60, 0.92)' : 'rgba(180, 83, 9, 0.92)';
-        ctx.strokeStyle = '#fde047';
-        ctx.lineWidth = 2.2;
-        ctx.beginPath();
-        ctx.arc(0, 0, 15, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.font = '14px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(this.nextWavePreview.primaryIcon || '⚠️', 0, 1);
-        ctx.restore();
-      }
-    }
-
-    // Gleivių pėdsakas (1 Zonos Bosas: Šliužų Karalius)
-    for (const puddle of this.slimePuddles) {
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, puddle.life / puddle.maxLife) * 0.52;
-      ctx.fillStyle = '#84cc16';
-      ctx.beginPath();
-      ctx.ellipse(puddle.x, puddle.y + 4, 15, 8, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 3. Tvirtovė(-s) kiekvieno kelio pabaigoje (pvz., 5-oje zonoje yra du atskiri išėjimai)
-    const exits = [];
-    for (const spline of this.pathSplines) {
-      const endPt = spline.points?.[spline.points.length - 1];
-      if (!endPt) continue;
-      if (!exits.some((ex) => Math.hypot(ex.x - endPt.x, ex.y - endPt.y) < 12)) {
-        exits.push(endPt);
-      }
-    }
-    if (exits.length === 0 && this.map.fortress) {
-      exits.push(this.map.fortress);
-    }
-
-    for (const exitPt of exits) {
-      ctx.fillStyle = '#0f172a';
-      ctx.strokeStyle = this.map.accentColor;
-      ctx.lineWidth = 3.5;
-      ctx.beginPath();
-      ctx.arc(exitPt.x, exitPt.y, 30, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.font = '26px Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(this.map.theme === 'solar_future_base' ? '🛰️' : '🏰', exitPt.x, exitPt.y + 1);
-    }
-
-    // 4. Veikimo spindulio (Range) ir auros peržiūra
-    if (this.selectedPadIndex !== null && this.map.pads[this.selectedPadIndex]) {
-      const pad = this.map.pads[this.selectedPadIndex];
-      const existingTower = this.getTowerAtPad(this.selectedPadIndex);
-
-      if (existingTower) {
-        const stats = getTowerStats(existingTower.type, existingTower.level, existingTower.evolutionId);
-        if (stats) {
-          const effR = existingTower.effectiveRange || stats.range;
-          this.drawRangeCircle(ctx, pad.x, pad.y, effR, stats.color, false);
-          if (existingTower.level < 3) {
-            const nextStats = getTowerStats(existingTower.type, existingTower.level + 1);
-            if (nextStats && nextStats.range > stats.range) {
-              this.drawRangeCircle(ctx, pad.x, pad.y, nextStats.range, '#4ade80', true);
-            }
-          }
-        }
-      } else {
-        const previewStats = getTowerStats(this.previewTowerType, 1);
-        if (previewStats) {
-          this.drawRangeCircle(ctx, pad.x, pad.y, previewStats.range, previewStats.color, false);
-        }
-      }
-    }
-
-    // 5. Statybos aikštelės (Build Pads)
-    const pulseAlpha = 0.55 + Math.sin(this.animClock * 4) * 0.25;
-    this.map.pads.forEach((pad, idx) => {
-      const isSelected = this.selectedPadIndex === idx;
-      const built = this.getTowerAtPad(idx);
-      if (built) return;
-
-      ctx.save();
-      ctx.fillStyle = isSelected ? 'rgba(56, 189, 248, 0.32)' : 'rgba(15, 23, 42, 0.78)';
-      ctx.strokeStyle = isSelected
-        ? '#fde047'
-        : `rgba(56, 189, 248, ${pulseAlpha.toFixed(2)})`;
-      ctx.lineWidth = isSelected ? 3 : 2;
-      ctx.beginPath();
-      ctx.arc(pad.x, pad.y, 23, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
-      ctx.lineWidth = 1.2;
-      ctx.setLineDash([4, 4]);
-      ctx.beginPath();
-      ctx.arc(pad.x, pad.y, 17, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      ctx.fillStyle = isSelected ? '#fde047' : '#bae6fd';
-      ctx.font = 'bold 20px Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('+', pad.x, pad.y + 1);
-      ctx.restore();
-    });
-
-    // 6. Garso bangos (su muzikinėmis natomis) ir sprogimai
-    for (const pulse of this.pulses) {
-      const p = 1 - pulse.life / pulse.maxLife;
-      const r = pulse.maxRadius * p;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, 1 - p) * 0.7;
-      ctx.strokeStyle = pulse.color;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.arc(pulse.x, pulse.y, r, 0, Math.PI * 2);
-      ctx.stroke();
-      if (pulse.isMusical) {
-        ctx.fillStyle = '#fef08a';
-        ctx.font = '14px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        for (let n = 0; n < 4; n++) {
-          const ang = (n * Math.PI) / 2 + p * 1.4;
-          ctx.fillText(n % 2 === 0 ? '♪' : '♫', pulse.x + Math.cos(ang) * r, pulse.y + Math.sin(ang) * r);
-        }
-      }
-      ctx.restore();
-    }
-
-    for (const exp of this.explosions) {
-      const p = 1 - exp.life / exp.maxLife;
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, 1 - p) * 0.45;
-      ctx.fillStyle = exp.color;
-      ctx.beginPath();
-      ctx.arc(exp.x, exp.y, exp.radius * (0.4 + p * 0.6), 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 7. Dronų radaro skenavimas ir Barakų Rally Point vėliavėlės + robotai-vejapjovės
-    for (const tower of this.towers) {
-      const stats = getTowerStats(tower.type, tower.level, tower.evolutionId);
-      if (tower.type === 'drone_hangar') {
-        const radR = stats.camoRevealRadius || 160;
-        ctx.save();
-        ctx.strokeStyle = 'rgba(45, 212, 191, 0.22)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(tower.x, tower.y, radR, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.strokeStyle = 'rgba(45, 212, 191, 0.45)';
-        ctx.beginPath();
-        ctx.moveTo(tower.x, tower.y);
-        ctx.lineTo(
-          tower.x + Math.cos(tower.radarAngle || 0) * radR,
-          tower.y + Math.sin(tower.radarAngle || 0) * radR
-        );
-        ctx.stroke();
-        ctx.restore();
-      } else if (tower.type === 'mower_barracks' && tower.rallyPoint) {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(74, 222, 128, 0.32)';
-        ctx.setLineDash([4, 4]);
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(tower.x, tower.y);
-        ctx.lineTo(tower.rallyPoint.x, tower.rallyPoint.y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.font = '15px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🚩', tower.rallyPoint.x, tower.rallyPoint.y - 14);
-        ctx.restore();
-
-        for (const u of tower.units) {
-          if (u.respawnTimer > 0) continue;
-          ctx.save();
-          if (stats.electroAuraDps > 0) {
-            ctx.strokeStyle = 'rgba(250, 204, 21, 0.35)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(u.x, u.y, stats.electroAuraRadius || 60, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-          ctx.fillStyle = stats.color;
-          ctx.strokeStyle = '#0f172a';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(u.x, u.y, 10, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
-
-          ctx.font = '11px Outfit, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(u.stunTimer > 0 ? '💫' : '🤖', u.x, u.y + 1);
-
-          const uRatio = Math.max(0, Math.min(1, u.hp / u.maxHp));
-          ctx.fillStyle = '#020617';
-          ctx.fillRect(u.x - 10, u.y - 16, 20, 4);
-          ctx.fillStyle = '#38bdf8';
-          ctx.fillRect(u.x - 10, u.y - 16, 20 * uRatio, 4);
-          ctx.restore();
-        }
-      }
-    }
-
-    // 8. Pastatyti bokšteliai
-    for (const tower of this.towers) {
-      const stats = getTowerStats(tower.type, tower.level, tower.evolutionId);
-      const isSelected = this.selectedPadIndex === tower.padIndex;
-      const priorityMeta = getTargetingPriorityMeta(tower.priority);
-
-      ctx.save();
-      ctx.fillStyle = '#0f172a';
-      ctx.strokeStyle = isSelected ? '#fde047' : stats.color;
-      ctx.lineWidth = isSelected ? 3.5 : 2.5;
-      ctx.beginPath();
-      ctx.arc(tower.x, tower.y, 23, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      if (tower.type !== 'solar_station' && tower.type !== 'mower_barracks') {
-        ctx.save();
-        ctx.translate(tower.x, tower.y);
-        ctx.rotate(tower.angle);
-        ctx.fillStyle = stats.color;
-        ctx.fillRect(4, -3.5, 19, 7);
-        ctx.restore();
-      }
-
-      ctx.font = '19px Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(tower.evolutionId ? stats.evolutionIcon : stats.icon, tower.x, tower.y + 1);
-
-      ctx.font = 'bold 10px Outfit, sans-serif';
-      ctx.fillStyle = tower.level === 4 ? '#f472b6' : '#fde047';
-      ctx.fillText(tower.level === 4 ? '✦✦✦✦' : '★'.repeat(tower.level), tower.x, tower.y - 29);
-
-      ctx.font = '12px Outfit, sans-serif';
-      ctx.fillText(priorityMeta.icon, tower.x + 19, tower.y + 18);
-
-      // Užtildymo (🔇) arba Triukšmo Goblino slopinimo (👺) / Aurų indikatoriai
-      if (tower.silencedTimer > 0) {
-        ctx.font = '14px Outfit, sans-serif';
-        ctx.fillText('🔇', tower.x - 19, tower.y - 16);
-      } else if (tower.isJammed) {
-        ctx.font = '12px Outfit, sans-serif';
-        ctx.fillText('👺', tower.x - 19, tower.y - 16);
-      }
-      if (tower.speedAuraPct > 0 || tower.rangeAuraPct > 0) {
-        ctx.font = 'bold 9px Outfit, sans-serif';
-        ctx.fillStyle = '#a7f3d0';
-        const auraTxt = [
-          tower.speedAuraPct > 0 ? `+${tower.speedAuraPct}%⚡` : '',
-          tower.rangeAuraPct > 0 ? `+${tower.rangeAuraPct}%🔭` : ''
-        ]
-          .filter(Boolean)
-          .join(' ');
-        ctx.fillText(auraTxt, tower.x, tower.y + 30);
-      }
-      ctx.restore();
-    }
-
-    // 9. Ištisiniai Saulės Lazerio spinduliai ir trumpi šūviai
-    for (const tower of this.towers) {
-      if (tower.type === 'solar_laser' && Array.isArray(tower.activeBeams)) {
-        for (const b of tower.activeBeams) {
-          const width = 2.5 + (b.ramp - 1) * 2.8;
-          ctx.save();
-          ctx.strokeStyle = b.color;
-          ctx.lineWidth = width + 3;
-          ctx.globalAlpha = 0.45;
-          ctx.beginPath();
-          ctx.moveTo(b.x1, b.y1);
-          ctx.lineTo(b.x2, b.y2);
-          ctx.stroke();
-
-          ctx.globalAlpha = 1;
-          ctx.strokeStyle = b.ramp >= 2 ? '#fde047' : '#ffffff';
-          ctx.lineWidth = width;
-          ctx.stroke();
-          ctx.restore();
-        }
-      }
-    }
-
-    for (const beam of this.beams) {
-      const alpha = Math.max(0, beam.life / beam.maxLife);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = beam.color;
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(beam.x1, beam.y1);
-      ctx.lineTo(beam.x2, beam.y2);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    for (const bolt of this.lightningBolts) {
-      const alpha = Math.max(0, bolt.life / bolt.maxLife);
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.strokeStyle = '#fde047';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(bolt.x1, bolt.y1);
-      ctx.lineTo(bolt.x1 - 14, bolt.y2 * 0.35);
-      ctx.lineTo(bolt.x1 + 12, bolt.y2 * 0.68);
-      ctx.lineTo(bolt.x2, bolt.y2);
-      ctx.stroke();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // 10. Priešai ir 5 Zonos Bosai
-    for (const enemy of this.enemies) {
-      ctx.save();
-
-      // Po žeme panėręs Kurmis-Tunelininkas arba Geležinis Kurmis
-      if (enemy.burrowTimer > 0) {
-        ctx.fillStyle = '#78350f';
-        ctx.strokeStyle = '#fde68a';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.ellipse(enemy.x, enemy.y + 3, enemy.radius * 1.1, enemy.radius * 0.65, 0, Math.PI, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-        ctx.font = '12px Outfit, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('⛰️', enemy.x, enemy.y - 6);
-        ctx.restore();
-        continue;
-      }
-
-      if (enemy.isCamo && (enemy.camoRevealedTimer || 0) <= 0) {
-        ctx.globalAlpha = 0.42;
-      }
-
-      if (enemy.jamAuraRadius > 0) {
-        ctx.strokeStyle = 'rgba(236, 72, 153, 0.25)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(enemy.x, enemy.y, enemy.jamAuraRadius, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      if (enemy.isFlying) {
-        // Skrendančio priešo šešėlis žemiau
-        ctx.fillStyle = 'rgba(2, 6, 23, 0.45)';
-        ctx.beginPath();
-        ctx.ellipse(enemy.x, enemy.y + 18, enemy.radius * 0.85, 5, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.fillStyle =
-        enemy.hitFlash > 0
-          ? '#ffffff'
-          : enemy.stunTimer > 0
-            ? '#93c5fd'
-            : enemy.slowTimer > 0
-              ? '#38bdf8'
-              : enemy.color;
-      ctx.strokeStyle = enemy.borderColor;
-      ctx.lineWidth = enemy.isBoss ? 3 : 2;
-      ctx.beginPath();
-      ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.font = enemy.isBoss ? '15px Outfit, sans-serif' : '12px Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(enemy.icon || '👾', enemy.x, enemy.y + 1);
-
-      if (enemy.isBoss) {
-        ctx.font = '14px Outfit, sans-serif';
-        ctx.fillText('👑', enemy.x, enemy.y - enemy.radius - 16);
-      } else if (enemy.isCamo) {
-        ctx.font = '11px Outfit, sans-serif';
-        ctx.fillText('👁️', enemy.x, enemy.y - enemy.radius - 14);
-      }
-
-      const barW = enemy.radius * 2.2;
-      const barY = enemy.y - enemy.radius - 9;
-      const ratio = Math.max(0, Math.min(1, enemy.hp / enemy.maxHp));
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
-      ctx.fillRect(enemy.x - barW / 2, barY, barW, 5);
-      ctx.fillStyle = enemy.isBoss ? '#facc15' : '#4ade80';
-      ctx.fillRect(enemy.x - barW / 2, barY, barW * ratio, 5);
-
-      // Kibernetinio Mega-Bosuko energijos skydo juosta
-      if (enemy.maxShield > 0 && enemy.shield > 0) {
-        const sRatio = Math.max(0, Math.min(1, enemy.shield / enemy.maxShield));
-        ctx.fillStyle = 'rgba(2, 6, 23, 0.88)';
-        ctx.fillRect(enemy.x - barW / 2, barY - 6, barW, 4);
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(enemy.x - barW / 2, barY - 6, barW * sRatio, 4);
-      }
-      ctx.restore();
-    }
-
-    // 11. Skraidantys Dronų Angaro mini dronai
-    for (const tower of this.towers) {
-      if (tower.type === 'drone_hangar') {
-        for (const d of tower.drones) {
-          ctx.save();
-          ctx.translate(d.x, d.y);
-          ctx.rotate(d.angle);
-          ctx.fillStyle = '#0f172a';
-          ctx.strokeStyle = '#2dd4bf';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(10, 0);
-          ctx.lineTo(-7, -6);
-          ctx.lineTo(-4, 0);
-          ctx.lineTo(-7, 6);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-          ctx.restore();
-        }
-      }
-    }
-
-    // 12. Sviediniai (tiesūs ir paraboliniai)
-    for (const proj of this.projectiles) {
-      ctx.save();
-      ctx.fillStyle = proj.color;
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    for (const shot of this.parabolicShots) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.45)';
-      ctx.beginPath();
-      ctx.ellipse(shot.x, shot.groundY, 7, 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = shot.color;
-      ctx.strokeStyle = '#e0e7ff';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(shot.x, shot.y, 7.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    // 13. Plaukiojantys tekstai
-    for (const ft of this.floatingTexts) {
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, ft.life / ft.maxLife);
-      ctx.font = 'bold 14px Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#020617';
-      ctx.fillText(ft.text, ft.x + 1, ft.y + 1);
-      ctx.fillStyle = ft.color;
-      ctx.fillText(ft.text, ft.x, ft.y);
-      ctx.restore();
-    }
-
-    // 14. Rally Point režimo pranešimas arba Pauzės uždanga
-    if (this.placingRallyPadIndex !== null && !this.gameResult) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-      ctx.fillRect(w / 2 - 220, 12, 440, 36);
-      ctx.strokeStyle = '#4ade80';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(w / 2 - 220, 12, 440, 36);
-      ctx.fillStyle = '#bbf7d0';
-      ctx.font = '700 15px Fredoka, Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🚩 Paspausk ant kelio spindulyje, kad perkeltum robotus!', w / 2, 30);
-      ctx.restore();
-    } else if (this.manualPaused && !this.gameResult) {
-      ctx.save();
-      ctx.fillStyle = 'rgba(2, 6, 23, 0.45)';
-      ctx.fillRect(0, 0, w, h);
-      ctx.fillStyle = '#f8fafc';
-      ctx.font = '700 28px Fredoka, Outfit, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('⏸ ŽAIDIMAS SUSTABDYTAS', w / 2, h / 2);
-      ctx.restore();
-    }
+    renderBattleScene(this);
   }
 
   drawRangeCircle(ctx, x, y, radius, color, isUpgradeRing) {
