@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121k';
+} from '../../../shared/playtime-timer.js?v=20261121m';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -26,9 +26,9 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121k';
-import { TDEngine } from './engine.js?v=20261121k';
-import { audioManager } from './audio.js?v=20261121k';
+} from './balance.js?v=20261121m';
+import { TDEngine } from './engine.js?v=20261121m';
+import { audioManager } from './audio.js?v=20261121m';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];
@@ -182,6 +182,29 @@ const btnUpgradeTower = document.getElementById('btn-upgrade-tower');
 const btnSmartUpgrade = document.getElementById('btn-smart-upgrade');
 const btnSellTower = document.getElementById('btn-sell-tower');
 
+function reportBootError(errOrMessage) {
+  const banner = typeof document !== 'undefined' ? document.getElementById('boot-error-banner') : null;
+  const text = errOrMessage instanceof Error
+    ? `${errOrMessage.name}: ${errOrMessage.message}`
+    : String(errOrMessage || 'Nežinoma paleidimo klaida');
+  if (typeof console !== 'undefined' && console.error) {
+    console.error('[Bubių Tvirtovė Boot Error]', errOrMessage);
+  }
+  if (banner) {
+    banner.textContent = `⚠️ Žaidimo paleidimo klaida: ${text}. Pabandyk perkrauti puslapį (Ctrl+F5).`;
+    banner.classList.remove('hidden');
+  }
+}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('error', (event) => {
+    reportBootError(event?.error || event?.message || 'Klaida skripte');
+  });
+  window.addEventListener('unhandledrejection', (event) => {
+    reportBootError(event?.reason || 'Neapdorota asinchroninė klaida');
+  });
+}
+
 let saveData = loadSaveData();
 let activeProfile = null;
 let lastFrameTimestamp = 0;
@@ -191,6 +214,8 @@ let victoryGateTimeoutId = null;
 let smartUpgradeRestorePause = null;
 
 let encyActiveTab = 'towers';
+let modalRestorePause = null;
+let engine = null;
 
 function recordEnemyEncounter(enemyId) {
   if (!activeProfile || !enemyId) return;
@@ -202,13 +227,15 @@ function recordEnemyEncounter(enemyId) {
   }
 }
 
-const engine = new TDEngine(canvas, {
+engine = new TDEngine(canvas, {
   onStateChange: () => syncBattleUI(),
   onSelectionChange: () => syncSelectionUI(),
   onWavePreviewChange: (preview) => renderWavePreviewCard(preview),
   onGameResult: (result) => handleGameResult(result),
   onEnemyEncountered: (enemyId) => recordEnemyEncounter(enemyId)
 });
+syncBattleUI();
+syncSelectionUI();
 
 function isInBattleView() {
   return Boolean(screenGame && !screenGame.classList.contains('hidden'));
@@ -504,6 +531,7 @@ function renderTowerInspectorMenu(pad, tower) {
 }
 
 function syncSelectionUI() {
+  if (!engine) return;
   if (engine.placingRallyPadIndex !== null) {
     closePadMenus();
     return;
@@ -526,6 +554,7 @@ function syncSelectionUI() {
 }
 
 function syncBattleUI() {
+  if (!engine) return;
   const heartsEl = document.getElementById('hud-hearts');
   const maxHeartsEl = document.getElementById('hud-max-hearts');
   const starsPreviewEl = document.getElementById('hud-stars-preview');
@@ -993,7 +1022,6 @@ function renderCampaignMap() {
   }
 }
 
-let modalRestorePause = null;
 
 function syncTechStarsUI() {
   if (!activeProfile) {

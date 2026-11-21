@@ -4,11 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#070d20" />
+  <script>
+    (function () {
+      if (typeof window !== 'undefined' && window.location && /\/games\/gynyba$/i.test(window.location.pathname)) {
+        window.location.replace(window.location.pathname + '/' + window.location.search + window.location.hash);
+      }
+    })();
+  </script>
   <title>Bubių Tvirtovė – Bokštelių Gynyba</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261121k" />
+  <link rel="stylesheet" href="./style.css?v=20261121m" />
 </head>
 <body>
   <div class="td-bg-glow" aria-hidden="true"></div>
@@ -47,10 +54,11 @@
   </header>
 
   <main class="td-container">
+    <div id="boot-error-banner" class="boot-error-banner hidden" role="alert"></div>
     <!-- ==================== 1. PROFILIO PASIRINKIMO EKRANAS ==================== -->
     <section id="screen-profiles" class="profiles-screen">
       <div class="hero-card glass-panel">
-        <span class="hero-kicker">🛡️ KINGDOM RUSH &amp; BLOONS TD 6 STANDARTAS</span>
+        <span class="hero-kicker">🛡️ 5 ZONOS • 15 LYGIŲ • 6 BOKŠTAI</span>
         <h2>PASIRINK TVIRTOVĖS VADĄ!</h2>
         <p class="hero-desc">
           Keliauk per 5 zonas ir 15 unikalių žemėlapių – nuo Bubių kiemo ir šiltnamio iki Ateities bazės!
@@ -378,6 +386,6 @@
     </div>
   </div>
 
-  <script type="module" src="./js/main.js?v=20261121k"></script>
+  <script type="module" src="./js/main.js?v=20261121m"></script>
 </body>
 </html>
