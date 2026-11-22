@@ -15,7 +15,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./style.css?v=20261121s" />
+  <link rel="stylesheet" href="./style.css?v=20261122a" />
+  <link rel="stylesheet" href="../../shared/edu-gate.css?v=20261122a" />
 </head>
 <body>
   <div class="td-bg-glow" aria-hidden="true"></div>
@@ -400,32 +401,31 @@
     </div>
   </div>
 
-  <!-- ==================== ŽINIŲ VARTŲ / PROTINGO PATOBULINIMO MODALAS ==================== -->
+  <!-- ==================== PROTINGO PATOBULINIMO MODALAS (NEUŽDAROMAS) ==================== -->
   <div id="knowledge-gate-modal" class="knowledge-gate-modal hidden" role="dialog" aria-modal="true" aria-labelledby="kg-title">
     <div class="knowledge-gate-card glass-panel">
       <div class="floating-menu-head">
-        <span id="kg-badge" class="kg-badge">🔐 ŽINIŲ VARTAI</span>
-        <button id="btn-close-kg" class="menu-close-x" type="button" title="Atšaukti / Atgal" aria-label="Atšaukti ir grįžti">✕</button>
+        <span id="kg-badge" class="kg-badge">🧠 PROTINGAS PATOBULINIMAS</span>
       </div>
       <div class="kg-status-row">
         <span id="kg-category-badge" class="kg-pill kg-cat-pill">🕒 Laikrodis</span>
-        <span id="kg-remaining-pill" class="kg-pill kg-rem-pill">Liko: 3 užd.</span>
+        <span id="kg-remaining-pill" class="kg-pill kg-rem-pill">1 užduotis (1 bandymas)</span>
         <span id="kg-mistakes-pill" class="kg-pill kg-err-pill hidden">Klaidos: 0</span>
       </div>
-      <h3 id="kg-title">Atrakink naują lygį!</h3>
-      <p id="kg-subtitle" class="kg-subtitle">Išspręsk užduotį, kad atvertum kelią į priekį:</p>
-      <div class="kg-visual-wrap">
-        <canvas id="kg-visual-canvas" width="320" height="148" aria-label="Užduoties iliustracija"></canvas>
+      <h3 id="kg-title">Nemokamas bokštelio patobulinimas!</h3>
+      <p id="kg-subtitle" class="kg-subtitle">Išspręsk iš 1-o karto teisingai ir pakelk bokštelio lygį už 0 🪙!</p>
+      <div id="kg-visual-wrap" class="kg-visual-wrap hidden">
+        <div id="kg-visual-container" class="kg-visual-svg" aria-label="Užduoties iliustracija"></div>
       </div>
       <div id="kg-question" class="kg-question">8 + 7 = ?</div>
       <div id="kg-penalty-banner" class="kg-penalty-banner hidden"></div>
       <div id="kg-options" class="kg-options"></div>
       <div id="kg-explanation-box" class="kg-explanation-box hidden"></div>
       <div id="kg-feedback" class="kg-feedback hidden"></div>
-      <button id="btn-kg-next" class="kg-next-btn hidden" type="button">Kitas uždavinys →</button>
+      <button id="btn-kg-next" class="kg-next-btn hidden" type="button">Tęsti žaidimą →</button>
     </div>
   </div>
 
-  <script type="module" src="./js/main.js?v=20261121s"></script>
+  <script type="module" src="./js/main.js?v=20261122a"></script>
 </body>
 </html>

@@ -3,7 +3,15 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121s';
+} from '../../../shared/playtime-timer.js?v=20261122a';
+import {
+  generateTask as generateEduTask,
+  renderTaskVisual as renderEduTaskVisual
+} from '../../../shared/edu-bank.js?v=20261122a';
+import {
+  enforcePendingDebt,
+  requireGate
+} from '../../../shared/edu-gate.js?v=20261122a';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -22,14 +30,10 @@ import {
   getTowerEvolutions,
   computeSellRefund,
   calculateStarsForHearts,
-  getProfileModifier,
-  buildTaskReviewSummary,
-  createKnowledgeGateSession,
-  eduTaskGenerator,
-  renderTaskVisual
-} from './balance.js?v=20261121s';
-import { TDEngine } from './engine.js?v=20261121s';
-import { audioManager } from './audio.js?v=20261121s';
+  getProfileModifier
+} from './balance.js?v=20261122a';
+import { TDEngine } from './engine.js?v=20261122a';
+import { audioManager } from './audio.js?v=20261122a';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];
@@ -167,7 +171,8 @@ const kgBadgeEl = document.getElementById('kg-badge');
 const kgCategoryBadgeEl = document.getElementById('kg-category-badge');
 const kgRemainingPillEl = document.getElementById('kg-remaining-pill');
 const kgMistakesPillEl = document.getElementById('kg-mistakes-pill');
-const kgVisualCanvas = document.getElementById('kg-visual-canvas');
+const kgVisualWrap = document.getElementById('kg-visual-wrap');
+const kgVisualContainer = document.getElementById('kg-visual-container');
 const kgQuestionEl = document.getElementById('kg-question');
 const kgPenaltyBannerEl = document.getElementById('kg-penalty-banner');
 const kgOptionsEl = document.getElementById('kg-options');
@@ -240,6 +245,7 @@ let pendingVictoryReward = null;
 let kgNextAction = null;
 let victoryGateTimeoutId = null;
 let smartUpgradeRestorePause = null;
+const smartUpgradeRecentIds = [];
 
 let encyActiveTab = 'towers';
 let activeCampaignAct = 'act1';
@@ -839,6 +845,29 @@ function commitPendingVictoryReward(reward) {
   }
 }
 
+function openVictoryEduGate(reward, afterClaimCallback = null) {
+  if (!activeProfile || !reward || reward.claimed) {
+    if (typeof afterClaimCallback === 'function') afterClaimCallback();
+    return;
+  }
+  if (victoryGateTimeoutId) {
+    clearTimeout(victoryGateTimeoutId);
+    victoryGateTimeoutId = null;
+  }
+  const targetLvl = getLevelById(reward.mapId || engine.mapId);
+  const cleanTitle = targetLvl.title.replace(/^\d+\.\s*/, '');
+  requireGate(
+    activeProfile,
+    3,
+    `Pergalės vartai: ${targetLvl.levelNumber} lygis (${cleanTitle})`,
+    () => {
+      commitPendingVictoryReward(reward);
+      playtimeTimer.setActiveGameplay(false);
+      if (typeof afterClaimCallback === 'function') afterClaimCallback();
+    }
+  );
+}
+
 function handleGameResult(result) {
   if (!result || !resultOverlay) return;
   clearEduModalTimers(true);
@@ -896,7 +925,7 @@ function handleGameResult(result) {
       victoryGateTimeoutId = null;
       if (!activeProfile || !isInBattleView() || resultOverlay?.classList.contains('hidden')) return;
       if (!rewardSnapshot.claimed) {
-        openKnowledgeGateModal({ mode: 'post_level', reward: rewardSnapshot });
+        openVictoryEduGate(rewardSnapshot);
       }
     }, 2000);
   } else {
@@ -914,13 +943,26 @@ function handleGameResult(result) {
 
   if (result.status !== 'victory') {
     playtimeTimer.setActiveGameplay(false);
+    if (activeProfile) {
+      requireGate(activeProfile, 3, 'Pamoka po kovos (3 užd.)', () => {
+        playtimeTimer.setActiveGameplay(false);
+      });
+    }
   }
 }
 
 function renderTaskPromptAndOptions(task, onPick) {
-  if (kgCategoryBadgeEl) kgCategoryBadgeEl.textContent = task.categoryLabel || '🧠 Užduotis';
+  if (kgCategoryBadgeEl) kgCategoryBadgeEl.textContent = `📚 ${task.topicLabel || 'Užduotis'}`;
   if (kgQuestionEl) kgQuestionEl.textContent = task.prompt;
-  if (kgVisualCanvas) renderTaskVisual(kgVisualCanvas, task);
+  if (kgVisualContainer && kgVisualWrap) {
+    if (task.visualSpec) {
+      renderEduTaskVisual(kgVisualContainer, task.visualSpec);
+      kgVisualWrap.classList.remove('hidden');
+    } else {
+      kgVisualContainer.innerHTML = '';
+      kgVisualWrap.classList.add('hidden');
+    }
+  }
 
   hideKgNextButton();
   kgPenaltyBannerEl?.classList.add('hidden');
@@ -932,7 +974,7 @@ function renderTaskPromptAndOptions(task, onPick) {
   kgOptionsEl.classList.toggle('kg-options-three', task.options.length === 3);
 
   let answered = false;
-  task.options.forEach((opt) => {
+  task.options.forEach((opt, idx) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'kg-opt-btn';
@@ -940,10 +982,10 @@ function renderTaskPromptAndOptions(task, onPick) {
     btn.addEventListener('click', () => {
       if (answered) return;
       answered = true;
-      const isCorrect = opt === task.correctAnswer;
-      kgOptionsEl.querySelectorAll('.kg-opt-btn').forEach((b) => {
+      const isCorrect = idx === task.correctIndex;
+      kgOptionsEl.querySelectorAll('.kg-opt-btn').forEach((b, bIdx) => {
         b.disabled = true;
-        if (b.textContent === String(task.correctAnswer)) {
+        if (bIdx === task.correctIndex) {
           b.classList.add('kg-opt-correct');
         }
       });
@@ -966,155 +1008,29 @@ function requestStartLevelWithPreGate(mapId, battleOpts = {}) {
     engine.setPaused(true);
     if (!playtimeTimer.setActiveGameplay(false)) return;
   }
-  openKnowledgeGateModal({
-    mode: 'pre_level',
-    mapId,
-    battleOpts
-  });
-}
-
-function openKnowledgeGateModal(configOrLevelId, legacyOpts = {}) {
-  if (!knowledgeGateModal || !activeProfile) return;
-  const config =
-    typeof configOrLevelId === 'object' && configOrLevelId !== null
-      ? configOrLevelId
-      : { mode: 'pre_level', mapId: configOrLevelId, battleOpts: legacyOpts };
-
-  const mode = config.mode === 'post_level' ? 'post_level' : 'pre_level';
-  const reward = config.reward || null;
-  const targetId = mode === 'post_level' ? (reward?.mapId || engine.mapId) : config.mapId;
-  const targetLvl = getLevelById(targetId);
-  const pauseReason = mode === 'post_level' ? 'post_level_gate' : 'pre_level_gate';
-  const battleOpts = config.battleOpts || {};
-
-  clearEduModalTimers(true);
-  activeGateMode = mode;
-  playtimeTimer.setTaskPaused(true, pauseReason);
-  pendingGateLevelId = targetLvl.id;
-  const session = createKnowledgeGateSession(3);
-
+  const targetLvl = getLevelById(mapId);
   const cleanTitle = targetLvl.title.replace(/^\d+\.\s*/, '');
-  if (mode === 'post_level') {
-    if (kgBadgeEl) kgBadgeEl.textContent = '🏆 PERGALĖS VARTAI';
-    if (kgTitleEl) kgTitleEl.textContent = `Užtvirtink pergalę: ${targetLvl.levelNumber} lygis (${cleanTitle})`;
-    if (kgSubtitleEl) {
-      kgSubtitleEl.textContent = 'Išspręsk 3 užduotis, kad išsaugotum žvaigždutes ir atrakintum kitą lygį! Klaida = +2 užd.';
+  const gateTitle = battleOpts.veteranMode
+    ? `Pasirengimas kovai (Veteranas): ${targetLvl.levelNumber} lygis (${cleanTitle})`
+    : `Pasirengimas kovai: ${targetLvl.levelNumber} lygis (${cleanTitle})`;
+
+  clearEduModalTimers(false);
+  pendingGateLevelId = targetLvl.id;
+
+  requireGate(activeProfile, 3, gateTitle, () => {
+    pendingGateLevelId = null;
+    const bucket = saveData[activeProfile];
+    if (bucket && !bucket.unlockedLevels.includes(targetLvl.id)) {
+      bucket.unlockedLevels.push(targetLvl.id);
+      persistSaveData(saveData);
     }
-  } else {
-    if (kgBadgeEl) kgBadgeEl.textContent = battleOpts.veteranMode ? '🔥 PASIRENGIMO VARTAI (VETERANAS)' : '🚀 PASIRENGIMO VARTAI';
-    if (kgTitleEl) kgTitleEl.textContent = `Pasirengimas kovai: ${targetLvl.levelNumber} lygis (${cleanTitle})`;
-    if (kgSubtitleEl) {
-      kgSubtitleEl.textContent = 'Išspręsk 3 užduotis prieš pradedant lygį! Kiekviena klaida prideda +2 uždavinius.';
+    renderCampaignMap();
+    if (getRemainingPlaytimeSeconds(activeProfile) <= 0) {
+      playtimeTimer.setActiveGameplay(false);
+      return;
     }
-  }
-
-  const syncGateCounters = () => {
-    if (kgRemainingPillEl) {
-      kgRemainingPillEl.textContent = `Liko: ${session.remaining} užd.`;
-    }
-    if (kgMistakesPillEl) {
-      if (session.mistakes > 0) {
-        kgMistakesPillEl.textContent = `Klaidos: ${session.mistakes}`;
-        kgMistakesPillEl.classList.remove('hidden');
-      } else {
-        kgMistakesPillEl.classList.add('hidden');
-      }
-    }
-  };
-
-  const renderRound = () => {
-    syncGateCounters();
-    const task = eduTaskGenerator.generateTask(activeProfile);
-    renderTaskPromptAndOptions(task, (isCorrect) => {
-      const outcome = session.submitAnswer(isCorrect);
-      const review = buildTaskReviewSummary(task, outcome.isCorrect);
-      syncGateCounters();
-
-      if (outcome.isCorrect) {
-        audioManager.playGateSuccess();
-        if (outcome.complete) {
-          if (mode === 'post_level') {
-            commitPendingVictoryReward(reward);
-            const nextLvl = reward?.nextLvlId ? getLevelById(reward.nextLvlId) : null;
-            if (kgFeedbackEl) {
-              kgFeedbackEl.style.color = '#86efac';
-              kgFeedbackEl.textContent = nextLvl
-                ? `🎉 Pergalė užtvirtinta! Žvaigždutės išsaugotos ir ${nextLvl.levelNumber} lygis atrakintas!`
-                : '🎉 Pergalė užtvirtinta! Visos žvaigždutės išsaugotos!';
-              kgFeedbackEl.classList.remove('hidden');
-            }
-            if (kgExplanationBoxEl) {
-              kgExplanationBoxEl.textContent = review.explanationText;
-              kgExplanationBoxEl.classList.remove('hidden');
-            }
-            showKgNextButton('Išsaugoti ir tęsti →', () => {
-              knowledgeGateModal.classList.add('hidden');
-              pendingGateLevelId = null;
-              activeGateMode = null;
-              playtimeTimer.setTaskPaused(false, pauseReason);
-              playtimeTimer.setActiveGameplay(false);
-            });
-            return;
-          }
-
-          const bucket = saveData[activeProfile];
-          if (bucket && !bucket.unlockedLevels.includes(targetLvl.id)) {
-            bucket.unlockedLevels.push(targetLvl.id);
-            persistSaveData(saveData);
-          }
-          if (kgFeedbackEl) {
-            kgFeedbackEl.style.color = '#86efac';
-            kgFeedbackEl.textContent = `🎉 Šaunuolis! Pasirengimo vartai įveikti — ${targetLvl.levelNumber} lygis paruoštas!`;
-            kgFeedbackEl.classList.remove('hidden');
-          }
-          if (kgExplanationBoxEl) {
-            kgExplanationBoxEl.textContent = review.explanationText;
-            kgExplanationBoxEl.classList.remove('hidden');
-          }
-          renderCampaignMap();
-          showKgNextButton('Pradėti kovą! →', () => {
-            knowledgeGateModal.classList.add('hidden');
-            pendingGateLevelId = null;
-            activeGateMode = null;
-            playtimeTimer.setTaskPaused(false, pauseReason);
-            if (getRemainingPlaytimeSeconds(activeProfile) <= 0) {
-              playtimeTimer.setActiveGameplay(false);
-              return;
-            }
-            enterBattleLevel(targetLvl.id, battleOpts);
-          });
-          return;
-        }
-
-        if (kgFeedbackEl) {
-          kgFeedbackEl.style.color = '#86efac';
-          kgFeedbackEl.textContent = `✅ Teisingai! Liko dar ${outcome.remaining} užd.`;
-          kgFeedbackEl.classList.remove('hidden');
-        }
-        if (kgExplanationBoxEl) {
-          kgExplanationBoxEl.textContent = review.explanationText;
-          kgExplanationBoxEl.classList.remove('hidden');
-        }
-        showKgNextButton('Kitas uždavinys →', renderRound);
-        return;
-      }
-
-      // Klaidos bausmė (+2) + paaiškinimas su rankiniu „Kitas uždavinys →“ mygtuku
-      audioManager.playGateMistake();
-      if (kgPenaltyBannerEl) {
-        kgPenaltyBannerEl.textContent = outcome.warning;
-        kgPenaltyBannerEl.classList.remove('hidden');
-      }
-      if (kgExplanationBoxEl) {
-        kgExplanationBoxEl.textContent = review.explanationText;
-        kgExplanationBoxEl.classList.remove('hidden');
-      }
-      showKgNextButton('Kitas uždavinys →', renderRound);
-    });
-  };
-
-  renderRound();
-  knowledgeGateModal.classList.remove('hidden');
+    enterBattleLevel(targetLvl.id, battleOpts);
+  });
 }
 
 function openSmartUpgradeModal(padIndex) {
@@ -1143,9 +1059,14 @@ function openSmartUpgradeModal(padIndex) {
   if (kgRemainingPillEl) kgRemainingPillEl.textContent = '1 užduotis (1 bandymas)';
   kgMistakesPillEl?.classList.add('hidden');
 
-  const task = eduTaskGenerator.generateTask(activeProfile);
+  const task = generateEduTask(activeProfile, { recentIds: smartUpgradeRecentIds });
+  if (task?.id) {
+    smartUpgradeRecentIds.push(task.id);
+    if (smartUpgradeRecentIds.length > 25) smartUpgradeRecentIds.shift();
+  }
+
   renderTaskPromptAndOptions(task, (isCorrect) => {
-    const review = buildTaskReviewSummary(task, isCorrect);
+    const explanationText = task.explanation ? `💡 Paaiškinimas: ${task.explanation}` : '';
     if (isCorrect) {
       audioManager.playGateSuccess();
       engine.applyFreeSmartUpgrade(padIndex);
@@ -1154,8 +1075,8 @@ function openSmartUpgradeModal(padIndex) {
         kgFeedbackEl.textContent = '✅ Teisingai! Bokštelis nemokamai patobulintas!';
         kgFeedbackEl.classList.remove('hidden');
       }
-      if (kgExplanationBoxEl) {
-        kgExplanationBoxEl.textContent = review.explanationText;
+      if (kgExplanationBoxEl && explanationText) {
+        kgExplanationBoxEl.textContent = explanationText;
         kgExplanationBoxEl.classList.remove('hidden');
       }
       showKgNextButton('Tęsti žaidimą →', () => {
@@ -1170,8 +1091,8 @@ function openSmartUpgradeModal(padIndex) {
       kgPenaltyBannerEl.textContent = '❌ Suklydai! Šios bangos nemokamas patobulinimas sudegė.';
       kgPenaltyBannerEl.classList.remove('hidden');
     }
-    if (kgExplanationBoxEl) {
-      kgExplanationBoxEl.textContent = review.explanationText;
+    if (kgExplanationBoxEl && explanationText) {
+      kgExplanationBoxEl.textContent = explanationText;
       kgExplanationBoxEl.classList.remove('hidden');
     }
     showKgNextButton('Tęsti žaidimą →', () => {
@@ -1703,6 +1624,9 @@ function selectProfile(profileId) {
   showCampaignMapView();
   const allowed = playtimeTimer.setActiveChild(activeProfile);
   engine.setExternalLocked(!allowed);
+
+  // Jei vaikas turi nebaigtą užduočių skolą iš šio ar kito žaidimo – iškart užrakiname ekraną!
+  enforcePendingDebt(activeProfile);
 }
 
 function showProfileScreen() {
@@ -1759,24 +1683,50 @@ function animationLoop(timestamp) {
   requestAnimationFrame(animationLoop);
 }
 
+function hasActiveBattleWaveStarted() {
+  return Boolean(activeProfile && isInBattleView() && engine && engine.wave >= 1 && !engine.gameResult);
+}
+
 // ==================== ĮVYKIŲ SUSIEJIMAS ====================
 document.getElementById('btn-select-linas')?.addEventListener('click', () => selectProfile('linas'));
 document.getElementById('btn-select-lukas')?.addEventListener('click', () => selectProfile('lukas'));
-btnSwitchProfile?.addEventListener('click', showProfileScreen);
-document.getElementById('btn-back-campaign')?.addEventListener('click', showCampaignMapView);
-document.getElementById('btn-result-campaign')?.addEventListener('click', showCampaignMapView);
-document.getElementById('btn-close-kg')?.addEventListener('click', () => {
-  const closedMode = activeGateMode;
-  clearEduModalTimers(true);
-  knowledgeGateModal?.classList.add('hidden');
-  if (closedMode === 'pre_level') {
-    showCampaignMapView();
+btnSwitchProfile?.addEventListener('click', () => {
+  if (hasActiveBattleWaveStarted()) {
+    engine.setPaused(true);
+    requireGate(activeProfile, 3, 'Kovos užbaigimas (3 užd.)', () => showProfileScreen());
     return;
   }
-  if (isInBattleView() && engine.gameResult && activeProfile && getRemainingPlaytimeSeconds(activeProfile) <= 0) {
-    playtimeTimer.setActiveGameplay(false);
-  }
+  showProfileScreen();
 });
+
+document.getElementById('btn-back-campaign')?.addEventListener('click', () => {
+  if (hasActiveBattleWaveStarted()) {
+    engine.setPaused(true);
+    requireGate(activeProfile, 3, 'Kovos užbaigimas (3 užd.)', () => showCampaignMapView());
+    return;
+  }
+  showCampaignMapView();
+});
+
+document.getElementById('btn-result-campaign')?.addEventListener('click', () => {
+  if (pendingVictoryReward && !pendingVictoryReward.claimed) {
+    openVictoryEduGate(pendingVictoryReward, () => showCampaignMapView());
+    return;
+  }
+  showCampaignMapView();
+});
+
+// Protingo patobulinimo modalas neuždaromas nei Escape, nei paspaudus už lango
+window.addEventListener(
+  'keydown',
+  (e) => {
+    if (activeGateMode === 'smart_upgrade' && (e.key === 'Escape' || e.key === 'Esc')) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  },
+  true
+);
 
 btnKgNext?.addEventListener('click', () => {
   const action = kgNextAction;
@@ -1789,7 +1739,7 @@ btnKgNext?.addEventListener('click', () => {
 btnResultNextLevel?.addEventListener('click', () => {
   if (!activeProfile) return;
   if (pendingVictoryReward && !pendingVictoryReward.claimed) {
-    openKnowledgeGateModal({ mode: 'post_level', reward: pendingVictoryReward });
+    openVictoryEduGate(pendingVictoryReward);
     return;
   }
   const nextId = btnResultNextLevel.dataset.nextLevelId;

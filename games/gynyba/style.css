@@ -1496,12 +1496,21 @@ body.in-battle-mode .td-container {
   margin-bottom: 10px;
 }
 
-#kg-visual-canvas {
+#kg-visual-canvas,
+.kg-visual-svg {
   width: 100%;
   max-width: 320px;
   height: auto;
   border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.kg-visual-svg {
+  background: rgba(255, 255, 255, 0.96);
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .kg-question {
