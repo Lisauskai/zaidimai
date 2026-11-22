@@ -5,14 +5,14 @@
 import {
   getTowerStats,
   getTargetingPriorityMeta
-} from './balance.js?v=20261121r';
+} from './balance.js?v=20261121s';
 import {
   drawEnemySprite,
   drawTowerBaseSprite,
   drawTowerTurretSprite,
   drawDroneUnitSprite,
   drawMowerUnitSprite
-} from './sprites.js?v=20261121r';
+} from './sprites.js?v=20261121s';
 
 const backdropCache = new Map();
 

@@ -20,16 +20,16 @@ import {
   selectTargetByPriority,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './balance.js?v=20261121r';
+} from './balance.js?v=20261121s';
 import {
   TOWER_CATALOG,
   getTowerStats,
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121r';
-import { renderBattleScene, getMapBonusZones } from './renderer.js?v=20261121r';
-import { audioManager } from './audio.js?v=20261121r';
+} from './towers.js?v=20261121s';
+import { renderBattleScene, getMapBonusZones } from './renderer.js?v=20261121s';
+import { audioManager } from './audio.js?v=20261121s';
 
 let nextEnemyUid = 1;
 
@@ -236,7 +236,7 @@ export class TDEngine {
 
     this.maxHearts = getStartingHearts(this.techTree, this.veteranMode);
     this.hearts = this.maxHearts;
-    this.coins = getStartingCoins(this.map.baseCoins, this.profileId, this.techTree);
+    this.coins = getStartingCoins(this.map.baseCoins, this.profileId, this.techTree, this.veteranMode);
     this.wave = 0;
     this.interWaveTimer = 0;
     this.waveActive = false;
@@ -994,13 +994,14 @@ export class TDEngine {
     });
 
     // Iškviečia 4–5 teminius palydovus
-    const vetScale = this.veteranMode ? 1.35 : 1.0;
+    const vetScale = this.veteranMode ? 1.35 / 0.88 : 1.0;
+    const rewardScale = this.veteranMode ? 1.0 : 1.08;
     const escorts = Array.isArray(boss.phase2Escorts) && boss.phase2Escorts.length > 0
       ? boss.phase2Escorts
       : ['garden_slug', 'rushing_hedgehog', 'armored_beetle', 'garden_slug'];
     for (let i = 0; i < escorts.length; i++) {
       const arch = ENEMY_ARCHETYPES[escorts[i]] || ENEMY_ARCHETYPES.garden_slug;
-      const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, boss.pathIndex, 0, 0.62 * vetScale);
+      const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, boss.pathIndex, 0, 0.62 * vetScale, rewardScale);
       const offsetDist = Math.max(0, boss.distance - (i + 1) * 14);
       this.spawnEnemyRuntime(minion, offsetDist);
     }
@@ -1183,9 +1184,10 @@ export class TDEngine {
           enemy.summonTimer = 0;
           const arch = ENEMY_ARCHETYPES[enemy.summonType] || ENEMY_ARCHETYPES.garden_slug;
           const count = enemy.summonCount || 2;
-          const vetScale = this.veteranMode ? 1.35 : 1.0;
+          const vetScale = this.veteranMode ? 1.35 / 0.88 : 1.0;
+          const rewardScale = this.veteranMode ? 1.0 : 1.08;
           for (let s = 0; s < count; s++) {
-            const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, enemy.pathIndex, 0, 0.55 * vetScale);
+            const minion = createEnemyInstanceData(arch, Math.max(1, this.wave), this.profileId, enemy.pathIndex, 0, 0.55 * vetScale, rewardScale);
             this.spawnEnemyRuntime(minion, Math.max(0, enemy.distance - (s + 1) * 14));
           }
           const summonTxt = enemy.summonType === 'forest_healer' ? '🌿 +Gydytojas!' : '🐌 +Šliužai!';

@@ -4,8 +4,8 @@ export const MAX_WAVES_DEFAULT = 10;
 
 export function scaleEnemyHp(baseHp, waveNumber = 1, profileId = 'lukas') {
   const w = Math.max(1, Number(waveNumber) || 1);
-  // 3 kl. (Lukas): +35% stipresni; 1 kl. (Linas): ~25% mažiau HP nei 3 kl. (1.0125 / 1.35 = 0.75)
-  const profileMult = profileId === 'linas' ? 1.0125 : 1.35;
+  // 3 kl. (Lukas): +18.8% (-12% nuo 1.35); 1 kl. (Linas): ~25% mažiau HP nei 3 kl. (0.891 / 1.188 = 0.75)
+  const profileMult = profileId === 'linas' ? 0.891 : 1.188;
   const waveScale = 1 + (w - 1) * 0.24 + Math.pow(Math.max(0, w - 3), 1.22) * 0.055;
   return Math.max(10, Math.round(baseHp * waveScale * profileMult));
 }
@@ -264,7 +264,7 @@ export const ZONE_BOSSES = {
     zone: 1,
     name: 'Milžiniškas Šliužų Karalius',
     icon: '🐌',
-    baseHp: 4600,
+    baseHp: 4140,
     speed: 38,
     reward: 90,
     heartCost: 5,
@@ -292,7 +292,7 @@ export const ZONE_BOSSES = {
     zone: 2,
     name: 'Geležinis Kurmis',
     icon: '⛏️',
-    baseHp: 5600,
+    baseHp: 5040,
     speed: 42,
     reward: 100,
     heartCost: 5,
@@ -319,7 +319,7 @@ export const ZONE_BOSSES = {
     zone: 3,
     name: 'Girios Šešėlių Valdovas',
     icon: '🌑',
-    baseHp: 11500,
+    baseHp: 10350,
     speed: 45,
     reward: 115,
     heartCost: 5,
@@ -345,7 +345,7 @@ export const ZONE_BOSSES = {
     zone: 4,
     name: 'Klaidingų Natų Baubas',
     icon: '🎺',
-    baseHp: 11000,
+    baseHp: 9900,
     speed: 42,
     reward: 125,
     heartCost: 5,
@@ -372,7 +372,7 @@ export const ZONE_BOSSES = {
     zone: 5,
     name: 'Kibernetinis Mega-Bosukas',
     icon: '🤖',
-    baseHp: 15500,
+    baseHp: 13950,
     speed: 40,
     reward: 160,
     heartCost: 5,
@@ -399,7 +399,7 @@ export const ZONE_BOSSES = {
     zone: 6,
     name: 'Pelkių Valdovas',
     icon: '🌿',
-    baseHp: 13000,
+    baseHp: 11700,
     speed: 37,
     reward: 190,
     heartCost: 6,
@@ -428,7 +428,7 @@ export const ZONE_BOSSES = {
     zone: 7,
     name: 'Klinčių Kolosas',
     icon: '🪨',
-    baseHp: 16000,
+    baseHp: 9900,
     speed: 34,
     reward: 220,
     heartCost: 6,
@@ -454,7 +454,7 @@ export const ZONE_BOSSES = {
     zone: 8,
     name: 'Geležinis Mega-Titanas',
     icon: '🦾',
-    baseHp: 4700,
+    baseHp: 4230,
     speed: 28,
     reward: 260,
     heartCost: 6,
@@ -484,7 +484,7 @@ export const ZONE_CO_BOSSES = {
     zone: 8,
     name: 'Šešėlių Architektas',
     icon: '👁️',
-    baseHp: 4600,
+    baseHp: 4140,
     speed: 32,
     reward: 260,
     heartCost: 6,
@@ -517,7 +517,15 @@ export function getZoneBoss(zoneNumber = 1) {
   return ZONE_BOSSES[z] || ZONE_BOSSES[1];
 }
 
-export function createEnemyInstanceData(archetype, waveNumber, profileId, pathIndex = 0, delay = 0.7, hpScale = 1) {
+export function createEnemyInstanceData(
+  archetype,
+  waveNumber,
+  profileId,
+  pathIndex = 0,
+  delay = 0.7,
+  hpScale = 1,
+  rewardScale = 1.08
+) {
   const bossProfileScale = profileId === 'linas' ? 0.75 : 1.0;
   const scaledHp = archetype.isBoss
     ? Math.max(200, Math.round(archetype.baseHp * bossProfileScale * hpScale))
@@ -536,7 +544,7 @@ export function createEnemyInstanceData(archetype, waveNumber, profileId, pathIn
     delay,
     hp: scaledHp,
     speed: archetype.speed + (archetype.isBoss ? 0 : Math.min(18, waveNumber * 1.4)),
-    reward: archetype.reward,
+    reward: Math.max(1, Math.round((Number(archetype.reward) || 1) * rewardScale)),
     heartCost: archetype.heartCost || 1,
     armor: archetype.armor || 0,
     energyResist: archetype.energyResist || 0,
@@ -688,8 +696,11 @@ export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas
   const paths = Math.max(1, Number(pathCount) || 1);
   const levelNum = Math.max(1, Number(options.levelNumber) || 1);
   const zoneId = Math.max(1, Number(options.zoneId) || 1);
-  const veteranMult = options.veteranMode ? 1.35 : 1.0;
-  const levelHpScale = (1 + (levelNum - 1) * 0.024 + (zoneId - 1) * 0.045) * veteranMult;
+  // Veterano režimas išlaiko nesušvelnintą sunkumą (HP ir atlygį)
+  const normalVetMult = options.veteranMode ? 1.35 / 0.88 : 1.0;
+  const bossVetMult = options.veteranMode ? 1.35 / 0.90 : 1.0;
+  const rewardScale = options.veteranMode ? 1.0 : 1.08;
+  const levelHpScale = (1 + (levelNum - 1) * 0.024 + (zoneId - 1) * 0.045) * normalVetMult;
   const planTypes = getWavePlanTypes(w, options);
   const totalUnits = Math.min(54, 7 + Math.round(w * 2.4));
   const intervalBase = Math.max(0.28, 0.92 - w * 0.036);
@@ -699,13 +710,15 @@ export function generateWaveSpawns(waveNumber, pathCount = 1, profileId = 'lukas
     const typeId = planTypes[i % planTypes.length];
     const arch = ENEMY_ARCHETYPES[typeId] || ENEMY_ARCHETYPES.garden_slug;
     spawns.push(
-      createEnemyInstanceData(arch, w, profileId, i % paths, i === 0 ? 0.15 : intervalBase, levelHpScale)
+      createEnemyInstanceData(arch, w, profileId, i % paths, i === 0 ? 0.15 : intervalBase, levelHpScale, rewardScale)
     );
   }
 
   const waveBosses = resolveBossesForWave(w, paths, options);
   for (const entry of waveBosses) {
-    spawns.push(createEnemyInstanceData(entry.boss, w, profileId, entry.pathIndex, entry.delay, veteranMult));
+    spawns.push(
+      createEnemyInstanceData(entry.boss, w, profileId, entry.pathIndex, entry.delay, bossVetMult, rewardScale)
+    );
   }
 
   return spawns;

@@ -3,7 +3,7 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261121r';
+} from '../../../shared/playtime-timer.js?v=20261121s';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -27,9 +27,9 @@ import {
   createKnowledgeGateSession,
   eduTaskGenerator,
   renderTaskVisual
-} from './balance.js?v=20261121r';
-import { TDEngine } from './engine.js?v=20261121r';
-import { audioManager } from './audio.js?v=20261121r';
+} from './balance.js?v=20261121s';
+import { TDEngine } from './engine.js?v=20261121s';
+import { audioManager } from './audio.js?v=20261121s';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];
@@ -235,6 +235,8 @@ let saveData = loadSaveData();
 let activeProfile = null;
 let lastFrameTimestamp = 0;
 let pendingGateLevelId = null;
+let activeGateMode = null; // 'pre_level' | 'post_level' | 'smart_upgrade' | null
+let pendingVictoryReward = null;
 let kgNextAction = null;
 let victoryGateTimeoutId = null;
 let smartUpgradeRestorePause = null;
@@ -773,15 +775,67 @@ function showKgNextButton(label, onNext) {
 
 function clearEduModalTimers(restorePause = true) {
   hideKgNextButton();
+  activeGateMode = null;
   if (victoryGateTimeoutId) {
     clearTimeout(victoryGateTimeoutId);
     victoryGateTimeoutId = null;
   }
+  playtimeTimer?.setTaskPaused(false, 'pre_level_gate');
+  playtimeTimer?.setTaskPaused(false, 'post_level_gate');
   playtimeTimer?.setTaskPaused(false, 'knowledge_gate');
   playtimeTimer?.setTaskPaused(false, 'smart_upgrade');
   if (restorePause && smartUpgradeRestorePause !== null) {
     engine.setPaused(smartUpgradeRestorePause);
     smartUpgradeRestorePause = null;
+  }
+}
+
+function commitPendingVictoryReward(reward) {
+  if (!reward || reward.claimed || !activeProfile) return;
+  reward.claimed = true;
+
+  const bucket = saveData[activeProfile];
+  let newlyClearedVeteran = false;
+  if (bucket) {
+    if (!Array.isArray(bucket.veteranClearedLevels)) bucket.veteranClearedLevels = [];
+    if (reward.isVeteran) {
+      if (!bucket.veteranClearedLevels.includes(reward.mapId)) {
+        bucket.veteranClearedLevels.push(reward.mapId);
+        newlyClearedVeteran = true;
+      }
+    } else {
+      bucket.levelStars[reward.mapId] = Math.max(bucket.levelStars[reward.mapId] || 0, reward.stars);
+    }
+    if (reward.nextLvlId && !bucket.unlockedLevels.includes(reward.nextLvlId)) {
+      bucket.unlockedLevels.push(reward.nextLvlId);
+    }
+    const levelStarsSum = Object.values(bucket.levelStars).reduce((acc, s) => acc + s, 0);
+    bucket.stars = levelStarsSum + bucket.veteranClearedLevels.length;
+    bucket.bestWave = Math.max(bucket.bestWave || 0, reward.wave);
+    persistSaveData(saveData);
+    updateProfileCards();
+    syncTechStarsUI();
+    renderCampaignMap();
+  }
+
+  const descEl = document.getElementById('result-desc');
+  if (descEl) {
+    descEl.textContent = reward.isVeteran
+      ? `Žvaigždutės išsaugotos! Atlaikei su ${reward.hearts} / ${reward.maxHearts || 10} širdelių (+35% priešų HP)!${
+          newlyClearedVeteran
+            ? ' Užsidėta auksinė karūnėlė 👑 ir pridėta +1 ⭐ Išradimų Medžiui!'
+            : ' Auksinė karūnėlė 👑 apginta dar kartą!'
+        }`
+      : `Žvaigždutės išsaugotos! Išsaugojai ${reward.hearts} / ${reward.maxHearts || 20} širdelių ir pelnei ${reward.stars} žvaigždutę(-es)!`;
+  }
+
+  const nextLvl = reward.nextLvlId ? getLevelById(reward.nextLvlId) : null;
+  if (btnResultNextLevel && nextLvl) {
+    btnResultNextLevel.textContent = `▶️ Kitas lygis (${nextLvl.levelNumber}) →`;
+    btnResultNextLevel.dataset.nextLevelId = nextLvl.id;
+    btnResultNextLevel.classList.remove('hidden');
+  } else {
+    btnResultNextLevel?.classList.add('hidden');
   }
 }
 
@@ -795,7 +849,6 @@ function handleGameResult(result) {
   const titleEl = document.getElementById('result-title');
   const starsEl = document.getElementById('result-stars');
   const descEl = document.getElementById('result-desc');
-  const bucket = activeProfile ? saveData[activeProfile] : null;
   const currentLvl = getLevelById(engine.mapId);
   const nextLvl =
     currentLvl.levelNumber < CAMPAIGN_LEVELS.length
@@ -804,24 +857,17 @@ function handleGameResult(result) {
 
   if (result.status === 'victory') {
     const isVeteran = Boolean(result.veteranMode || engine.veteranMode);
-    let newlyClearedVeteran = false;
-    if (bucket) {
-      if (!Array.isArray(bucket.veteranClearedLevels)) bucket.veteranClearedLevels = [];
-      if (isVeteran) {
-        if (!bucket.veteranClearedLevels.includes(engine.mapId)) {
-          bucket.veteranClearedLevels.push(engine.mapId);
-          newlyClearedVeteran = true;
-        }
-      } else {
-        bucket.levelStars[engine.mapId] = Math.max(bucket.levelStars[engine.mapId] || 0, result.stars);
-      }
-      const levelStarsSum = Object.values(bucket.levelStars).reduce((acc, s) => acc + s, 0);
-      bucket.stars = levelStarsSum + bucket.veteranClearedLevels.length;
-      bucket.bestWave = Math.max(bucket.bestWave || 0, result.wave);
-      persistSaveData(saveData);
-      updateProfileCards();
-      syncTechStarsUI();
-    }
+    pendingVictoryReward = {
+      mapId: engine.mapId,
+      stars: result.stars,
+      wave: result.wave,
+      hearts: result.hearts,
+      maxHearts: engine.maxHearts || (isVeteran ? 10 : 20),
+      isVeteran,
+      nextLvlId: nextLvl ? nextLvl.id : null,
+      claimed: false
+    };
+
     if (iconEl) iconEl.textContent = isVeteran ? '👑' : '🏆';
     if (titleEl) {
       titleEl.textContent = isVeteran
@@ -834,34 +880,27 @@ function handleGameResult(result) {
         : '⭐'.repeat(result.stars) + '☆'.repeat(3 - result.stars);
     }
     if (descEl) {
-      descEl.textContent = isVeteran
-        ? `Atlaikei su ${result.hearts} / ${engine.maxHearts || 10} širdelių (+35% priešų HP)!${
-            newlyClearedVeteran
-              ? ' Užsidėta auksinė karūnėlė 👑 ir pridėta +1 ⭐ Išradimų Medžiui!'
-              : ' Auksinė karūnėlė 👑 apginta dar kartą!'
-          }`
-        : `Išsaugojai ${result.hearts} / ${engine.maxHearts || 20} širdelių ir pelnei ${result.stars} žvaigždutę(-es)!`;
+      descEl.textContent = `Puikiai apgynei tvirtovę (${result.hearts} ❤️)! Po 2 sek. atsidarys Pergalės vartai (3 užd.), kad išsaugotum žvaigždutes${
+        nextLvl ? ` ir atrakintum ${nextLvl.levelNumber}-ąjį lygį` : ''
+      }!`;
     }
 
-    if (btnResultNextLevel && nextLvl && bucket) {
-      const nextUnlocked = bucket.unlockedLevels.includes(nextLvl.id);
-      btnResultNextLevel.textContent = nextUnlocked
-        ? `▶️ Kitas lygis (${nextLvl.levelNumber}) →`
-        : `🔐 Žinių Vartai: Lygis ${nextLvl.levelNumber} →`;
-      btnResultNextLevel.dataset.nextLevelId = nextLvl.id;
+    if (btnResultNextLevel) {
+      btnResultNextLevel.textContent = '🔐 Pergalės vartai (3 užd.) →';
+      btnResultNextLevel.dataset.nextLevelId = nextLvl ? nextLvl.id : '';
       btnResultNextLevel.classList.remove('hidden');
-
-      if (!nextUnlocked) {
-        victoryGateTimeoutId = setTimeout(() => {
-          victoryGateTimeoutId = null;
-          if (!activeProfile || !isInBattleView() || resultOverlay?.classList.contains('hidden')) return;
-          openKnowledgeGateModal(nextLvl.id, { autoEnter: false });
-        }, 2000);
-      }
-    } else {
-      btnResultNextLevel?.classList.add('hidden');
     }
+
+    const rewardSnapshot = pendingVictoryReward;
+    victoryGateTimeoutId = setTimeout(() => {
+      victoryGateTimeoutId = null;
+      if (!activeProfile || !isInBattleView() || resultOverlay?.classList.contains('hidden')) return;
+      if (!rewardSnapshot.claimed) {
+        openKnowledgeGateModal({ mode: 'post_level', reward: rewardSnapshot });
+      }
+    }, 2000);
   } else {
+    pendingVictoryReward = null;
     if (iconEl) iconEl.textContent = '💔';
     if (titleEl) titleEl.textContent = 'TVIRTOVĖ NEATLAIKĖ!';
     if (starsEl) starsEl.textContent = '☆☆☆';
@@ -917,20 +956,56 @@ function renderTaskPromptAndOptions(task, onPick) {
   });
 }
 
-function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
+function requestStartLevelWithPreGate(mapId, battleOpts = {}) {
+  if (!activeProfile) return;
+  if (getRemainingPlaytimeSeconds(activeProfile) <= 0) {
+    playtimeTimer.setActiveGameplay(false);
+    return;
+  }
+  if (isInBattleView()) {
+    engine.setPaused(true);
+    if (!playtimeTimer.setActiveGameplay(false)) return;
+  }
+  openKnowledgeGateModal({
+    mode: 'pre_level',
+    mapId,
+    battleOpts
+  });
+}
+
+function openKnowledgeGateModal(configOrLevelId, legacyOpts = {}) {
   if (!knowledgeGateModal || !activeProfile) return;
+  const config =
+    typeof configOrLevelId === 'object' && configOrLevelId !== null
+      ? configOrLevelId
+      : { mode: 'pre_level', mapId: configOrLevelId, battleOpts: legacyOpts };
+
+  const mode = config.mode === 'post_level' ? 'post_level' : 'pre_level';
+  const reward = config.reward || null;
+  const targetId = mode === 'post_level' ? (reward?.mapId || engine.mapId) : config.mapId;
+  const targetLvl = getLevelById(targetId);
+  const pauseReason = mode === 'post_level' ? 'post_level_gate' : 'pre_level_gate';
+  const battleOpts = config.battleOpts || {};
+
   clearEduModalTimers(true);
-  playtimeTimer.setTaskPaused(true, 'knowledge_gate');
-  const targetLvl = getLevelById(targetLevelId);
+  activeGateMode = mode;
+  playtimeTimer.setTaskPaused(true, pauseReason);
   pendingGateLevelId = targetLvl.id;
   const session = createKnowledgeGateSession(3);
 
-  if (kgBadgeEl) kgBadgeEl.textContent = '🔐 ŽINIŲ VARTAI';
-  if (kgTitleEl) {
-    kgTitleEl.textContent = `Atrakink ${targetLvl.levelNumber} lygį: ${targetLvl.title.replace(/^\d+\.\s*/, '')}`;
-  }
-  if (kgSubtitleEl) {
-    kgSubtitleEl.textContent = 'Išspręsk 3 užduotis! Kiekviena klaida prideda vis daugiau papildomų uždavinių.';
+  const cleanTitle = targetLvl.title.replace(/^\d+\.\s*/, '');
+  if (mode === 'post_level') {
+    if (kgBadgeEl) kgBadgeEl.textContent = '🏆 PERGALĖS VARTAI';
+    if (kgTitleEl) kgTitleEl.textContent = `Užtvirtink pergalę: ${targetLvl.levelNumber} lygis (${cleanTitle})`;
+    if (kgSubtitleEl) {
+      kgSubtitleEl.textContent = 'Išspręsk 3 užduotis, kad išsaugotum žvaigždutes ir atrakintum kitą lygį! Klaida = +2 užd.';
+    }
+  } else {
+    if (kgBadgeEl) kgBadgeEl.textContent = battleOpts.veteranMode ? '🔥 PASIRENGIMO VARTAI (VETERANAS)' : '🚀 PASIRENGIMO VARTAI';
+    if (kgTitleEl) kgTitleEl.textContent = `Pasirengimas kovai: ${targetLvl.levelNumber} lygis (${cleanTitle})`;
+    if (kgSubtitleEl) {
+      kgSubtitleEl.textContent = 'Išspręsk 3 užduotis prieš pradedant lygį! Kiekviena klaida prideda +2 uždavinius.';
+    }
   }
 
   const syncGateCounters = () => {
@@ -958,17 +1033,38 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
       if (outcome.isCorrect) {
         audioManager.playGateSuccess();
         if (outcome.complete) {
-          const bucket = saveData[activeProfile];
-          if (!bucket.unlockedLevels.includes(pendingGateLevelId)) {
-            bucket.unlockedLevels.push(pendingGateLevelId);
-            persistSaveData(saveData);
+          if (mode === 'post_level') {
+            commitPendingVictoryReward(reward);
+            const nextLvl = reward?.nextLvlId ? getLevelById(reward.nextLvlId) : null;
+            if (kgFeedbackEl) {
+              kgFeedbackEl.style.color = '#86efac';
+              kgFeedbackEl.textContent = nextLvl
+                ? `🎉 Pergalė užtvirtinta! Žvaigždutės išsaugotos ir ${nextLvl.levelNumber} lygis atrakintas!`
+                : '🎉 Pergalė užtvirtinta! Visos žvaigždutės išsaugotos!';
+              kgFeedbackEl.classList.remove('hidden');
+            }
+            if (kgExplanationBoxEl) {
+              kgExplanationBoxEl.textContent = review.explanationText;
+              kgExplanationBoxEl.classList.remove('hidden');
+            }
+            showKgNextButton('Išsaugoti ir tęsti →', () => {
+              knowledgeGateModal.classList.add('hidden');
+              pendingGateLevelId = null;
+              activeGateMode = null;
+              playtimeTimer.setTaskPaused(false, pauseReason);
+              playtimeTimer.setActiveGameplay(false);
+            });
+            return;
           }
-          if (btnResultNextLevel && btnResultNextLevel.dataset.nextLevelId === pendingGateLevelId) {
-            btnResultNextLevel.textContent = `▶️ Kitas lygis (${targetLvl.levelNumber}) →`;
+
+          const bucket = saveData[activeProfile];
+          if (bucket && !bucket.unlockedLevels.includes(targetLvl.id)) {
+            bucket.unlockedLevels.push(targetLvl.id);
+            persistSaveData(saveData);
           }
           if (kgFeedbackEl) {
             kgFeedbackEl.style.color = '#86efac';
-            kgFeedbackEl.textContent = `🎉 Šaunuolis! Žinių vartai įveikti — ${targetLvl.levelNumber} lygis atrakintas!`;
+            kgFeedbackEl.textContent = `🎉 Šaunuolis! Pasirengimo vartai įveikti — ${targetLvl.levelNumber} lygis paruoštas!`;
             kgFeedbackEl.classList.remove('hidden');
           }
           if (kgExplanationBoxEl) {
@@ -976,13 +1072,16 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
             kgExplanationBoxEl.classList.remove('hidden');
           }
           renderCampaignMap();
-          const unlockedId = pendingGateLevelId;
-          showKgNextButton('Tęsti žaidimą →', () => {
+          showKgNextButton('Pradėti kovą! →', () => {
             knowledgeGateModal.classList.add('hidden');
             pendingGateLevelId = null;
-            playtimeTimer.setTaskPaused(false, 'knowledge_gate');
-            const allowed = playtimeTimer.setActiveGameplay(false);
-            if (allowed && autoEnter) enterBattleLevel(unlockedId);
+            activeGateMode = null;
+            playtimeTimer.setTaskPaused(false, pauseReason);
+            if (getRemainingPlaytimeSeconds(activeProfile) <= 0) {
+              playtimeTimer.setActiveGameplay(false);
+              return;
+            }
+            enterBattleLevel(targetLvl.id, battleOpts);
           });
           return;
         }
@@ -1000,7 +1099,7 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
         return;
       }
 
-      // Klaidos bausmė + ramus paaiškinimas su rankiniu „Kitas uždavinys →“ mygtuku
+      // Klaidos bausmė (+2) + paaiškinimas su rankiniu „Kitas uždavinys →“ mygtuku
       audioManager.playGateMistake();
       if (kgPenaltyBannerEl) {
         kgPenaltyBannerEl.textContent = outcome.warning;
@@ -1021,6 +1120,7 @@ function openKnowledgeGateModal(targetLevelId, { autoEnter = true } = {}) {
 function openSmartUpgradeModal(padIndex) {
   if (!knowledgeGateModal || !activeProfile || !engine.canUseSmartUpgrade(padIndex)) return;
   clearEduModalTimers(false);
+  activeGateMode = 'smart_upgrade';
   playtimeTimer.setTaskPaused(true, 'smart_upgrade');
   pendingGateLevelId = null;
 
@@ -1252,10 +1352,10 @@ function renderCampaignMap() {
       `;
 
       node.addEventListener('click', () => {
-        if (isUnlocked) {
-          enterBattleLevel(lvl.id, { veteranMode: veteranModeSelected && isBeaten });
-        } else if (isGateReady) {
-          openKnowledgeGateModal(lvl.id);
+        if (isUnlocked || isGateReady) {
+          requestStartLevelWithPreGate(lvl.id, {
+            veteranMode: Boolean(isBeaten && veteranModeSelected)
+          });
         }
       });
 
@@ -1555,6 +1655,7 @@ function showCampaignMapView() {
   screenCampaign?.classList.remove('hidden');
   syncBossHpBarUI();
   playtimeTimer.setActiveGameplay(false);
+  pendingVictoryReward = null;
   syncTechStarsUI();
   renderCampaignMap();
 }
@@ -1606,6 +1707,7 @@ function selectProfile(profileId) {
 
 function showProfileScreen() {
   activeProfile = null;
+  pendingVictoryReward = null;
   clearEduModalTimers(false);
   closeFeatureModals();
   closePadMenus();
@@ -1624,6 +1726,7 @@ function showProfileScreen() {
 }
 
 function selectMap(mapId, opts = {}) {
+  pendingVictoryReward = null;
   clearEduModalTimers(false);
   knowledgeGateModal?.classList.add('hidden');
   closePadMenus();
@@ -1663,8 +1766,13 @@ btnSwitchProfile?.addEventListener('click', showProfileScreen);
 document.getElementById('btn-back-campaign')?.addEventListener('click', showCampaignMapView);
 document.getElementById('btn-result-campaign')?.addEventListener('click', showCampaignMapView);
 document.getElementById('btn-close-kg')?.addEventListener('click', () => {
+  const closedMode = activeGateMode;
   clearEduModalTimers(true);
   knowledgeGateModal?.classList.add('hidden');
+  if (closedMode === 'pre_level') {
+    showCampaignMapView();
+    return;
+  }
   if (isInBattleView() && engine.gameResult && activeProfile && getRemainingPlaytimeSeconds(activeProfile) <= 0) {
     playtimeTimer.setActiveGameplay(false);
   }
@@ -1679,15 +1787,14 @@ btnKgNext?.addEventListener('click', () => {
 });
 
 btnResultNextLevel?.addEventListener('click', () => {
-  const nextId = btnResultNextLevel.dataset.nextLevelId;
-  if (!nextId || !activeProfile) return;
-  const bucket = saveData[activeProfile];
-  if (bucket.unlockedLevels.includes(nextId)) {
-    if (!playtimeTimer.setActiveGameplay(false)) return;
-    enterBattleLevel(nextId);
-  } else {
-    openKnowledgeGateModal(nextId, { autoEnter: true });
+  if (!activeProfile) return;
+  if (pendingVictoryReward && !pendingVictoryReward.claimed) {
+    openKnowledgeGateModal({ mode: 'post_level', reward: pendingVictoryReward });
+    return;
   }
+  const nextId = btnResultNextLevel.dataset.nextLevelId;
+  if (!nextId) return;
+  requestStartLevelWithPreGate(nextId, { veteranMode: false });
 });
 
 btnSpeedToggle?.addEventListener('click', () => {
@@ -1703,15 +1810,11 @@ btnCallWave?.addEventListener('click', () => {
 });
 
 document.getElementById('btn-restart-map')?.addEventListener('click', () => {
-  if (!playtimeTimer.setActiveGameplay(false)) return;
-  playtimeTimer.setActiveGameplay(true);
-  selectMap(engine.mapId, { veteranMode: Boolean(engine.veteranMode) });
+  requestStartLevelWithPreGate(engine.mapId, { veteranMode: Boolean(engine.veteranMode) });
 });
 
 document.getElementById('btn-result-replay')?.addEventListener('click', () => {
-  if (!playtimeTimer.setActiveGameplay(false)) return;
-  playtimeTimer.setActiveGameplay(true);
-  selectMap(engine.mapId, { veteranMode: Boolean(engine.veteranMode) });
+  requestStartLevelWithPreGate(engine.mapId, { veteranMode: Boolean(engine.veteranMode) });
 });
 
 btnCampTab1?.addEventListener('click', () => {

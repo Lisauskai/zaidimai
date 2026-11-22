@@ -8,7 +8,7 @@ export {
   getUpgradeCost,
   getTowerEvolutions,
   findNearestPathPoint
-} from './towers.js?v=20261121r';
+} from './towers.js?v=20261121s';
 
 export {
   ENEMY_ARCHETYPES,
@@ -20,7 +20,7 @@ export {
   createEnemyInstanceData,
   generateWaveSpawns,
   getWavePreviewInfo
-} from './enemies.js?v=20261121r';
+} from './enemies.js?v=20261121s';
 
 export {
   CAMPAIGN_ZONES,
@@ -28,7 +28,7 @@ export {
   MAP_DEFINITIONS,
   getLevelById,
   renderMapThemeDecorations
-} from './maps.js?v=20261121r';
+} from './maps.js?v=20261121s';
 
 export {
   buildTaskReviewSummary,
@@ -36,7 +36,7 @@ export {
   EduTaskGenerator,
   eduTaskGenerator,
   renderTaskVisual
-} from './edu_tasks.js?v=20261121r';
+} from './edu_tasks.js?v=20261121s';
 
 export const STARTING_HEARTS = 20;
 export const VETERAN_HEARTS = 10;
@@ -168,15 +168,15 @@ export const PROFILE_MODIFIERS = {
     id: 'linas',
     label: 'Linas (1 klasė)',
     startingCoinsMultiplier: 1.15, // +15% daugiau pradinių monetų nei 3 kl.
-    enemyHpMultiplier: 1.0125, // ~25% mažiau HP nei 3 kl. (1.0125 / 1.35 = 0.75)
+    enemyHpMultiplier: 0.891, // -12% HP nuo 1.0125; išlaiko 25% lengviau nei Lukas (0.891 / 1.188 = 0.75)
     badgeText: '1 kl. balansas: +15% pradinių monetų • -25% priešų HP'
   },
   lukas: {
     id: 'lukas',
     label: 'Lukas (3 klasė)',
     startingCoinsMultiplier: 1.0,
-    enemyHpMultiplier: 1.35,
-    badgeText: '3 kl. balansas: stratego iššūkis (+35% priešų HP)'
+    enemyHpMultiplier: 1.188, // -12% HP nuo 1.35 švelnesniam balansui (išskyrus Veterano režimą)
+    badgeText: '3 kl. balansas: stratego iššūkis'
   }
 };
 
@@ -184,10 +184,15 @@ export function getProfileModifier(profileId) {
   return profileId === 'linas' ? PROFILE_MODIFIERS.linas : PROFILE_MODIFIERS.lukas;
 }
 
-export function getStartingCoins(baseCoins, profileId, techTree = null) {
+export function getStartingCoins(baseCoins, profileId, techTree = null, veteranMode = false) {
   const mod = getProfileModifier(profileId);
   const tech = getTechModifiers(techTree);
-  return Math.round((Number(baseCoins) || 200) * mod.startingCoinsMultiplier * (1 + tech.startingCoinsBonusPct));
+  const baseScaled =
+    (Number(baseCoins) || 200) * mod.startingCoinsMultiplier * (1 + tech.startingCoinsBonusPct);
+  if (veteranMode) {
+    return Math.round(baseScaled);
+  }
+  return Math.ceil((baseScaled * 1.1) / 5) * 5;
 }
 
 export function getStartingHearts(techTree = null, veteranMode = false) {

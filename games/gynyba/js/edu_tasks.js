@@ -82,7 +82,7 @@ export function createKnowledgeGateSession(initialRemaining = 3) {
         };
       }
       this.mistakes += 1;
-      const penaltyAdded = this.mistakes;
+      const penaltyAdded = 2;
       this.remaining += penaltyAdded;
       return {
         isCorrect: false,
@@ -91,7 +91,7 @@ export function createKnowledgeGateSession(initialRemaining = 3) {
         mistakes: this.mistakes,
         solved: this.solved,
         complete: false,
-        warning: `Ups! Klaida #${this.mistakes} → +${penaltyAdded} papildomi uždaviniai! Nesikubink ir suskaičiuok tiksliai!`
+        warning: 'Ups! Neteisingai → pridedami +2 papildomi uždaviniai!'
       };
     }
   };
@@ -808,32 +808,35 @@ function generateGrade3World() {
 export class EduTaskGenerator {
   constructor() {
     this.lastCategoryByProfile = new Map();
-    this.lastSignatureByProfile = new Map();
+    this.recentSignaturesByProfile = new Map();
+    this.maxRecentHistory = 18;
   }
 
   getWeightedGenerators(profileId) {
     if (profileId === 'linas') {
       return [
         { category: 'clock', weight: 16, fn: generateGrade1Clock },
-        { category: 'coins', weight: 16, fn: generateGrade1Coins },
-        { category: 'inequality', weight: 16, fn: generateGrade1Inequality },
-        { category: 'sequence', weight: 16, fn: generateGrade1Sequence },
-        { category: 'geometry', weight: 16, fn: generateGrade1Geometry },
-        { category: 'world_quiz', weight: 20, fn: generateGrade1World }
+        { category: 'coins', weight: 17, fn: generateGrade1Coins },
+        { category: 'inequality', weight: 17, fn: generateGrade1Inequality },
+        { category: 'sequence', weight: 17, fn: generateGrade1Sequence },
+        { category: 'geometry', weight: 17, fn: generateGrade1Geometry },
+        { category: 'world_quiz', weight: 16, fn: generateGrade1World }
       ];
     }
     return [
       { category: 'clock_duration', weight: 16, fn: generateGrade3ClockDuration },
-      { category: 'units', weight: 16, fn: generateGrade3Units },
-      { category: 'perimeter_area', weight: 16, fn: generateGrade3PerimeterArea },
-      { category: 'fractions', weight: 16, fn: generateGrade3Fractions },
-      { category: 'order_of_ops', weight: 16, fn: generateGrade3OrderOfOps },
-      { category: 'world_quiz_3', weight: 20, fn: generateGrade3World }
+      { category: 'units', weight: 17, fn: generateGrade3Units },
+      { category: 'perimeter_area', weight: 17, fn: generateGrade3PerimeterArea },
+      { category: 'fractions', weight: 17, fn: generateGrade3Fractions },
+      { category: 'order_of_ops', weight: 17, fn: generateGrade3OrderOfOps },
+      { category: 'world_quiz_3', weight: 16, fn: generateGrade3World }
     ];
   }
 
   pickGenerator(profileId, lastCategory) {
-    const pool = this.getWeightedGenerators(profileId).filter((g) => g.category !== lastCategory);
+    const all = this.getWeightedGenerators(profileId);
+    const filtered = all.filter((g) => g.category !== lastCategory);
+    const pool = filtered.length > 0 ? filtered : all;
     const totalWeight = pool.reduce((sum, g) => sum + g.weight, 0);
     let r = Math.random() * totalWeight;
     for (const item of pool) {
@@ -846,22 +849,28 @@ export class EduTaskGenerator {
   generateTask(profileId = 'linas') {
     const key = profileId === 'lukas' ? 'lukas' : 'linas';
     const lastCategory = this.lastCategoryByProfile.get(key) || null;
-    const lastSignature = this.lastSignatureByProfile.get(key) || null;
+    const recent = this.recentSignaturesByProfile.get(key) || [];
 
     let selected = null;
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-      const gen = this.pickGenerator(key, lastCategory);
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      const gen = this.pickGenerator(key, attempt < 20 ? lastCategory : null);
       const task = gen.fn();
-      if (task.signature !== lastSignature) {
+      if (!recent.includes(task.signature)) {
         selected = task;
         break;
       }
-      selected = task;
+      if (!selected || attempt === 29) {
+        selected = task;
+      }
     }
 
     if (selected) {
       this.lastCategoryByProfile.set(key, selected.category);
-      this.lastSignatureByProfile.set(key, selected.signature);
+      recent.push(selected.signature);
+      while (recent.length > this.maxRecentHistory) {
+        recent.shift();
+      }
+      this.recentSignaturesByProfile.set(key, recent);
     }
     return selected;
   }
