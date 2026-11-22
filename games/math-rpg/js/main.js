@@ -9,7 +9,14 @@ import {
   saveSystem,
   BACKPACK_CAPACITY,
   DEFAULT_DAILY_TIME_LIMIT_SECONDS
-} from './saveSystem.js?v=20261121k';
+} from './saveSystem.js?v=20261122b';
+import { isTaskPaused } from '../../../shared/playtime-timer.js?v=20261122b';
+import { generateTask as generateEduTask } from '../../../shared/edu-bank.js?v=20261122b';
+import {
+  enforcePendingDebt,
+  requireGate,
+  isGateOpen
+} from '../../../shared/edu-gate.js?v=20261122b';
 import { audio } from './audio.js';
 import { mathEngine } from './mathEngine.js';
 import { Player } from './player.js';
@@ -156,6 +163,10 @@ function startPlaytimeTicker() {
     if (typeof document !== 'undefined' && (document.hidden || document.visibilityState === 'hidden')) return;
     const profile = saveSystem.getActiveProfile();
     if (!profile) return;
+    if (isTaskPaused()) {
+      updatePlaytimeHud(profile);
+      return;
+    }
 
     // Laikas skaičiuojamas TIK tada, kai žaidėjas realiai bėgioja lygyje arba sprendžia matematikos užduotį!
     const isActivelyPlayingLevel = gameState === 'PLAYING' && !isWorldPaused && !isTimeLimitPaused;
@@ -287,6 +298,12 @@ function registerServiceWorker() {
 // ==================== VALDYMAS ====================
 function setupInputListeners() {
   window.addEventListener('keydown', (e) => {
+    if (isGateOpen()) return;
+    if (gameState === 'MATH_DUEL' && (e.key === 'Escape' || e.key === 'Esc')) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     if (gameState === 'PLAYING' && !isWorldPaused) {
       if (e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = true;
       if (e.code === 'ArrowRight' || e.code === 'KeyD') input.right = true;
@@ -565,6 +582,7 @@ function renderNamedProfiles() {
       const slot = Number(btn.dataset.play);
       saveSystem.selectSlot(slot);
       openWorldMap();
+      enforcePendingDebt(slot === 0 ? 'linas' : 'lukas');
     });
   });
 
@@ -1672,7 +1690,25 @@ function exitSecretBonusRoom() {
   updateHud();
 }
 
+function getActiveMathRpgProfileId() {
+  const profile = saveSystem.getActiveProfile();
+  return profile && profile.slotIndex === 0 ? 'linas' : 'lukas';
+}
+
 function startLevelPlay(levelId) {
+  const profile = saveSystem.getActiveProfile();
+  if (!profile || typeof generateEduTask !== 'function') return;
+  if (getRemainingPlaytimeSeconds(profile) <= 0) {
+    openTimeLimitModal(true);
+    return;
+  }
+  isWorldPaused = true;
+  requireGate(getActiveMathRpgProfileId(), 3, `Pasirengimas ${levelId} lygiui`, () => {
+    startLevelPlayDirect(levelId);
+  });
+}
+
+function startLevelPlayDirect(levelId) {
   const profile = saveSystem.getActiveProfile();
   if (!profile) return;
 
@@ -3196,54 +3232,69 @@ function awardBrainStarLoot(profile) {
 // ==================== LYGIO PABAIGA ====================
 function finishLevel(won) {
   const profile = saveSystem.getActiveProfile();
+  if (!profile) return;
   isWorldPaused = true;
   gameState = 'RESULT';
   gameHud.classList.add('hidden');
   touchControls.classList.add('hidden');
-  modalLevelResult.classList.remove('hidden');
 
-  if (won) {
-    audio.levelWin();
-    const completionBonus = 25 + currentLevel.levelId * 8;
-    profile.coins += completionBonus;
-    levelSession.coinsEarned += completionBonus;
+  const coinsSnapshot = levelSession.coinsEarned;
+  const crystalsSnapshot = levelSession.crystalsEarned;
+  const solvedSnapshot = levelSession.solvedCount;
+  const mistakesSnapshot = levelSession.mistakesInLevel;
+  const completedLvlId = currentLevel?.levelId || 1;
 
-    const stars = levelSession.mistakesInLevel === 0 ? 3 : levelSession.mistakesInLevel <= 2 ? 2 : 1;
-    if (stars === 3) {
-      profile.stats.perfectLevels++;
+  requireGate(
+    getActiveMathRpgProfileId(),
+    3,
+    won ? `Pergalės vartai (${completedLvlId} lygis)` : 'Pamoka po lygio',
+    () => {
+      let totalCoinsEarned = coinsSnapshot;
+      if (won) {
+        audio.levelWin();
+        const completionBonus = 25 + completedLvlId * 8;
+        profile.coins += completionBonus;
+        totalCoinsEarned += completionBonus;
+
+        const stars = mistakesSnapshot === 0 ? 3 : mistakesSnapshot <= 2 ? 2 : 1;
+        if (stars === 3) {
+          profile.stats.perfectLevels++;
+        }
+
+        const prev = profile.completedLevels[completedLvlId];
+        profile.completedLevels[completedLvlId] = {
+          stars: Math.max(stars, prev ? prev.stars : 0),
+          bestCoins: Math.max(totalCoinsEarned, prev ? prev.bestCoins : 0)
+        };
+
+        if (completedLvlId >= profile.unlockedLevel && profile.unlockedLevel < 50) {
+          profile.unlockedLevel = completedLvlId + 1;
+        }
+
+        saveSystem.saveAll();
+
+        document.getElementById('result-icon').textContent = '🏆';
+        document.getElementById('result-title').textContent = `${completedLvlId} Lygis Įveiktas!`;
+        document.getElementById('result-subtitle').textContent =
+          stars === 3 ? `Nepriekaištingai, ${profile.name}! Nė vienos klaidos!` : `Puikus nuotykis, ${profile.name}!`;
+        document.getElementById('result-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
+        document.getElementById('btn-result-next').textContent = '➡️ Kitas lygis';
+      } else {
+        audio.wrong();
+        document.getElementById('result-icon').textContent = '💪';
+        document.getElementById('result-title').textContent = 'Baigėsi širdelės!';
+        document.getElementById('result-subtitle').textContent =
+          'Visas surinktas auksas ir kuprinės daiktai lieka tau! Užsidėk geresnius ginklus bei šarvus inventoriuje ir bandyk dar kartą!';
+        document.getElementById('result-stars').textContent = '☆☆☆';
+        document.getElementById('btn-result-next').textContent = '🔄 Bandyti dar kartą';
+      }
+
+      document.getElementById('result-coins').textContent = `+${totalCoinsEarned} 🪙`;
+      document.getElementById('result-crystals').textContent = `+${crystalsSnapshot} 💎`;
+      document.getElementById('result-solved').textContent = `${solvedSnapshot}`;
+      modalLevelResult.classList.remove('hidden');
     }
-
-    const prev = profile.completedLevels[currentLevel.levelId];
-    profile.completedLevels[currentLevel.levelId] = {
-      stars: Math.max(stars, prev ? prev.stars : 0),
-      bestCoins: Math.max(levelSession.coinsEarned, prev ? prev.bestCoins : 0)
-    };
-
-    if (currentLevel.levelId >= profile.unlockedLevel && profile.unlockedLevel < 50) {
-      profile.unlockedLevel = currentLevel.levelId + 1;
-    }
-
-    saveSystem.saveAll();
-
-    document.getElementById('result-icon').textContent = '🏆';
-    document.getElementById('result-title').textContent = `${currentLevel.levelId} Lygis Įveiktas!`;
-    document.getElementById('result-subtitle').textContent =
-      stars === 3 ? `Nepriekaištingai, ${profile.name}! Nė vienos klaidos!` : `Puikus nuotykis, ${profile.name}!`;
-    document.getElementById('result-stars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
-    document.getElementById('btn-result-next').textContent = '➡️ Kitas lygis';
-  } else {
-    audio.wrong();
-    document.getElementById('result-icon').textContent = '💪';
-    document.getElementById('result-title').textContent = 'Baigėsi širdelės!';
-    document.getElementById('result-subtitle').textContent =
-      'Visas surinktas auksas ir kuprinės daiktai lieka tau! Užsidėk geresnius ginklus bei šarvus inventoriuje ir bandyk dar kartą!';
-    document.getElementById('result-stars').textContent = '☆☆☆';
-    document.getElementById('btn-result-next').textContent = '🔄 Bandyti dar kartą';
-  }
-
-  document.getElementById('result-coins').textContent = `+${levelSession.coinsEarned} 🪙`;
-  document.getElementById('result-crystals').textContent = `+${levelSession.crystalsEarned} 💎`;
-  document.getElementById('result-solved').textContent = `${levelSession.solvedCount}`;
+  );
 }
 
 // ==================== CANVAS PIEŠIMAS (RENDER) ====================
@@ -4308,11 +4359,20 @@ function setupUIListeners() {
 
   document.getElementById('btn-switch-profile').addEventListener('click', () => {
     audio.click();
-    isWorldPaused = true;
-    gameState = 'PROFILES';
-    hideAllScreens();
-    renderNamedProfiles();
-    screenProfiles.classList.remove('hidden');
+    const goProfiles = () => {
+      isWorldPaused = true;
+      gameState = 'PROFILES';
+      hideAllScreens();
+      renderNamedProfiles();
+      screenProfiles.classList.remove('hidden');
+    };
+    if (gameState === 'PLAYING' || gameState === 'MATH_DUEL') {
+      isWorldPaused = true;
+      modalMath.classList.add('hidden');
+      requireGate(getActiveMathRpgProfileId(), 3, 'Lygio užbaigimas', goProfiles);
+      return;
+    }
+    goProfiles();
   });
 
   document.getElementById('btn-claim-daily').addEventListener('click', () => {
@@ -4366,6 +4426,14 @@ function setupUIListeners() {
 
   document.getElementById('btn-hud-map').addEventListener('click', () => {
     audio.click();
+    if (gameState === 'PLAYING' || gameState === 'MATH_DUEL') {
+      isWorldPaused = true;
+      modalMath.classList.add('hidden');
+      requireGate(getActiveMathRpgProfileId(), 3, 'Lygio užbaigimas', () => {
+        openWorldMap();
+      });
+      return;
+    }
     openWorldMap();
   });
 

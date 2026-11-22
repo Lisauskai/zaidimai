@@ -3,15 +3,15 @@ import {
   initPlaytimeTimer,
   getRemainingPlaytimeSeconds,
   formatMMSS
-} from '../../../shared/playtime-timer.js?v=20261122a';
+} from '../../../shared/playtime-timer.js?v=20261122b';
 import {
   generateTask as generateEduTask,
   renderTaskVisual as renderEduTaskVisual
-} from '../../../shared/edu-bank.js?v=20261122a';
+} from '../../../shared/edu-bank.js?v=20261122b';
 import {
   enforcePendingDebt,
   requireGate
-} from '../../../shared/edu-gate.js?v=20261122a';
+} from '../../../shared/edu-gate.js?v=20261122b';
 import {
   TOWER_LIST,
   ENEMY_LIST,
@@ -31,9 +31,9 @@ import {
   computeSellRefund,
   calculateStarsForHearts,
   getProfileModifier
-} from './balance.js?v=20261122a';
-import { TDEngine } from './engine.js?v=20261122a';
-import { audioManager } from './audio.js?v=20261122a';
+} from './balance.js?v=20261122b';
+import { TDEngine } from './engine.js?v=20261122b';
+import { audioManager } from './audio.js?v=20261122b';
 
 const SAVE_KEY = 'gynyba_save_v1';
 const DEFAULT_ENCOUNTERED_ENEMIES = ['garden_slug', 'rushing_hedgehog', 'armored_beetle'];

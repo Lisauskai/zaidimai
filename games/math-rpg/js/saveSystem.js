@@ -8,7 +8,7 @@ import {
   getTodayDateString,
   loadGlobalPlaytime as sharedLoadGlobalPlaytime,
   saveGlobalPlaytime as sharedSaveGlobalPlaytime
-} from '../../../shared/playtime-timer.js?v=20261121k';
+} from '../../../shared/playtime-timer.js?v=20261122b';
 
 const STORAGE_KEY_LINAS = 'skaiciu_karalyste_save_linas_v2';
 const STORAGE_KEY_LUKAS = 'skaiciu_karalyste_save_lukas_v2';

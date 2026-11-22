@@ -7,8 +7,8 @@ import {
   normalizeProfile,
   generateTask,
   renderTaskVisual
-} from './edu-bank.js?v=20261122a';
-import { setTaskPaused } from './playtime-timer.js?v=20261122a';
+} from './edu-bank.js?v=20261122b';
+import { setTaskPaused } from './playtime-timer.js?v=20261122b';
 
 export const DEBT_STORAGE_KEY = 'bosas_edu_debt_v1';
 export const RELOAD_WINDOW_MS = 300000; // 5 minutės

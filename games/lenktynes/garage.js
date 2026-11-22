@@ -20,7 +20,7 @@ export {
   pauseForTask,
   resumeFromTask,
   isTaskPaused
-} from '../../shared/playtime-timer.js?v=20261121p';
+} from '../../shared/playtime-timer.js?v=20261122b';
 
 export const MAX_MICRO_UPGRADE_LEVEL = 50;
 export const MAX_PART_LEVEL = 50;

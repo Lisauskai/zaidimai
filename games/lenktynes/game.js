@@ -24,8 +24,15 @@ import {
   setTaskPaused,
   isTaskPaused,
   TASK_PAUSED_LABEL
-} from './garage.js?v=20261121p';
-import { PitStopMath } from './math.js?v=20261121p';
+} from './garage.js?v=20261122b';
+import { PitStopMath } from './math.js?v=20261122b';
+import { generateTask as generateEduTask } from '../../shared/edu-bank.js?v=20261122b';
+import {
+  enforcePendingDebt,
+  requireGate,
+  startOrResumeDebt,
+  isGateOpen
+} from '../../shared/edu-gate.js?v=20261122b';
 
 const PARENT_PASSWORD = 'bosas123';
 
@@ -316,6 +323,7 @@ let animTick = 0;
 let mathChallenge = null;
 let mathTimerInterval = null;
 let garageEvolutionToast = null; // { text, subText, color, expiresAt }
+let postRaceGateTimeoutId = null;
 
 // ==================== KLAVIATŪROS IR EKRANO ĮVESTIS ====================
 const keys = {
@@ -351,6 +359,7 @@ function isTypingInField(e) {
 
 window.addEventListener('keydown', (e) => {
   if (isTypingInField(e)) return; // leidžiame laisvai rašyti tėvų slaptažodį
+  if (isGateOpen()) return;
 
   // Jei žaidėjo mašina sunaikinta – paspaudus Enter arba Tarpą grįžtame į garažą
   if (raceState && raceState.gameState === 'gameOver') {
@@ -705,6 +714,7 @@ function selectDriverAndOpenGarage(driverKey) {
   if (getRemainingPlaytimeSeconds(driverKey) <= 0) {
     openTimeLimitModal(true);
   }
+  enforcePendingDebt(driverKey);
 }
 
 // ==================== GARAŽO SĄSAJOS VALDYMAS ====================
@@ -2426,6 +2436,10 @@ function spawnEnemies(profile, trackType, s0OrStartX, startAngleOrBaseY) {
 }
 
 function startNewRace() {
+  if (postRaceGateTimeoutId) {
+    clearTimeout(postRaceGateTimeoutId);
+    postRaceGateTimeoutId = null;
+  }
   const profile = garage.getActiveProfile();
   if (getRemainingPlaytimeSeconds(profile.driverKey) <= 0) {
     openTimeLimitModal(true);
@@ -5931,26 +5945,104 @@ function triggerGameOver() {
     if (coinsEl) coinsEl.textContent = `Surinkta monetų: +${totalEarned} 🪙`;
     goOverlay.classList.remove('hidden');
   }
+
+  // Fiksuojame skolą iš karto, kad F5 per 1.8s animaciją neapeitų vartų
+  startOrResumeDebt(brokenProfile.driverKey, 3, 'Bolido remontas po avarijos');
+  if (postRaceGateTimeoutId) clearTimeout(postRaceGateTimeoutId);
+  postRaceGateTimeoutId = setTimeout(() => {
+    postRaceGateTimeoutId = null;
+    if (currentScreen === 'RACE' && !isGateOpen()) {
+      handleGameOverReturnToGarage();
+    }
+  }, 1800);
+}
+
+function fullRepairActiveCar(profile) {
+  if (!profile) return;
+  const stats = garage.getComputedCarStats(profile);
+  profile.currentHp = stats.maxHp;
+  profile.needsRepair = false;
+  garage.saveDriver();
+}
+
+function savePendingRaceResultToProfile() {
+  if (!raceState) return;
+  const profile = garage.getActiveProfile();
+  if (!profile) return;
+  const pStats = garage.getComputedCarStats(profile);
+  if (!raceState.coinsSaved) {
+    raceState.coinsSaved = true;
+    profile.coins += (raceState.coinsEarned || 0);
+    profile.racesPlayed = (profile.racesPlayed || 0) + 1;
+    if (raceState.gameState === 'podium' && raceState.player?.position === 1) {
+      profile.wins = (profile.wins || 0) + 1;
+    }
+    profile.totalTakedowns = (profile.totalTakedowns || 0) + (raceState.takedownsByPlayer || 0);
+  }
+  if (raceState.gameState === 'gameOver' || raceState.player?.hp <= 0) {
+    profile.currentHp = 0;
+    profile.needsRepair = true;
+  } else {
+    profile.currentHp = Math.min(pStats.maxHp, Math.max(10, Math.round(raceState.player?.hp || pStats.maxHp)));
+    profile.needsRepair = profile.currentHp < pStats.maxHp;
+  }
+  garage.saveDriver();
+}
+
+function triggerPostRaceGate(title = 'Po lenktynių – apžvalga ir remontas', afterGateCb = null) {
+  if (typeof generateEduTask !== 'function') return;
+  if (postRaceGateTimeoutId) {
+    clearTimeout(postRaceGateTimeoutId);
+    postRaceGateTimeoutId = null;
+  }
+  if (isGateOpen()) return;
+  const profile = garage.getActiveProfile();
+  if (!profile) return;
+
+  savePendingRaceResultToProfile();
+  const goOverlay = document.getElementById('overlay-game-over');
+  if (goOverlay) goOverlay.classList.add('hidden');
+  document.getElementById('modal-race-results')?.classList.add('hidden');
+
+  requireGate(profile.driverKey, 3, title, () => {
+    fullRepairActiveCar(profile);
+    audio.correct();
+    if (typeof afterGateCb === 'function') {
+      afterGateCb();
+    } else {
+      returnToGarage();
+    }
+  });
+}
+
+function requestStartRaceWithGate() {
+  if (isGateOpen()) return;
+  const profile = garage.getActiveProfile();
+  if (!profile) return;
+  if (getRemainingPlaytimeSeconds(profile.driverKey) <= 0) {
+    openTimeLimitModal(true);
+    return;
+  }
+  const pStats = garage.getComputedCarStats(profile);
+  if (profile.needsRepair || profile.currentHp <= 0 || profile.currentHp < pStats.maxHp) {
+    requireGate(profile.driverKey, 3, 'Bolido remontas garaže', () => {
+      fullRepairActiveCar(profile);
+      audio.correct();
+      updateGarageUI();
+    });
+    return;
+  }
+  requireGate(profile.driverKey, 3, 'Pasirengimas lenktynėms', () => {
+    if (getRemainingPlaytimeSeconds(profile.driverKey) <= 0) {
+      openTimeLimitModal(true);
+      return;
+    }
+    startNewRace();
+  });
 }
 
 function handleGameOverReturnToGarage() {
-  if (raceState) {
-    const profile = garage.getActiveProfile();
-    if (!raceState.coinsSaved) {
-      raceState.coinsSaved = true;
-      profile.coins += (raceState.coinsEarned || 0);
-      profile.racesPlayed = (profile.racesPlayed || 0) + 1;
-      profile.totalTakedowns = (profile.totalTakedowns || 0) + (raceState.takedownsByPlayer || 0);
-    }
-    profile.currentHp = 0;
-    profile.needsRepair = true;
-    garage.saveDriver();
-  }
-
-  const goOverlay = document.getElementById('overlay-game-over');
-  if (goOverlay) goOverlay.classList.add('hidden');
-
-  returnToGarage();
+  triggerPostRaceGate('Bolido remontas po avarijos');
 }
 
 function drawGameOverOverlay(ctx, w, h) {
@@ -6082,28 +6174,22 @@ function triggerPodium() {
 
   audio.fanfare();
   hideCountdownOverlay();
+
+  const podiumProfile = garage.getActiveProfile();
+  if (podiumProfile) {
+    startOrResumeDebt(podiumProfile.driverKey, 3, 'Po lenktynių – apžvalga ir remontas');
+  }
+  if (postRaceGateTimeoutId) clearTimeout(postRaceGateTimeoutId);
+  postRaceGateTimeoutId = setTimeout(() => {
+    postRaceGateTimeoutId = null;
+    if (currentScreen === 'RACE' && !isGateOpen()) {
+      handlePodiumReturnToGarage();
+    }
+  }, 2200);
 }
 
 function handlePodiumReturnToGarage() {
-  if (raceState && !raceState.coinsSaved) {
-    raceState.coinsSaved = true;
-    const profile = garage.getActiveProfile();
-    const pStats = garage.getComputedCarStats(profile);
-    profile.coins += (raceState.coinsEarned || 0);
-    profile.currentHp =
-      raceState.player.hp <= 0
-        ? 0
-        : Math.min(pStats.maxHp, Math.max(10, Math.round(raceState.player.hp)));
-    profile.needsRepair = profile.currentHp < pStats.maxHp;
-    profile.racesPlayed = (profile.racesPlayed || 0) + 1;
-    if (raceState.player.position === 1) {
-      profile.wins = (profile.wins || 0) + 1;
-    }
-    profile.totalTakedowns = (profile.totalTakedowns || 0) + (raceState.takedownsByPlayer || 0);
-    garage.saveDriver();
-  }
-
-  returnToGarage();
+  triggerPostRaceGate('Po lenktynių – apžvalga ir remontas');
 }
 
 function finishRace(playerRank) {
@@ -6420,7 +6506,19 @@ function normalizeAngle(a) {
 
 // ==================== ĮVYKIŲ PRIRIŠIMAS IR PAGRINDINIS CIKLAS ====================
 function initEvents() {
-  document.getElementById('btn-open-profiles').addEventListener('click', openProfilesScreen);
+  document.getElementById('btn-open-profiles').addEventListener('click', () => {
+    if (currentScreen === 'RACE' && raceState && !raceState.isOver) {
+      const profile = garage.getActiveProfile();
+      if (profile) {
+        requireGate(profile.driverKey, 3, 'Lenktynių užbaigimas', () => {
+          fullRepairActiveCar(profile);
+          openProfilesScreen();
+        });
+        return;
+      }
+    }
+    openProfilesScreen();
+  });
   document.getElementById('btn-time-switch-profile').addEventListener('click', openProfilesScreen);
 
   document.getElementById('btn-global-timer').addEventListener('click', () => {
@@ -6456,7 +6554,17 @@ function initEvents() {
   });
 
   document.getElementById('btn-repair-math').addEventListener('click', () => {
-    startPitStopMathChallenge('repair', null);
+    const profile = garage.getActiveProfile();
+    if (!profile) return;
+    if (getRemainingPlaytimeSeconds(profile.driverKey) <= 0) {
+      openTimeLimitModal(true);
+      return;
+    }
+    requireGate(profile.driverKey, 3, 'Bolido remontas garaže', () => {
+      fullRepairActiveCar(profile);
+      audio.correct();
+      updateGarageUI();
+    });
   });
 
   document.getElementById('btn-repair-coins').addEventListener('click', (e) => {
@@ -6490,23 +6598,21 @@ function initEvents() {
     });
   }
 
-  document.getElementById('btn-start-race').addEventListener('click', startNewRace);
+  document.getElementById('btn-start-race').addEventListener('click', requestStartRaceWithGate);
   document.getElementById('btn-exit-race').addEventListener('click', () => {
     if (raceState && !raceState.isOver) {
-      const profile = garage.getActiveProfile();
-      const pStats = garage.getComputedCarStats(profile);
-      if (raceState.player.hp <= 0) {
-        profile.currentHp = 0;
-        profile.needsRepair = true;
-      } else {
-        profile.currentHp = Math.min(pStats.maxHp, Math.max(10, Math.round(raceState.player.hp)));
-        profile.needsRepair = profile.currentHp < pStats.maxHp;
-      }
-      garage.saveDriver();
+      triggerPostRaceGate('Lenktynių užbaigimas ir remontas');
+      return;
+    }
+    if (raceState && (raceState.gameState === 'gameOver' || raceState.gameState === 'podium')) {
+      triggerPostRaceGate('Po lenktynių – apžvalga ir remontas');
+      return;
     }
     returnToGarage();
   });
-  document.getElementById('btn-results-to-garage').addEventListener('click', returnToGarage);
+  document.getElementById('btn-results-to-garage').addEventListener('click', () => {
+    triggerPostRaceGate('Po lenktynių – apžvalga ir remontas');
+  });
 
   const btnGameOver = document.getElementById('btn-game-over-to-garage');
   if (btnGameOver) {
@@ -6599,7 +6705,9 @@ function mainLoop(now) {
   if (currentScreen === 'GARAGE') {
     drawGarageTurntable();
   } else if (currentScreen === 'RACE') {
-    updateRace(dt);
+    if (!isGateOpen()) {
+      updateRace(dt);
+    }
     drawRace();
   }
 
